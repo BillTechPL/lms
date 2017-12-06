@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004031000.php,v 1.12 2011/01/18 08:12:07 alec Exp $
  */
 
 // Some stuff by maniac.
 
-$this->Execute("ALTER TABLE users ADD message TEXT DEFAULT '' NOT NULL");
-$this->Execute("ALTER TABLE nodes ADD warning BOOL DEFAULT '0' NOT NULL");
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004031000', 'dbversion'));
+$DB->Execute("ALTER TABLE users ADD message TEXT DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE nodes ADD warning BOOL DEFAULT '0' NOT NULL");
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004031000', 'dbversion'));
 
 ?>

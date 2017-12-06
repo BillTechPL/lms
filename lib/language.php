@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2015 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,9 +21,26 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: language.php,v 1.56 2011/02/01 15:06:35 alec Exp $
  */
 
+function trans()
+{
+	global $_LANG;
+
+	$content = func_get_arg(0);
+
+	if(isset($_LANG[$content]))
+		$content = trim($_LANG[$content]);
+
+	$argc = func_num_args();
+	for($i = 1; $i < $argc; $i++)
+	{
+		$arg = func_get_arg($i);
+		$content = str_replace('$'.($i-1), $arg, $content);
+	}
+	return $content;
+}
 
 $LANGDEFS = array(
 		'pl' => array(
@@ -33,7 +50,6 @@ $LANGDEFS = array(
 			'charset' => 'UTF-8',
 			'html' => 'pl',
 			'money_format' => '%01.2f zł',
-			'money_format_in_words' => '%s złotych %s groszy',
 //			'mobile' => '(88[0-9]|5[01][0-9]|6[069][0-9]|7[2789][0-9])[0-9]{6}',
 			),
 		'lt' => array(
@@ -42,8 +58,7 @@ $LANGDEFS = array(
 			'locale' => 'lt_LT.UTF-8',
 			'charset' => 'UTF-8',
 			'html' => 'lt',
-			'money_format' => '%01.2f EUR',
-			'money_format_in_words' => '%s euro %s centų',
+			'money_format' => '%01.2f LT',
 //			'mobile' => '(88[08]|50[0-9]|6[09][0-9])[0-9]{6}',
 			),
 		'en' => array(
@@ -53,7 +68,6 @@ $LANGDEFS = array(
 			'charset' => 'UTF-8',
 			'html' => 'en',
 			'money_format' => '$ %01.2f',
-			'money_format_in_words' => '%s dollars %s cents',
 //			'mobile' => '(88[08]|50[0-9]|6[09][0-9])[0-9]{6}',
 			),
 		'sk' => array(
@@ -63,7 +77,6 @@ $LANGDEFS = array(
 			'charset' => 'UTF-8',
 			'html' => 'sk',
 			'money_format' => '%01.2f EUR',
-			'money_format_in_words' => '%s euro %s centov',
 //			'mobile' => '(88[08]|50[0-9]|6[09][0-9])[0-9]{6}',
 			),
 		'ro' => array(
@@ -73,17 +86,6 @@ $LANGDEFS = array(
 			'charset' => 'UTF-8',
 			'html' => 'ro',
 			'money_format' => '%01.2f RON',
-			'money_format_in_words' => '%s RON %s bani',
-//			'mobile' => '(88[08]|50[0-9]|6[09][0-9])[0-9]{6}',
-			),
-		'cs' => array(
-			'name' => 'Czech',
-			'orig' => 'Česky',
-			'locale' => 'cs_CZ.UTF-8',
-			'charset' => 'UTF-8',
-			'html' => 'cs',
-			'money_format' => '%01.2f Kč',
-			'money_format_in_words' => '%s Kč %s haléř',
 //			'mobile' => '(88[08]|50[0-9]|6[09][0-9])[0-9]{6}',
 			),
 		);
@@ -98,7 +100,7 @@ $langs = explode(',', $langs);
 
 foreach ($langs as $val)
 {
-	$val = substr($val, 0, 2);
+    $val = substr($val, 0, 2);
 	switch ($val)
 	{
 		case 'pl':
@@ -106,33 +108,32 @@ foreach ($langs as $val)
 		case 'sk':
 		case 'ro':
 		case 'en':
-		case 'cs':
 			$_ui_language = $val;
-			break 2;
+    	    break 2;
 	}
 }
 
 // System language
-$lang = ConfigHelper::getConfig('phpui.lang');
-if(!empty($lang))
-	$_language = $lang;
+if(!empty($CONFIG['phpui']['lang']))
+	$_language = $CONFIG['phpui']['lang'];
 else if (!empty($_ui_language))
 	$_language = $_ui_language;
 else
-	$_language = 'en'; // default language
+    $_language = 'en'; // default language
 
 // Use system lang for UI if any of browser langs isn't supported
 // or browser langs aren't set
 if (empty($_ui_language))
 	$_ui_language = $_language;
+
 $_LANG = array();
 
-if (@is_readable(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_ui_language . DIRECTORY_SEPARATOR . 'strings.php'))
-	include(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_ui_language . DIRECTORY_SEPARATOR . 'strings.php');
-if (@is_readable(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_ui_language . DIRECTORY_SEPARATOR . 'ui.php'))
-	include(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_ui_language . DIRECTORY_SEPARATOR . 'ui.php');
-if (@is_readable(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_language . DIRECTORY_SEPARATOR . 'system.php'))
-	include(LIB_DIR . DIRECTORY_SEPARATOR . 'locale' . DIRECTORY_SEPARATOR . $_language . DIRECTORY_SEPARATOR . 'system.php');
+if (@is_readable(LIB_DIR.'/locale/'.$_ui_language.'/strings.php'))
+	include(LIB_DIR.'/locale/'.$_ui_language.'/strings.php');
+if (@is_readable(LIB_DIR.'/locale/'.$_ui_language.'/ui.php'))
+	include(LIB_DIR.'/locale/'.$_ui_language.'/ui.php');
+if (@is_readable(LIB_DIR.'/locale/'.$_language.'/system.php'))
+	include(LIB_DIR.'/locale/'.$_language.'/system.php');
 
 setlocale(LC_COLLATE, $LANGDEFS[$_language]['locale']);
 setlocale(LC_CTYPE, $LANGDEFS[$_language]['locale']);

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,19 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: Sysinfo.class.php,v 1.32 2011/01/18 08:12:05 alec Exp $
  */
 
 /*
- * System information - uï¿½ywane przez welcome.php
+ * System information - u¿ywane przez welcome.php
  * Bazowane na projekcie phpsysinfo - http://phpsysinfo.sourceforge.net/
  */
 
 class Sysinfo {
 	
-        public function __construct() { }
-    
-	public function get_sysinfo()
+	function get_sysinfo()
 	{
 		$return['hostname'] = $this->hostname();
 		$return['uptime'] = $this->uptime();
@@ -44,12 +42,12 @@ class Sysinfo {
 		return $return;
 	}
 
-	public function bsd_grab_key ($key)
+	function bsd_grab_key ($key)
 	{
 		return $this->execute_program('sysctl', "-n $key");
 	}
 
-	public function execute_program ($program, $args = '')
+	function execute_program ($program, $args = '')
 	{
 		$buffer = '';
 		$program = $this->find_program($program);
@@ -84,7 +82,7 @@ class Sysinfo {
 		}
 	}
 
-	public function find_program ($program)
+	function find_program ($program)
 	{
 		$path = array('/bin', '/sbin', '/usr/bin', '/usr/sbin', '/usr/local/bin', '/usr/local/sbin');
 		while ($this_path = current($path))
@@ -98,7 +96,7 @@ class Sysinfo {
 		return;
 	}
 
-	public function hostname()
+	function hostname()
 	{
 		switch(PHP_OS)
 		{
@@ -115,14 +113,14 @@ class Sysinfo {
 				$hostname=$return[0];
 				break;
 			default:
-				$return = trans('unknown OS ($a)',PHP_OS);
+				$return = trans('unknown OS ($0)',PHP_OS);
 		}
 		if($hostname=='')
 			$hostname='N.A.';
 		return $hostname;
 	}
 		
-	public function uptime()
+	function uptime()
 	{
 		// Uptime function.
 		// Taken afair from PHPSysinfo
@@ -155,13 +153,13 @@ class Sysinfo {
 				$result = uptimef($sys_ticks);
 			break;
 			default:
-				$result = trans('unknown OS ($a)',PHP_OS);
+				$result = trans('unknown OS ($0)',PHP_OS);
 			break;
 		}
 		return $result;
 	}
 
-	public function kernel()
+	function kernel()
 	{
 		switch(PHP_OS)
 		{
@@ -185,7 +183,7 @@ class Sysinfo {
 		return $result;
 	}
 
-	public function users()
+	function users()
 	{
 		switch(PHP_OS)
 		{
@@ -202,7 +200,7 @@ class Sysinfo {
 		return $result;
 	}
 
-	public function loadavg()
+	function loadavg()
 	{
 		switch(PHP_OS)
 		{

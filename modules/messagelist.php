@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: messagelist.php,v 1.6 2011/01/18 08:12:23 alec Exp $
  */
 
 function GetMessagesList($order='cdate,desc', $search=NULL, $cat=NULL, $type='', $status=NULL)
@@ -90,10 +90,9 @@ function GetMessagesList($order='cdate,desc', $search=NULL, $cat=NULL, $type='',
 	{
 		switch($status)
 		{
-			case MSG_NEW: $where[] = 'x.sent + x.delivered + x.error = 0'; break;
+			case MSG_NEW: $where[] = 'x.sent + x.error = 0'; break;
 			case MSG_ERROR: $where[] = 'x.error > 0'; break;
 			case MSG_SENT: $where[] = 'x.sent = x.cnt'; break;
-			case MSG_DELIVERED: $where[] = 'x.delivered = x.cnt'; break;
 		}
         }
 	
@@ -101,13 +100,12 @@ function GetMessagesList($order='cdate,desc', $search=NULL, $cat=NULL, $type='',
 		$where = 'WHERE '.implode(' AND ', $where);
 	
 	$result = $DB->GetAll('SELECT m.id, m.cdate, m.type, m.subject,
-			x.cnt, x.sent, x.error, x.delivered
+			x.cnt, x.sent, x.error
 	    	FROM messages m
 		JOIN (
 			SELECT i.messageid, 
 				COUNT(*) AS cnt,
 				COUNT(CASE WHEN i.status = '.MSG_SENT.' THEN 1 ELSE NULL END) AS sent,
-				COUNT(CASE WHEN i.status = '.MSG_DELIVERED.' THEN 1 ELSE NULL END) AS delivered,
 				COUNT(CASE WHEN i.status = '.MSG_ERROR.' THEN 1 ELSE NULL END) AS error
 			FROM messageitems i
 			LEFT JOIN (
@@ -189,7 +187,7 @@ if ($SESSION->is_set('mlp') && !isset($_GET['page']))
         $SESSION->restore('mlp', $_GET['page']);
 	
 $page = (empty($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.messagelist_pagelimit', $listdata['total']);
+$pagelimit = (empty($CONFIG['phpui']['messagelist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['messagelist_pagelimit']);
 $SESSION->save('mlp', $page);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
@@ -199,6 +197,6 @@ $SMARTY->assign('pagelimit',$pagelimit);
 $SMARTY->assign('start',($page - 1) * $pagelimit);
 $SMARTY->assign('page', $page);
 $SMARTY->assign('messagelist',$messagelist);
-$SMARTY->display('message/messagelist.html');
+$SMARTY->display('messagelist.html');
 
 ?>

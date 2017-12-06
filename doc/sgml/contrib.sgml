@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: contrib.sgml,v 1.14 2007/02/23 07:09:55 alec Exp $ -->
 <chapter id="contrib">
 <title>Extensions</title>
 	<para>This chapter describes additional modules and implementations which extend LMS functionality. Some of them need to be adjusted for user's own need, some of them integrate with <emphasis>LMS-UI</emphasis> interface. All extensions are located in <filename>contrib</filename> subdirectory.</para>

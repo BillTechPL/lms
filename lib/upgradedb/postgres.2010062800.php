@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,9 +21,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	DELETE FROM rtattachments WHERE messageid NOT IN (SELECT id FROM rtmessages);
 	ALTER TABLE rtattachments ADD FOREIGN KEY (messageid)
 	        REFERENCES rtmessages (id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -62,8 +62,8 @@ $this->Execute("
     ALTER TABLE rtrights ALTER userid DROP DEFAULT;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010062800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010062800', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

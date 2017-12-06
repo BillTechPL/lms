@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,39 +21,19 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: divisiondel.php,v 1.5 2011/01/18 08:12:22 alec Exp $
  */
 
 $id = intval($_GET['id']);
 
-if (isset($_GET['is_sure']) && $_GET['is_sure'] == 1 && $id) {
-	if ($DB->GetOne('SELECT COUNT(*) FROM divisions', array($id)) != 1) {
-		if ($SYSLOG) {
-			$countryid = $DB->GetOne('SELECT country_id FROM divisions d
-				JOIN addresses a ON a.id = d.address_id
-				WHERE d.id = ?', array($id));
-			$args = array(
-				SYSLOG::RES_DIV => $id,
-				SYSLOG::RES_COUNTRY => $countryid
-			);
-			$SYSLOG->AddMessage(SYSLOG::RES_DIV, SYSLOG::OPER_DELETE, $args);
-			$assigns = $DB->GetAll('SELECT * FROM numberplanassignments WHERE divisionid = ?', array($id));
-			if (!empty($assigns))
-				foreach ($assigns as $assign) {
-					$args = array(
-						SYSLOG::RES_NUMPLANASSIGN => $assign['id'],
-						SYSLOG::RES_NUMPLAN => $assign['planid'],
-						SYSLOG::RES_DIV => $assign['divisionid'],
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_NUMPLANASSIGN, SYSLOG::OPER_DELETE, $args);
-				}
-		}
-
-		$DB->Execute('DELETE FROM addresses a WHERE a.id = (SELECT address_id FROM divisions d WHERE d.id = ?)', array($id));
+if(isset($_GET['is_sure']) && $_GET['is_sure']==1 && $id)
+{
+	if($DB->GetOne('SELECT COUNT(*) FROM divisions', array($id)) != 1)
+	{
 		$DB->Execute('DELETE FROM divisions WHERE id=?', array($id));
 		$DB->Execute('DELETE FROM numberplanassignments WHERE divisionid=?', array($id));
 	}
-}
+}	
 
 $SESSION->redirect('?'.$SESSION->get('backto'));
 

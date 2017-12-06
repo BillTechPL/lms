@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004070100.php,v 1.12 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->Execute("CREATE TABLE rtrights (
+$DB->Execute("CREATE TABLE rtrights (
     id INT(11) NOT NULL auto_increment, 
     adminid INT(11) DEFAULT 0 NOT NULL,
     queueid INT(11) DEFAULT 0 NOT NULL,
@@ -33,8 +33,8 @@ $this->Execute("CREATE TABLE rtrights (
     UNIQUE KEY (adminid, queueid)
     )
 ");
-$this->Execute("ALTER TABLE rtqueues ADD description TEXT DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE rtqueues ADD description TEXT DEFAULT '' NOT NULL");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004070100', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2004070100', 'dbversion'));
 
 ?>

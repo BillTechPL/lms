@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: accountlist.php,v 1.37 2011/01/18 08:12:19 alec Exp $
  */
 
 function GetAccountList($order='login,asc', $customer=NULL, $type=NULL, $kind=NULL, $domain='')
 {
-	global $DB, $ACCOUNTTYPES;
+	global $DB;
 
 	list($order,$direction) = sscanf($order, '%[^,],%s');
 
@@ -54,12 +54,9 @@ function GetAccountList($order='login,asc', $customer=NULL, $type=NULL, $kind=NU
 		break;
 	}
 
-	$quota_fields = array();
-	foreach ($ACCOUNTTYPES as $typeidx => $atype)
-		$quota_fields[] = 'p.quota_' . $atype['alias'];
 	$list = $DB->GetAll('SELECT p.id, p.ownerid, p.login, p.lastlogin, 
-			p.expdate, d.name AS domain, p.type, '
-			. implode(', ', $quota_fields) . ', '
+			p.expdate, d.name AS domain, p.type, 
+			p.quota_www, p.quota_sh, p.quota_mail, p.quota_ftp, p.quota_sql, '
 			.$DB->Concat('c.lastname', "' '",'c.name').' AS customername 
 		FROM passwd p
 		LEFT JOIN customers c ON c.id = p.ownerid 
@@ -137,7 +134,7 @@ unset($accountlist['domain']);
 unset($accountlist['direction']);
 
 $page = (empty($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.accountlist_pagelimit', $listdata['total']);
+$pagelimit = (empty($CONFIG['phpui']['accountlist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['accountlist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('alp', $page);
@@ -151,6 +148,6 @@ $SMARTY->assign('accountlist',$accountlist);
 $SMARTY->assign('listdata',$listdata);
 $SMARTY->assign('customerlist',$LMS->GetAllCustomerNames());
 $SMARTY->assign('domainlist',$DB->GetAll('SELECT id, name FROM domains ORDER BY name'));
-$SMARTY->display('account/accountlist.html');
+$SMARTY->display('accountlist.html');
 
 ?>

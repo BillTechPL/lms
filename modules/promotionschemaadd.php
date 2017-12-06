@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,93 +21,81 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotionschemaadd.php,v 1.3 2011/03/07 13:53:34 alec Exp $
  */
 
 $schema = isset($_POST['schema']) ? $_POST['schema'] : NULL;
 
-if ($schema) {
+if ($schema)
+{
 	foreach ($schema as $key => $value)
-		if (!is_array($value))
-			$schema[$key] = trim($value);
+	    if (!is_array($value))
+    		$schema[$key] = trim($value);
 
-	$schema['promotionid'] = intval($_GET['id']);
+    $schema['promotionid'] = intval($_GET['id']);
 
 	if ($schema['name']=='' && $schema['description']=='')
+	{
 		$SESSION->redirect('?m=promotioninfo&id='.$schema['promotionid']);
+	}
 
 	if ($schema['name'] == '')
 		$error['name'] = trans('Schema name is required!');
 	else if ($DB->GetOne('SELECT id FROM promotionschemas
-		WHERE name = ? AND promotionid = ?', array($schema['name'], $schema['promotionid'])))
+	    WHERE name = ? AND promotionid = ?', array($schema['name'], $schema['promotionid']))
+	) {
 		$error['name'] = trans('Specified name is in use!');
+    }
 
-	if (empty($schema['continuation']) && !empty($schema['ctariffid']))
-		$error['ctariffid'] = trans('Additional subscription is useless when contract prolongation is not set!');
+    if (empty($schema['continuation']) && !empty($schema['ctariffid']))
+        $error['ctariffid'] = trans('Additional subscription is useless when contract prolongation is not set!');
 
-	if (!$error) {
-		$data = array();
-		foreach ($schema['periods'] as $period)
-			if ($period = intval($period))
-				$data[] = $period;
-			else
-				break;
-		$data = implode(';', $data);
+	if (!$error)
+	{
+        $data = array();
+        foreach ($schema['periods'] as $period) {
+            if ($period = intval($period))
+                $data[] = $period;
+            else
+                break;
+        }
+        $data = implode(';', $data);
 
-		$args = array(
-			SYSLOG::RES_PROMO => $schema['promotionid'],
-			'name' => $schema['name'],
-			'description' => $schema['description'],
-			'data' => $data,
-			'continuation' => !empty($schema['continuation']) ? 1 : 0,
-			SYSLOG::RES_TARIFF => !empty($schema['ctariffid']) ? $schema['ctariffid'] : null
-		);
-		$DB->Execute('INSERT INTO promotionschemas (promotionid, name,
-			description, data, continuation, ctariffid)
-			VALUES (?, ?, ?, ?, ?, ?)', array_values($args));
+        $DB->Execute('INSERT INTO promotionschemas (promotionid, name,
+                description, data, continuation, ctariffid)
+            VALUES (?, ?, ?, ?, ?, ?)',
+            array($schema['promotionid'],
+                $schema['name'],
+                $schema['description'],
+                $data,
+                !empty($schema['continuation']) ? 1 : 0,
+                !empty($schema['ctariffid']) ? $schema['ctariffid'] : null,
+            ));
 
-		$sid = $DB->GetLastInsertId('promotionschemas');
+        $sid = $DB->GetLastInsertId('promotionschemas');
 
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_PROMOSCHEMA] = $sid;
-			$SYSLOG->AddMessage(SYSLOG::RES_PROMOSCHEMA, SYSLOG::OPER_ADD, $args);
-		}
-
-		// pre-fill promotionassignments with all tariffs in specified promotion
-/*
-		$tariffs = $DB->GetCol('SELECT DISTINCT tariffid FROM promotionassignments
-			WHERE promotionschemaid IN (SELECT id FROM promotionschemas WHERE promotionid = ?)
-			GROUP BY tariffid', array($schema['promotionid']));
-		if (!empty($tariffs)) {
-			$args = array(
-				SYSLOG::RES_PROMO => $schema['promotionid'],
-				SYSLOG::RES_PROMOSCHEMA => $sid
-			);
-			foreach ($tariffs as $tariff) {
-				$DB->Execute('INSERT INTO promotionassignments (promotionschemaid, tariffid)
-					VALUES (?, ?)', array($sid, $tariff));
-				if ($SYSLOG) {
-					$args[SYSLOG::RES_TARIFF] = $tariff;
-					$args[SYSLOG::RES_PROMOASSIGN] =
-						$DB->GetLastInsertID('promotionassignments');
-					$SYSLOG->AddMessage(SYSLOG::RES_PROMOASSIGN, SYSLOG::OPER_ADD, $args);
-				}
-			}
-		}
-*/
+        // pre-fill promotionassignments with all tariffs in specified promotion
+        $DB->Execute('INSERT INTO promotionassignments (promotionschemaid, tariffid)
+            SELECT ?, tariffid
+            FROM promotionassignments
+            WHERE promotionschemaid IN (SELECT id FROM promotionschemas WHERE promotionid = ?)
+            GROUP BY tariffid', array($sid, $schema['promotionid']));
 
 		if (empty($schema['reuse']))
-			$SESSION->redirect('?m=promotionschemainfo&id=' . $sid);
+		{
+			$SESSION->redirect('?m=promotionschemainfo&id='.$sid);
+		}
 
 		unset($schema['name']);
 		unset($schema['description']);
 		$schema['reuse'] = '1';
 	}
-} else {
-	$schema['promotionid'] = $_GET['id'];
-	$schema['promotionname'] = $LMS->GetPromotionNameByID($schema['promotionid']);
-	$schema['continuation'] = 1;
-	$schema['periods'] = array(0);
+}
+else
+{
+    $schema['promotionid']  = $_GET['id'];
+    $schema['continuation'] = 1;
+    $schema['periods']      = array(0);
 }
 
 $schema['selection'] = array(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,30,36,42,48,60);
@@ -117,6 +105,6 @@ $layout['pagetitle'] = trans('New Schema');
 $SMARTY->assign('error', $error);
 $SMARTY->assign('schema', $schema);
 $SMARTY->assign('tariffs', $LMS->GetTariffs());
-$SMARTY->display('promotion/promotionschemaadd.html');
+$SMARTY->display('promotionschemaadd.html');
 
 ?>

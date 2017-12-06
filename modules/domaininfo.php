@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: domaininfo.php,v 1.6 2011/01/18 08:12:22 alec Exp $
  */
 
 $id = $_GET['id'];
 
-$domain = $DB->GetRow('SELECT d.id, d.name, d.ownerid, d.description, d.mxbackup, d.type,
+$domain = $DB->GetRow('SELECT d.id, d.name, d.ownerid, d.description, d.type,
 		(SELECT COUNT(*) FROM passwd WHERE domainid = d.id) AS accountcnt, 
 		(SELECT COUNT(*) FROM records WHERE domain_id = d.id) AS recordscnt,
 		(SELECT COUNT(*) FROM aliases WHERE domainid = d.id) AS aliascnt, '
@@ -40,11 +40,11 @@ if(!$domain)
 	$SESSION->redirect('?'.$SESSION->get('backto'));
 }
 
-$layout['pagetitle'] = trans('Domain Info: $a', $domain['name']);
+$layout['pagetitle'] = trans('Domain Info: $0', $domain['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('domain', $domain);
-$SMARTY->display('domain/domaininfo.html');
+$SMARTY->display('domaininfo.html');
 
 ?>

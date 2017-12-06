@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2008021500.php,v 1.4 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	CREATE TABLE aliasassignments (
 		id		int(11)		NOT NULL auto_increment,
 		aliasid		int(11)		DEFAULT '0' NOT NULL,
@@ -35,18 +35,18 @@ $this->Execute("
 		UNIQUE KEY aliasid (aliasid, accountid)
 	)
 ");
-$this->Execute("ALTER TABLE aliases ADD domainid integer NOT NULL DEFAULT '0'");
+$DB->Execute("ALTER TABLE aliases ADD domainid integer NOT NULL DEFAULT '0'");
 	
-$this->Execute("UPDATE aliases SET domainid = (SELECT domainid FROM passwd WHERE id = accountid)");
+$DB->Execute("UPDATE aliases SET domainid = (SELECT domainid FROM passwd WHERE id = accountid)");
 
-$this->Execute("INSERT INTO aliasassignments (aliasid, accountid) 
+$DB->Execute("INSERT INTO aliasassignments (aliasid, accountid) 
 		SELECT id, accountid FROM aliases");
 	
-$this->Execute("ALTER TABLE aliases DROP accountid");
-$this->Execute("ALTER TABLE aliases ADD UNIQUE KEY (login, domainid)");
+$DB->Execute("ALTER TABLE aliases DROP accountid");
+$DB->Execute("ALTER TABLE aliases ADD UNIQUE KEY (login, domainid)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008021500', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008021500', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

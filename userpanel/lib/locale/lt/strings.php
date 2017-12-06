@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.4 2011/01/18 08:12:32 alec Exp $
  *  LT VERSION BY ETANETAS ver.0.1
  */
 
@@ -29,7 +29,7 @@ $_LANG['Access denied!'] = 'Neturite prieigos!';
 $_LANG['and'] = 'ir';
 $_LANG['Cancel'] = 'Panaikink';
 $_LANG['classic'] = 'klasikinis';
-$_LANG['Configure Module: $a'] = 'Modulio konfigūracija: $a';
+$_LANG['Configure Module: $0'] = 'Modulio konfigūracija: $0';
 $_LANG['Customer ID:'] = 'Kliento ID:';
 $_LANG['Customers\' rights'] = 'Klientų įgaliojimai';
 $_LANG['Database errors occurred!'] = 'Atsirado duomenų bazės aptarnavimo klaidų!';
@@ -42,14 +42,14 @@ $_LANG['[ Error! ]'] = '[ Klaida! ]';
 $_LANG['Error:'] = 'Klaida:';
 $_LANG['Error!'] = 'Klaida!';
 $_LANG['For more information see'] = 'Kad sužinotumėte daugiau informacijos pasižiūrėkite';
-$_LANG['Function <b>$a</b> in module <b>$b</b> not found!'] = 'Funkcija <b>$a</b> modulyje <b>$b</b> nerasta!';
+$_LANG['Function <b>$0</b> in module <b>$1</b> not found!'] = 'Funkcija <b>$0</b> modulyje <b>$1</b> nerasta!';
 $_LANG['Hint style:'] = 'Užuominos stilius:';
-$_LANG['Idle time limit exceeded ($a sec.)'] = 'Viršytas neveiklumo laiko limitas ($a sek.)';
+$_LANG['Idle time limit exceeded ($0 sec.)'] = 'Viršytas neveiklumo laiko limitas ($0 sek.)';
 $_LANG['Login'] = 'Prisijunk';
 $_LANG['Basic Configuration:'] = 'Pagrindinė konfigūracija:';
 $_LANG['modern'] = 'šiuolaikinis';
 $_LANG['Module'] = 'Modulis';
-$_LANG['Module <b>$a</b> not found!'] = 'Modulis <b>$a</b> nerastas!';
+$_LANG['Module <b>$0</b> not found!'] = 'Modulis <b>$0</b> nerastas!';
 $_LANG['Module Configuration:'] = 'Modulio konfigūracija:';
 $_LANG['monthly'] = 'per mėnesį';
 $_LANG['No modules found!'] = 'Nerstas nei vienas modulis!';
@@ -68,7 +68,7 @@ $_LANG['Total:'] = 'Iš viso:';
 $_LANG['Userpanel Configuration'] = 'Vartotojo panelės konfigūracija';
 $_LANG['Userpanel design style'] = 'Vartotojo panelės dizainas';
 $_LANG['Userpanel hints style. Chose modern for animated assistant, classic for tips in LMS style, or none to disable hints displaying'] = 'Užuominos stilius Vartotojo panelėje. Pasirink šiuolaikinį, kad rodytų animuotą asistentą, klasikinį – užuomina LMS stiliumi arba jokio, kad išjungtum užuominų rodymą';
-$_LANG['Userpanel module <b>$a</b> not found!'] = 'Nerastas modulis <b>$a</b>!';
+$_LANG['Userpanel module <b>$0</b> not found!'] = 'Nerastas modulis <b>$0</b>!';
 $_LANG['Userpanel Rights:'] = 'Įgaliojimai Vartotojo panelėje:';
 $_LANG['Userpanel style:'] = 'Vartotojo panelės stilius:';
 $_LANG['VCS'] = 'wBOK';

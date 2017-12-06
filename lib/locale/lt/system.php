@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: system.php,v 1.2 2011/01/18 08:12:06 alec Exp $
  */
 
 function check_ten($ten)
@@ -29,7 +29,7 @@ function check_ten($ten)
 	$steps = array(1, 2, 3, 4, 5, 6, 7, 8, 9, 1, 2, 3, 4);
 	$sum_nb = 0;
 
-	$ten = strtoupper(preg_replace('/[^[:digit:]\?]/', '', $ten));
+	$ten = strtoupper(preg_replace('/[^[:alnum:]\?]/', '', $ten));
 	if (!preg_match('/(^[0-9]{11})([0-9]{1}$|\?{1}$)/', $ten, $regs))
 		if (!preg_match('/(^[0-9]{8})([0-9]{1}$|\?{1}$)/', $ten, $regs))
 			return FALSE;
@@ -74,13 +74,25 @@ function check_zip($zip)
 	return preg_match('/^[0-9]{5}$/', $zip);
 }
 
+function check_gg($im)
+{
+	return preg_match('/^[0-9]{0,32}$/', $im);  // gadu-gadu ID check
+}
+
+function check_yahoo($im)
+{
+	return preg_match('/^[-_.a-z0-9]{0,32}$/i', $im);
+}
+
+function check_skype($im)
+{
+	return preg_match('/^[-_.a-z0-9]{0,32}$/i', $im);
+}
+
 function check_regon($regon)
 {
 	$regon = str_replace('-', '', $regon);
 	$regon = str_replace(' ', '', $regon);
-
-	return check_ten($regon);
-
 	$sum_nb = 0;
 
         if(strlen($regon) == 9)
@@ -120,29 +132,24 @@ function check_icn($icn)
 	return preg_match('/^[0-9]{8}$/i', $icn);
 }
 
-function bankaccount($id, $account = NULL) {
-	return iban_account('LT', 18, $id, $account);
-}
+function bankaccount($id, $account=NULL)
+{
+	global $DB;
 
-function check_bankaccount($account) {
-	return iban_check_account('LT', 18, $account);
-}
+	if($account === NULL)
+		$account = $DB->GetOne('SELECT account FROM divisions WHERE id IN (SELECT divisionid
+                        FROM customers WHERE id = ?)', array($id));	
+	
+	$acclen = strlen($account);
+	
+	if(!empty($account) && $acclen < 13 && $acclen >= 5)
+	{
+		$cc = '2129';	// Country Code - Lithuania
+		$format = '%0'.(16 - $acclen) .'d';
+		return 'LT'.sprintf('%02d',98-bcmod($account.sprintf($format,$id).$cc.'00',97)).$account.sprintf($format,$id);
+	}
 
-function format_bankaccount($account) {
-	return preg_replace('/(..)(....)(....)(....)(....)/i', '${1} ${2} ${3} ${4} ${5}', $account);
-}
-
-function getHolidays($year = null) {
-	return array();
-}
-
-/*!
- * \brief Generate random postcode
- *
- * \return string
- */
-function generateRandomPostcode() {
-    return sprintf("%05d", rand(0, 99999));
+	return $account;
 }
 
 ?>

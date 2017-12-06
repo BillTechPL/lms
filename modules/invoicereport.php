@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,176 +21,131 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: invoicereport.php,v 1.54 2011/04/07 10:04:22 alec Exp $
  */
 
 function set_taxes($taxid)
 {
-	global $taxes, $DB;
+    global $taxes, $DB;
 
-	if (empty($taxes[$taxid]))
-		$taxes[$taxid] = $DB->GetRow('SELECT id, value, label, taxed
-			FROM taxes WHERE id = ?', array($taxid));
+    if (empty($taxes[$taxid]))
+        $taxes[$taxid] = $DB->GetRow('SELECT id, value, label, taxed
+            FROM taxes WHERE id = ?', array($taxid));
 }
 
 $from = $_POST['from'];
 $to = $_POST['to'];
 
-switch ( intval($_POST['customer_type']) ) {
-	case CTYPES_PRIVATE:
-	case CTYPES_COMPANY:
-		$ctype = $_POST['customer_type'];
-	break;
-
-	default:
-		$ctype = -1; //all
-}
-
 // date format 'yyyy/mm/dd'
 if($from) {
 	list($year, $month, $day) = explode('/',$from);
 	$unixfrom = mktime(0,0,0,$month,$day,$year);
-} else {
+} else { 
 	$from = date('Y/m/d',time());
 	$unixfrom = mktime(0,0,0); //today
 }
 if($to) {
 	list($year, $month, $day) = explode('/',$to);
 	$unixto = mktime(23,59,59,$month,$day,$year);
-} else {
+} else { 
 	$to = date('Y/m/d',time());
 	$unixto = mktime(23,59,59); //today
 }
 
-$layout['pagetitle'] = trans('Sale Registry for period $a - $b', $from, $to);
+$layout['pagetitle'] = trans('Sale Registry for period $0 - $1', $from, $to);
 
 $listdata = array('tax' => 0, 'brutto' => 0);
 $invoicelist = array();
 $taxeslist = array();
 $taxes = array();
-if ($doctype == 'invoices')
-	$taxescount = 0;
-else
-	$taxescount = -1;
+$taxescount = 0;
 
 if(!empty($_POST['group']))
 {
 	if(is_array($_POST['group'])) {
-		$groups = array_map('intval', $_POST['group']);
+	    $groups = array_map('intval', $_POST['group']);
 		$groups = implode(',', $groups);
-	}
+    }
 	else
 		$groups = intval($_POST['group']);
 
-	$groupwhere = ' AND '.(isset($_POST['groupexclude']) ? 'NOT' : '').'
+	$groupwhere = ' AND '.(isset($_POST['groupexclude']) ? 'NOT' : '').' 
 		EXISTS (SELECT 1 FROM customerassignments a
 			WHERE a.customergroupid IN ('.$groups.')
 			AND a.customerid = d.customerid)';
 
-	$names = $DB->GetAll('SELECT name FROM customergroups WHERE id IN ('.$groups.')');
+        $names = $DB->GetAll('SELECT name FROM customergroups WHERE id IN ('.$groups.')');
 
 	$groupnames = '';
 	foreach($names as $idx => $row)
 		$groupnames .= ($idx ? ', ' : '') . $row['name'];
 
 	if(isset($_POST['groupexclude']))
-		$layout['group'] = trans('Group: all excluding $a', $groupnames);
+	        $layout['group'] = trans('Group: all excluding $0', $groupnames);
 	else
-		$layout['group'] = trans('Group: $a', $groupnames);
+	        $layout['group'] = trans('Group: $0', $groupnames);
 }
 
 if(!empty($_POST['division']))
 {
 	$divwhere = ' AND d.divisionid '.(isset($_POST['divexclude']) ? '!=' : '=').' '.intval($_POST['division']);
 
-	$divname = $DB->GetOne('SELECT name FROM divisions WHERE id = ?',
+        $divname = $DB->GetOne('SELECT name FROM divisions WHERE id = ?', 
 			array(intval($_POST['division'])));
 
-	$layout['division'] = $divname;
+        $layout['division'] = $divname;
 }
 
 // Sorting
-switch ($_POST['sorttype']) {
-	case 'sdate':
-		$sortcol = 'CEIL(COALESCE(d.sdate, d.cdate) / 86400)';
-		$wherecol = 'COALESCE(d.sdate, d.cdate)';
-		break;
-	case 'pdate':
-		$sortcol = 'CEIL((d.cdate + (d.paytime * 86400)) / 86400)';
-		$wherecol = '(d.cdate + (d.paytime * 86400))';
-		break;
-	case 'number':
-		$sortcol = 'd.number';
-		$wherecol = 'd.cdate';
-		break;
-	case 'cdate':
-	default:
-		$sortcol = 'CEIL(d.cdate / 86400)';
-		$wherecol = 'd.cdate';
-}
-
-if (in_array($_POST['doctype'], array('invoices', 'notes')))
-	$doctype = $_POST['doctype'];
-else
-	$doctype = 'invoices';
-
-if (!empty($_POST['numberplanid'])) {
-	if (is_array($_POST['numberplanid'])) {
-		$numberplans = array_map('intval', $_POST['numberplanid']);
-		$numberplans = implode(',', $numberplans);
-	} else
-		$numberplans = intval($_POST['numberplanid']);
+switch ($_POST['datetype']) {
+    case 'sdate':
+        $sortcol = 'COALESCE(d.sdate, d.cdate)';
+        break;
+    case 'pdate':
+        $sortcol = '(d.cdate + (d.paytime * 86400))';
+        break;
+    case 'cdate':
+    default:
+        $sortcol = 'd.cdate';
 }
 
 // we can't simply get documents with SUM(value*count)
 // because we need here incoices-like round-off
 
 // get documents items numeric values for calculations
-if ($doctype == 'invoices')
-	$args = array(DOC_INVOICE, DOC_CNOTE);
-else
-	$args = array(DOC_DNOTE, DOC_DNOTE);
-$args[] = $unixfrom;
-$args[] = $unixto;
-
-$items = $DB->GetAll('SELECT c.docid, c.itemid,' . ($doctype == 'invoices' ? ' c.taxid, c.count,' : '1 AS count,') . ' c.value,
-	d.number, d.cdate, d.sdate, d.paytime, d.customerid, d.reference,
-	d.name, d.address, d.zip, d.city, d.ten, d.ssn, n.template
+$items = $DB->GetAll('SELECT c.docid, c.itemid, c.taxid, c.value, c.count,
+        d.number, d.cdate, d.sdate, d.paytime, d.customerid, d.reference,
+        d.name, d.address, d.zip, d.city, d.ten, d.ssn, n.template
 	    FROM documents d
-		' . ($doctype == 'invoices' ? 'LEFT JOIN invoicecontents c ON c.docid = d.id'
-			: 'LEFT JOIN debitnotecontents c ON c.docid = d.id') . '
-	    LEFT JOIN numberplans n ON d.numberplanid = n.id' .
-	    ( $ctype != -1 ? ' LEFT JOIN customers cu ON d.customerid = cu.id ' : '' )
-	    . ' WHERE cancelled = 0 AND (d.type = ? OR d.type = ?) AND (' . $wherecol . ' BETWEEN ? AND ?) '
-	    .(isset($numberplans) ? 'AND d.numberplanid IN (' . $numberplans . ')' : '')
+	    LEFT JOIN invoicecontents c ON c.docid = d.id
+	    LEFT JOIN numberplans n ON d.numberplanid = n.id
+	    WHERE (d.type = ? OR d.type = ?) AND ('.$sortcol.' BETWEEN ? AND ?) '
+	    .($_POST['numberplanid'] ? 'AND d.numberplanid = '.intval($_POST['numberplanid']) : '')
 	    .(isset($divwhere) ? $divwhere : '')
 	    .(isset($groupwhere) ? $groupwhere : '')
-		.( $ctype != -1 ? ' AND cu.type = ' . $ctype : '')
 	    .' AND NOT EXISTS (
                 	    SELECT 1 FROM customerassignments a
 			    JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
 			    WHERE e.userid = lms_current_user() AND a.customerid = d.customerid)
-	    ORDER BY ' . $sortcol . ', d.id', $args);
+	    ORDER BY CEIL('.$sortcol.'/86400), d.id',
+	    array(DOC_INVOICE, DOC_CNOTE, $unixfrom, $unixto));
 
-if ($items) {
-	foreach ($items as $row) {
+if($items)
+{
+	foreach($items as $row)
+	{
 		$idx = $row['docid'];
 		$taxid = $row['taxid'];
 
-		set_taxes($taxid);
+        set_taxes($taxid);
 
 		$invoicelist[$idx]['custname'] = $row['name'];
 		$invoicelist[$idx]['custaddress'] = $row['zip'].' '.$row['city'].', '.$row['address'];
 		$invoicelist[$idx]['ten'] = ($row['ten'] ? trans('TEN').' '.$row['ten'] : ($row['ssn'] ? trans('SSN').' '.$row['ssn'] : ''));
-		$invoicelist[$idx]['number'] = docnumber(array(
-			'number' => $row['number'],
-			'template' => $row['template'],
-			'cdate' => $row['cdate'],
-			'customerid' => $row['customerid'],
-		));
+		$invoicelist[$idx]['number'] = docnumber($row['number'], $row['template'], $row['cdate']);
 		$invoicelist[$idx]['cdate'] = $row['cdate'];
 		$invoicelist[$idx]['sdate'] = $row['sdate'];
-		$invoicelist[$idx]['pdate'] = $row['cdate'] + ($row['paytime'] * 86400);
+        $invoicelist[$idx]['pdate'] = $row['cdate'] + ($row['paytime'] * 86400);
 		$invoicelist[$idx]['customerid'] = $row['customerid'];
 
 		if(!isset($invoicelist[$idx][$taxid]))
@@ -207,14 +162,14 @@ if ($items) {
 			// I think we can simply do query here instead of building
 			// big sql join in $items query, we've got so many credit notes?
 			$item = $DB->GetRow('SELECT taxid, value, count
-						FROM invoicecontents
-						WHERE docid=? AND itemid=?',
+						FROM invoicecontents 
+						WHERE docid=? AND itemid=?', 
 						array($row['reference'], $row['itemid']));
 
 			$row['value'] += $item['value'];
 			$row['count'] += $item['count'];
 
-			set_taxes($item['taxid']);
+            set_taxes($item['taxid']);
 
 			$refitemsum = $item['value'] * $item['count'];
 			$refitemval = round($refitemsum / ($taxes[$item['taxid']]['value']+100) * 100, 2);
@@ -232,9 +187,8 @@ if ($items) {
 		}
 
 		$sum = $row['value'] * $row['count'];
-		$val = ($sum / ($taxes[$taxid]['value'] + 100)) * 100;
-		$tax = round($sum - $val, 2);
-		$val = round($val, 2);
+		$val = round($sum / ($taxes[$taxid]['value']+100) * 100, 2);
+		$tax = $sum - $val;
 
 		$invoicelist[$idx][$taxid]['tax'] += $tax;
 		$invoicelist[$idx][$taxid]['val'] += $val;
@@ -264,7 +218,6 @@ if ($items) {
 }
 
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->assign('doctype', $doctype);
 $SMARTY->assign('taxes', $taxeslist);
 $SMARTY->assign('taxescount', $taxescount);
 $SMARTY->assign('layout', $layout);
@@ -278,7 +231,7 @@ if(isset($_POST['extended']))
 
 	// hidden option: records count for one page of printout
 	// I thinks 20 records is fine, but someone needs 19.
-	$rows = ConfigHelper::getConfig('phpui.printout_pagelimit', 20);
+	$rows = isset($CONFIG['phpui']['printout_pagelimit']) ? $CONFIG['phpui']['printout_pagelimit'] : 20;
 
 	// create a new array for use with {section}
 	// and do some calculations (summaries)
@@ -321,28 +274,10 @@ if(isset($_POST['extended']))
 	$SMARTY->assign('totals', $totals);
 	$SMARTY->assign('pagescount', sizeof($pages));
 	$SMARTY->assign('reccount', $reccount);
-	if (strtolower(ConfigHelper::getConfig('phpui.report_type')) == 'pdf') {
-		$SMARTY->assign('printcustomerid', $_POST['printcustomerid']);
-		$SMARTY->assign('printonlysummary', $_POST['printonlysummary']);
-		$output = $SMARTY->fetch('invoice/invoicereport-ext.html');
-		html2pdf($output, trans('Reports'), $layout['pagetitle'], NULL, NULL, 'L', array(5, 5, 5, 5), ($_GET['save'] == 1) ? true : false);
-	} else {
-		$SMARTY->assign('printcustomerid', $_POST['printcustomerid']);
-		$SMARTY->assign('printonlysummary', $_POST['printonlysummary']);
-		$SMARTY->display('invoice/invoicereport-ext.html');
-	}
+	$SMARTY->display('invoicereport-ext.html');
 }
 else {
-	if (strtolower(ConfigHelper::getConfig('phpui.report_type')) == 'pdf') {
-		$SMARTY->assign('printcustomerid', $_POST['printcustomerid']);
-		$SMARTY->assign('printonlysummary', $_POST['printonlysummary']);
-		$output = $SMARTY->fetch('invoice/invoicereport.html');
-		html2pdf($output, trans('Reports'), $layout['pagetitle'], NULL, NULL, 'L', array(5, 5, 5, 5), ($_GET['save'] == 1) ? true : false);
-	} else {
-		$SMARTY->assign('printcustomerid', $_POST['printcustomerid']);
-		$SMARTY->assign('printonlysummary', $_POST['printonlysummary']);
-		$SMARTY->display('invoice/invoicereport.html');
-	}
+	$SMARTY->display('invoicereport.html');
 }
 
 ?>

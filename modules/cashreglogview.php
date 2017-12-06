@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashreglogview.php,v 1.8 2011/04/01 10:35:12 alec Exp $
  */
 
 function GetCashLog($order='time,asc', $regid=0)
@@ -51,14 +51,14 @@ function GetCashLog($order='time,asc', $regid=0)
 		break;
 	}
 
-	$list = $DB->GetAll('SELECT cashreglog.id, time, value, description,
-				    snapshot, userid, vusers.name AS username
+	$list = $DB->GetAll('SELECT cashreglog.id, time, value, description, 
+				    snapshot, userid, users.name AS username
 			    FROM cashreglog
-			    LEFT JOIN vusers ON (userid = vusers.id)
+			    LEFT JOIN users ON (userid = users.id)
 			    WHERE regid = ?
-			    '.($sqlord != '' ? $sqlord : ''),
+			    '.($sqlord != '' ? $sqlord : ''), 
 			    array($regid));
-
+	
 	$list['total'] = sizeof($list);
 	$list['order'] = $order;
 	$list['direction'] = $direction;
@@ -82,8 +82,8 @@ if(!$regid)
 {
         $SESSION->redirect('?m=cashreglist');
 }
-
-if(! $DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array(Auth::GetCurrentUser(), $regid)) )
+	
+if(! $DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($AUTH->id, $regid)) )
 {
         $SMARTY->display('noaccess.html');
         $SESSION->close();
@@ -104,15 +104,15 @@ unset($cashreglog['direction']);
 if ($SESSION->is_set('crlp') && !isset($_GET['page']))
 	$SESSION->restore('crlp', $_GET['page']);
 
-$page = (!isset($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.cashreglog_pagelimit', $listdata['total']);
+$page = (!isset($_GET['page']) ? 1 : $_GET['page']); 
+$pagelimit = (!isset($CONFIG['phpui']['cashreglog_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['cashreglog_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('crlp', $page);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
-$layout['pagetitle'] = trans('Cash History of Registry:').
+$layout['pagetitle'] = trans('Cash History of Registry:'). 
 		' <A href="?m=receiptlist&regid='.$regid.'">'.$DB->GetOne('SELECT name FROM cashregs WHERE id = ?', array($regid)).'</A>';
 
 $SMARTY->assign('pagelimit', $pagelimit);
@@ -120,6 +120,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('start', $start);
 $SMARTY->assign('cashreglog', $cashreglog);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('cash/cashreglogview.html');
+$SMARTY->display('cashreglogview.html');
 
 ?>

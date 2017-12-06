@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,27 +21,27 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2007071600.php,v 1.6 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE excludedgroups (
 	id 		int(11) 	NOT NULL auto_increment,
         customergroupid int(11) 	NOT NULL DEFAULT 0,
 	userid 		int(11) 	NOT NULL DEFAULT 0,
 	PRIMARY KEY (id),
 	UNIQUE KEY userid (userid, customergroupid)
-    ) ENGINE=MyISAM;
+    ) TYPE=MyISAM;
 ");
 
-$this->Execute("
+$DB->Execute("
     CREATE FUNCTION lms_current_user() RETURNS int(11) NO SQL
     RETURN @lms_current_user;
 ");
 
-$this->Execute("
+$DB->Execute("		
     CREATE VIEW customersview AS
 	    SELECT c.* FROM customers c
 	    WHERE NOT EXISTS (
@@ -50,8 +50,8 @@ $this->Execute("
 		    WHERE e.userid = lms_current_user() AND a.customerid = c.id)
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007071600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007071600', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

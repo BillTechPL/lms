@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customergroupedit.php,v 1.15 2011/01/18 08:12:21 alec Exp $
  */
 
 if(!$LMS->CustomergroupExists($_GET['id']))
@@ -49,7 +49,7 @@ $othersnetid =  isset($_GET['othersnetid']) ? $_GET['othersnetid'] : 0;
 $customergroup = $LMS->CustomergroupGet($_GET['id'], $membersnetid);
 $customers = $LMS->GetCustomerWithoutGroupNames($_GET['id'], $othersnetid);
 
-$layout['pagetitle'] = trans('Group Edit: $a', $customergroup['name']);
+$layout['pagetitle'] = trans('Group Edit: $0', $customergroup['name']);
 
 if(isset($_POST['customergroup']))
 {
@@ -62,12 +62,12 @@ if(isset($_POST['customergroup']))
 
 	if($customergroupedit['name'] == '')
 		$error['name'] = trans('Group name required!');
-	elseif(strlen($customergroupedit['name']) > 255)
+	elseif(strlen($customergroupedit['name']) > 16)
 		$error['name'] = trans('Group name is too long!');
 	elseif(!preg_match('/^[._a-z0-9-]+$/i', $customergroupedit['name']))
 		$error['name'] = trans('Invalid chars in group name!');
 	elseif(($id = $LMS->CustomergroupGetId($customergroupedit['name'])) && $id != $customergroupedit['id'])
-		$error['name'] = trans('Group with name $a already exists!',$customergroupedit['name']);
+		$error['name'] = trans('Group with name $0 already exists!',$customergroupedit['name']);
 
 	if(!$error)
 	{
@@ -90,6 +90,6 @@ $SMARTY->assign('networks', $LMS->GetNetworks());
 $SMARTY->assign('customergroups',$LMS->CustomergroupGetAll());
 $SMARTY->assign('membersnetid', isset($membersnetid) ? $membersnetid : 0);
 $SMARTY->assign('othersnetid', isset($othersnetid) ? $othersnetid : 0);
-$SMARTY->display('customer/customergroupedit.html');
+$SMARTY->display('customergroupedit.html');
 
 ?>

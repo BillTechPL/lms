@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005033103.php,v 1.10 2011/01/18 08:12:13 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE passwd ADD quota_sh integer;
 	UPDATE passwd SET quota_sh = 0;
 	ALTER TABLE passwd ALTER quota_sh SET NOT NULL;
@@ -58,7 +58,7 @@ $this->Execute("
 	ALTER TABLE passwd ALTER createtime SET DEFAULT 0;
 ");
 
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE daemonhosts_id_seq;
 	CREATE TABLE daemonhosts (
 	id integer DEFAULT nextval('daemonhosts_id_seq'::text) NOT NULL,
@@ -69,7 +69,7 @@ $this->Execute("
 	PRIMARY KEY (id),
 	UNIQUE (name))
 ");
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE daemoninstances_id_seq;
 	CREATE TABLE daemoninstances (
 	id integer DEFAULT nextval('daemoninstances_id_seq'::text) NOT NULL,
@@ -82,7 +82,7 @@ $this->Execute("
 	disabled smallint DEFAULT 0 NOT NULL,
 	PRIMARY KEY (id))
 ");
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE daemonconfig_id_seq;
 	CREATE TABLE daemonconfig (
 	id integer DEFAULT nextval('daemonconfig_id_seq'::text) NOT NULL,
@@ -95,8 +95,8 @@ $this->Execute("
 	UNIQUE(instanceid, var))
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005033103', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005033103', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

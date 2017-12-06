@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,28 +21,32 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdevdel.php,v 1.28 2011/01/18 08:12:23 alec Exp $
  */
 
-if (!$LMS->NetDevExists($_GET['id']))
+if(! $LMS->NetDevExists($_GET['id']))
+{
 	$SESSION->redirect('?m=netdevlist');
+}		
 
-$layout['pagetitle'] = trans('Deletion of Device with ID: $a', sprintf('%04d', $_GET['id']));
-$SMARTY->assign('netdevid', $_GET['id']);
+$layout['pagetitle'] = trans('Deletion of Device with ID: $0',sprintf('%04d',$_GET['id']));
+$SMARTY->assign('netdevid',$_GET['id']);
 
-if ($LMS->CountNetDevLinks($_GET['id']) > 0)
-	$body = '<P>' . trans('Device connected to other device or node can\'t be deleted.') . '</P>';
-else
-	if ($_GET['is_sure'] != 1) {
-		$body = '<P>' . trans('Are you sure, you want to delete that device?') . '</P>'; 
-		$body .= '<P><A HREF="?m=netdevdel&id=' . $_GET['id'] . '&is_sure=1">' . trans('Yes, I am sure.') . '</A></P>';
-	} else {
-		header('Location: ?m=netdevlist');
-		$body = '<P>' . trans('Device has been deleted.') . '</P>';
-		$LMS->DeleteNetDev($_GET['id']);
-		$LMS->CleanupProjects();
-	}
-
+if($LMS->CountNetDevLinks($_GET['id'])>0)
+{
+	$body = '<P>'.trans('Device connected to other device or node can\'t be deleted.').'</P>';
+}else{
+    if($_GET['is_sure']!=1)
+    {
+	    $body = '<P>'.trans('Are you sure, you want to delete that device?').'</P>'; 
+	    $body .= '<P><A HREF="?m=netdevdel&id='.$_GET['id'].'&is_sure=1">'.trans('Yes, I am sure.').'</A></P>';
+    }else{
+	    header('Location: ?m=netdevlist');
+	    $body = '<P>'.trans('Device has been deleted.').'</P>';
+	    $LMS->DeleteNetDev($_GET['id']);
+    }
+}
+	
 $SMARTY->assign('body',$body);
 $SMARTY->display('dialog.html');
 

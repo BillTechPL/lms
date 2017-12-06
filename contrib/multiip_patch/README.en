@@ -24,4 +24,4 @@ $ psql -U lms -d lms -c "CREATE INDEX nodes_ipaddr_idx ON nodes(ipaddr)"
 £ukasz Wojciechowski
 Marek Adamski
 
-$Id$
+$Id: README.en,v 1.1 2005/03/21 22:24:52 hunter Exp $

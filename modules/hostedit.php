@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: hostedit.php,v 1.10 2011/01/18 08:12:23 alec Exp $
  */
 
 function GetHostIdByName($name)
@@ -30,11 +30,9 @@ function GetHostIdByName($name)
 	return $DB->GetOne('SELECT id FROM hosts WHERE name = ?', array($name));
 }
 
-$id = intval($_GET['id']);
+$host = $DB->GetRow('SELECT id, name, description FROM hosts WHERE id=?', array($_GET['id']));
 
-$host = $DB->GetRow('SELECT id, name, description FROM hosts WHERE id=?', array($id));
-
-$layout['pagetitle'] = trans('Host Edit: $a', $host['name']);
+$layout['pagetitle'] = trans('Host Edit: $0', $host['name']);
 
 if(isset($_POST['hostedit']))
 {
@@ -47,29 +45,23 @@ if(isset($_POST['hostedit']))
 	elseif($host['name']!=$hostedit['name'])
 		if(GetHostIdByName($hostedit['name']))
 			$error['name'] = trans('Host with specified name exists!');
-
-	if (!$error) {
-		$args = array(
-			'name' => $hostedit['name'],
-			'description' => $hostedit['description'],
-			SYSLOG::RES_HOST => $id
-		);
-		$DB->Execute('UPDATE hosts SET name=?, description=? WHERE id=?', array_values($args));
-
-		if ($SYSLOG)
-			$SYSLOG->AddMessage(SYSLOG::RES_HOST, SYSLOG::OPER_UPDATE, $args);
-
+	
+	if(!$error)
+	{
+		$DB->Execute('UPDATE hosts SET name=?, description=? WHERE id=?',
+				    array($hostedit['name'], $hostedit['description'], $_GET['id']));
+		
 		$SESSION->redirect('?m=hostlist');
 	}
-
+	
 	$host['name'] = $hostedit['name'];
 	$host['description'] = $hostedit['description'];
-}
+}	
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('hostedit', $host);
 $SMARTY->assign('error', $error);
-$SMARTY->display('host/hostedit.html');
+$SMARTY->display('hostedit.html');
 
 ?>

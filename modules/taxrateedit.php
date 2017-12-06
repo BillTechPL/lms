@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: taxrateedit.php,v 1.13 2011/01/18 08:12:26 alec Exp $
  */
 
 $taxrate = $DB->GetRow('SELECT * FROM taxes WHERE id=?', array($_GET['id']));
@@ -74,52 +74,53 @@ if(sizeof($taxrateedit))
 	if(!$taxrateedit['taxed'] && $taxrateedit['value']!=0)
 		$error['value'] = trans('Incorrect tax rate percentage value (non-zero value and taxing not checked)!');
 
-	if(!empty($taxrateedit['validfrom']))
+	if($taxrateedit['validfrom'] == '')
+		$validfrom = 0;
+	else
 	{
-		$validfrom = date_to_timestamp($taxrateedit['validfrom']);
-		if(empty($validfrom))
+		list($fyear, $fmonth, $fday) = explode('/',$taxrateedit['validfrom']);
+		if(!checkdate($fmonth, $fday, $fyear))
 			$error['validfrom'] = trans('Incorrect date format! Enter date in YYYY/MM/DD format!');
+		else
+			$validfrom = mktime(0, 0, 0, $fmonth, $fday, $fyear);
+	}
+
+	if($taxrateedit['validto'] == '')
+		$validto = 0;
+	else
+	{
+		list($tyear, $tmonth, $tday) = explode('/',$taxrateedit['validto']);
+		if(!checkdate($tmonth, $tday, $tyear))
+			$error['validto'] = trans('Incorrect date format! Enter date in YYYY/MM/DD format!');
+		else
+			$validto = mktime(23, 59, 59, $tmonth, $tday, $tyear);
+	}
+
+	if(!$error)
+	{
+		$DB->Execute('UPDATE taxes SET label=?, value=?, taxed=?,validfrom=?,validto=? WHERE id=?',
+			    array(
+				    $taxrateedit['label'], 
+				    $taxrateedit['value'],
+				    $taxrateedit['taxed'],
+				    $validfrom,
+				    $validto,
+				    $taxrateedit['id']
+				    ));
+		
+		$SESSION->redirect('?m=taxratelist');
 	}
 	else
-		$validfrom = 0;
-
-        if(!empty($taxrateedit['validto']))
-        {
-                $validto = date_to_timestamp($taxrateedit['validto']);
-                if(empty($validto))
-                        $error['validto'] = trans('Incorrect date format! Enter date in YYYY/MM/DD format!');
-        }
-        else
-                $validto = 0;
-
-	if (!$error) {
-		$args = array(
-			'label' => $taxrateedit['label'],
-			'value' => $taxrateedit['value'],
-			'taxed' => $taxrateedit['taxed'],
-			'reversecharge' => isset($taxrateedit['reversecharge']) ? intval($taxrateedit['reversecharge']) : 0,
-			'validfrom' => $validfrom,
-			'validto' => $validto,
-			SYSLOG::RES_TAX => $taxrateedit['id']
-		);
-		$DB->Execute('UPDATE taxes SET label=?, value=?, taxed=?, reversecharge=?, validfrom=?,validto=? WHERE id=?',
-			array_values($args));
-
-		if ($SYSLOG)
-			$SYSLOG->AddMessage(SYSLOG::RES_TAX, SYSLOG::OPER_UPDATE, $args);
-
-		$SESSION->redirect('?m=taxratelist');
-	} else
 		$taxrate = $taxrateedit;
-}
+}	
 
-$layout['pagetitle'] = trans('Tax Rate Edit: $a', $label);
+$layout['pagetitle'] = trans('Tax Rate Edit: $0', $label);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('taxrateedit', $taxrate);
 $SMARTY->assign('error', $error);
-$SMARTY->display('taxrate/taxrateedit.html');
+$SMARTY->display('taxrateedit.html');
 
 ?>
 <?php

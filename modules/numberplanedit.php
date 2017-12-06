@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: numberplanedit.php,v 1.13 2011/01/18 08:12:24 alec Exp $
  */
 
 $numberplan = $DB->GetRow('SELECT id, period, template, doctype, isdefault
@@ -38,9 +38,8 @@ if(sizeof($numberplanedit))
 
 	if($numberplanedit['template'] == '')
 		$error['template'] = trans('Number template is required!');
-	elseif (!preg_match('/%[1-9]{0,1}N/', $numberplanedit['template'])
-		&& !preg_match('/%[1-9]{0,1}C/', $numberplanedit['template']))
-		$error['template'] = trans('Template must contain "%N" or "%C" specifier!');
+	elseif(!preg_match('/%[1-9]{0,1}N/', $numberplanedit['template']))
+		$error['template'] = trans('Template must consist "%N" specifier!');
 
 	if(!isset($numberplanedit['isdefault']))
 		$numberplanedit['isdefault'] = 0;
@@ -63,51 +62,26 @@ if(sizeof($numberplanedit))
 		{
 			$error['doctype'] = trans('Selected document type has already defined default plan!');
 		}
-
-	if (!$error) {
+	
+	if(!$error)
+	{
 		$DB->BeginTrans();
-
-		$args = array(
-			'template' => $numberplanedit['template'],
-			'doctype' => $numberplanedit['doctype'],
-			'period' => $numberplanedit['period'],
-			'isdefault' => $numberplanedit['isdefault'],
-			SYSLOG::RES_NUMPLAN => $numberplanedit['id']
-		);
+		
 		$DB->Execute('UPDATE numberplans SET template=?, doctype=?, period=?, isdefault=? WHERE id=?',
-				array_values($args));
-
-		if ($SYSLOG) {
-			$SYSLOG->AddMessage(SYSLOG::RES_NUMPLAN, SYSLOG::OPER_UPDATE, $args);
-			$assigns = $DB->GetAll('SELECT * FROM numberplanassignments WHERE planid = ?',
-				array($numberplanedit['id']));
-			if (!empty($assigns))
-				foreach ($assigns as $assign) {
-					$args = array(
-						SYSLOG::RES_NUMPLANASSIGN => $assign['id'],
-						SYSLOG::RES_NUMPLAN => $assign['planid'],
-						SYSLOG::RES_DIV => $assign['divisionid']
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_NUMPLANASSIGN, SYSLOG::OPER_DELETE, $args);
-				}
-		}
-
+			    array(
+				    $numberplanedit['template'],
+				    $numberplanedit['doctype'],
+				    $numberplanedit['period'],
+				    $numberplanedit['isdefault'],
+				    $numberplanedit['id']
+			    ));
+		
 		$DB->Execute('DELETE FROM numberplanassignments WHERE planid = ?', array($numberplanedit['id']));
-
-		if (!empty($_POST['selected']))
-			foreach ($_POST['selected'] as $idx => $name) {
+	
+		if(!empty($_POST['selected']))
+			foreach($_POST['selected'] as $idx => $name)
 				$DB->Execute('INSERT INTO numberplanassignments (planid, divisionid)
 					VALUES (?, ?)', array($numberplanedit['id'], intval($idx)));
-				if ($SYSLOG) {
-					$id = $DB->GetLastInsertID('numberplanassignments');
-					$args = array(
-						SYSLOG::RES_NUMPLANASSIGN => $id,
-						SYSLOG::RES_NUMPLAN => $numberplanedit['id'],
-						SYSLOG::RES_DIV => intval($idx)
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_NUMPLANASSIGN, SYSLOG::OPER_ADD, $args);
-				}
-			}
 
 		$DB->CommitTrans();
 		
@@ -134,7 +108,7 @@ else
 		WHERE d.id = divisionid AND planid = ?', 'id', array($numberplan['id']));
 }
 
-$layout['pagetitle'] = trans('Numbering Plan Edit: $a', $template);
+$layout['pagetitle'] = trans('Numbering Plan Edit: $0', $template);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
@@ -144,6 +118,6 @@ $SMARTY->assign('available', $DB->GetAllByKey('SELECT id, shortname AS name
 		.(!empty($numberplan['selected']) ? 'OR id IN ('.implode(',', array_keys($numberplan['selected'])).')' : '')
 		.'ORDER BY shortname', 'id', array($numberplan['id'])));
 $SMARTY->assign('error', $error);
-$SMARTY->display('numberplan/numberplanedit.html');
+$SMARTY->display('numberplanedit.html');
 
 ?>

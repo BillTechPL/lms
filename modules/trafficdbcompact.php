@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,14 +21,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: trafficdbcompact.php,v 1.35 2011/01/18 08:12:26 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Network Statistics Compacting');
 
 if (!isset($_GET['level']) && !isset($_GET['removeold']) && !isset($_GET['removedeleted']))
 {
-    $SMARTY->display('traffic/trafficdbcompact.html');
+    $SMARTY->display('trafficdbcompact.html');
     $SESSION->close();
     die;
 }
@@ -38,23 +38,23 @@ set_time_limit(0);
 $SMARTY->display('header.html');
 
 echo '<H1>'.trans('Compacting Database').'</H1><PRE>';
-echo trans('$a records before compacting.<BR>',$DB->GetOne('SELECT COUNT(*) FROM stats'));
+echo trans('$0 records before compacting.<BR>',$DB->GetOne('SELECT COUNT(*) FROM stats'));
 flush();
 
 if(isset($_GET['removeold']))
 {
     if($deleted = $DB->Execute('DELETE FROM stats where dt < ?NOW? - 365*24*60*60'))
     {
-	echo trans('$a at least one year old records have been removed.<BR>', $deleted);
+	echo trans('$0 at least one year old records have been removed.<BR>', $deleted);
         flush();
     }
 }
 
 if(isset($_GET['removedeleted']))
 {
-    if($deleted = $DB->Execute('DELETE FROM stats WHERE nodeid NOT IN (SELECT id FROM vnodes)'))
+    if($deleted = $DB->Execute('DELETE FROM stats WHERE nodeid NOT IN (SELECT id FROM nodes)'))
     {
-    	echo trans('$a records for deleted nodes have been removed.<BR>', $deleted);
+    	echo trans('$0 records for deleted nodes has been removed.<BR>', $deleted);
 	flush();
     }
 }
@@ -65,13 +65,20 @@ if(isset($_GET['level']))
     switch($_GET['level'])
     {
         case 'medium' : $period = $time-30*24*60*60; $step = 24*60*60; break;//month, day
-        case 'high' : $period = $time-30*24*60*60; $step = 60*60; break; //month, hour
+        case 'high' : $period = $time-365*24*60*60; $step = 60*60; break; //month, hour
         default: $period = $time-24*60*60; $step = 24*60*60; break; //1 day, day
     }
 
     if ($mintime = $DB->GetOne('SELECT MIN(dt) FROM stats'))
     {
-        $nodes = $DB->GetAll('SELECT id, name FROM vnodes ORDER BY name');
+	    if ($CONFIG['database']['type'] != 'postgres')
+    	    $multi_insert = true;
+	    else if (version_compare($DB->GetDBVersion(), '8.2') >= 0)
+	        $multi_insert = true;
+	    else
+	        $multi_insert = false;
+
+	    $nodes = $DB->GetAll('SELECT id, name FROM nodes ORDER BY name');
 
         foreach ($nodes as $node)
         {
@@ -82,9 +89,9 @@ if(isset($_GET['level']))
             $dtdivider = 'FLOOR((dt+'.$timeoffset.')/'.$step.')';
 
             $data = $DB->GetAll('SELECT SUM(download) AS download, SUM(upload) AS upload,
-                    COUNT(dt) AS count, MIN(dt) AS mintime, MAX(dt) AS maxtime, nodesessionid
+                    COUNT(dt) AS count, MIN(dt) AS mintime, MAX(dt) AS maxtime
                 FROM stats WHERE nodeid = ? AND dt >= ? AND dt < ? 
-                GROUP BY nodeid, nodesessionid, '.$dtdivider.'
+                GROUP BY nodeid, '.$dtdivider.'
                 ORDER BY mintime', array($node['id'], $mintime, $maxtime));
 
             if ($data) {
@@ -100,7 +107,7 @@ if(isset($_GET['level']))
 
                 // all records for this node has been already compacted
                 if (empty($data)) {
-                    echo $node['name'].': '.trans('$a - removed, $b - inserted<BR>', 0, 0);
+                    echo $node['name'].': '.trans('$0 - removed, $1 - inserted<BR>', 0, 0);
                     flush();
                     continue;
                 }
@@ -116,31 +123,37 @@ if(isset($_GET['level']))
                 $DB->Execute('DELETE FROM stats WHERE nodeid = ? AND dt >= ? AND dt <= ?',
                     array($node['id'], $nodemintime, $maxtime));
 
-		// insert new (summary) records
-		foreach ($data as $record) {
-			$deleted += $record['count'];
+                // insert new (summary) records
+                foreach ($data as $record) {
+    			    $deleted += $record['count'];
 
-			if (!$record['download'] && !$record['upload'])
-				continue;
+                    if (!$record['download'] && !$record['upload'])
+                        continue;
 
-			$values[] = sprintf('(%d, %d, %d, %d, %d)',
-				$node['id'], $record['maxtime'], $record['upload'], $record['download'], $record['nodesessionid']);
-		}
+                    if ($multi_insert)
+                        $values[] = sprintf('(%d, %d, %d, %d)',
+                            $node['id'], $record['maxtime'], $record['upload'], $record['download']);
+                    else
+                        $inserted += $DB->Execute('INSERT INTO stats
+                            (nodeid, dt, upload, download) VALUES (?, ?, ?, ?)',
+                            array($node['id'], $record['maxtime'],
+                                $record['upload'], $record['download']));
+                }
 
-		if (!empty($values))
-			$inserted = $DB->Execute('INSERT INTO stats
-				(nodeid, dt, upload, download, nodesessionid) VALUES ' . implode(', ', $values));
+                if (!empty($values))
+                    $inserted = $DB->Execute('INSERT INTO stats
+                        (nodeid, dt, upload, download) VALUES ' . implode(', ', $values));
 
                 $DB->CommitTrans();
 
-                echo $node['name'].': '.trans('$a - removed, $b - inserted<BR>', $deleted, $inserted);
+                echo $node['name'].': '.trans('$0 - removed, $1 - inserted<BR>', $deleted, $inserted);
                 flush();
             }
         }
     }
 }
 
-echo trans('$a records after compacting.',$DB->GetOne('SELECT COUNT(*) FROM stats'));
+echo trans('$0 records after compacting.',$DB->GetOne('SELECT COUNT(*) FROM stats'));
 echo '</PRE>';
 flush();
 

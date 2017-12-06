@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: advanced.sgml,v 1.84 2011/03/10 11:36:38 alec Exp $ -->
 <chapter id="devel">
      <title>Dla dociekliwych</title>
      <sect1 id="devel-catalogs">
@@ -96,9 +96,6 @@
                     <member>failedlogindate - data ostatniej nieudanej próby logowania</member>
                     <member>failedloginip - adres IP, z którego próbowano siê zalogowaæ</member>
                     <member>deleted - czy usuniêty (0/1)</member>
-                    <member>access - czy konto aktywne (0/1)</member>
-                    <member>accessfrom - data od której konto jest aktywne</member>
-                    <member>accessto - data do której konto jest aktywne</member>
                </simplelist>
           </sect2>
           <sect2 id="customers">
@@ -116,7 +113,6 @@
                     <member>zip - kod pocztowy</member>
                     <member>city - nazwa miasta</member>
 		    <member>countryid - identyfikator kraju</member>
-		    <member>post_name - adres korespondencyjny (adresat)</member>
 		    <member>post_address - adres korespondencyjny (ulica, nr domu, nr lokalu)</member>
                     <member>post_zip - adres korespondencyjny - kod pocztowy</member>
                     <member>post_city - adres korespondencyjny - nazwa miasta</member>
@@ -190,11 +186,7 @@
                <simplelist>
                     <member>id - identyfikator</member>
                     <member>name - nazwa</member>
-                    <member>location - lokalizacja, tekst</member>
-                    <member>location_city - identyfikator miejscowo¶ci (TERYT)</member>
-		    <member>location_street - identyfikator ulicy (TERYT)</member>
-		    <member>location_house - numer domu</member>
-		    <member>location_flat - numer mieszkania</member>
+                    <member>location - lokalizacja</member>
                     <member>description - opis</member>
                     <member>producer - producent</member>
                     <member>model - model</member>
@@ -208,8 +200,6 @@
 		    <member>secret - has³o (radius)</member>
 		    <member>community - community SNMP</member>
 		    <member>channelid - identyfikator kana³u STM (tabela ewx_channels)</member>
-		    <member>longitude - d³ugo¶æ geograficzna</member>
-		    <member>latitude - szeroko¶æ geograficzna</member>
 	    </simplelist>
           </sect2>
           <sect2 id="netlinks">
@@ -244,14 +234,10 @@
                     <member>warning - ostrzegaj/nie ostrzegaj (1/0)</member>
                     <member>lastonline - znacznik czasu ostatniej obecno¶ci w sieci</member>
                     <member>info - informacje dodatkowe</member>
-		    <member>location - adres lokalizacji, tekst</member>
-		    <member>location_city - identyfikator miejscowo¶ci (TERYT)</member>
-		    <member>location_street - identyfikator ulicy (TERYT)</member>
-		    <member>location_house - numer domu</member>
-		    <member>location_flat - numer mieszkania</member>
+		    <member>location_address - adres lokalizacji - ulica, nr domu, nr lokalu</member>
+		    <member>location_zip - adres lokalizacji - kod pocztowy</member>
+		    <member>location_city - adres lokalizacji - miasto</member>
 		    <member>nas - flaga NAS (0/1)</member>
-		    <member>longitude - d³ugo¶æ geograficzna</member>
-		    <member>latitude - szeroko¶æ geograficzna</member>
                </simplelist>
           </sect2>
           <sect2 id="macs">
@@ -382,7 +368,6 @@
 		    <member>quota_ftp_limit - limit quoty dla konta ftp</member>
 		    <member>quota_sql_limit - limit quoty dla konta sql</member>
 		    <member>description - opis</member>
-		    <member>disabled - status taryfy: w³±czona/wy³±czona (0/1)</member>
                </simplelist>
           </sect2>
           <sect2 id="promotions">
@@ -450,8 +435,7 @@
                     <member>datefrom - data obowi±zywania zobowi±zania</member>
                     <member>dateto - data obowi±zywania zobowi±zania</member>
                     <member>invoice - okre¶la czy ma byæ wystawiana faktura (1 - tak, 0 - nie)</member>
-                    <member>pdiscount - warto¶æ procentowa rabatu</member>
-                    <member>vdiscount - warto¶æ kwotowa rabatu</member>
+                    <member>discount - warto¶æ procentowa rabatu</member>
                     <member>suspended - zawieszenie p³atno¶ci (1 - tak, 0 - nie)</member>
 		    <member>settlement - rozliczenie okresu niepe³nego (1 - tak, 0 - nie)</member>
 		    <member>paytype - identyfikator typu p³atno¶ci faktury</member>
@@ -525,7 +509,6 @@
 		    <member>numberplanid - identyfikator planu numeracyjnego</member>
 		    <member>type - typ dokumentu (1-faktura, 2-KP)</member>
                     <member>cdate - data wystawienia</member>
-                    <member>sdate - data sprzeda¿y (dla faktur)</member>
                     <member>paytime - termin p³atno¶ci (ilo¶æ dni)</member>
                     <member>paytype - rodzaj p³atno¶ci (1-gotówka, 2-przelew, 3-przelew/gotówka, 4-karta, 5-kompensata, 6-barter, 7-umowa)</member>
                     <member>customerid - identyfikator klienta-nabywcy</member>
@@ -562,8 +545,7 @@
                     <member>docid - identyfikator faktury</member>
                     <member>itemid - nr pozycji</member>
                     <member>value - kwota pozycji</member>
-		    <member>pdiscount - warto¶æ procentowa rabatu</member>
-		    <member>vdiscount - warto¶æ kwotowa rabatu</member>
+		    <member>discount - warto¶æ procentowa rabatu</member>
                     <member>taxid - identyfikator stawki podatkowej</member>
                     <member>prodid - numer PKWiU</member>
                     <member>content - u¿yta jednostka (najczê¶ciej 'szt.')</member>
@@ -693,7 +675,6 @@
 			<member>login - login</member>
 			<member>passwd - has³o</member>
 			<member>phone - numer telefonu</member>
-			<member>access - w³±czone/wy³±czone (1/0)</member>
 			<member>creationdate - data utworzenia</member>
 			<member>moddate - date ostatniej zmiany</member>
 			<member>creatorid - identyfikator u¿ytkownika</member>
@@ -802,8 +783,6 @@
                     <member>customerid - identyfikator klienta</member>
                     <member>private - prywatny/publiczny</member>
                     <member>closed - status zamkniêcia</member>
-		    <member>moduserid - id u¿ytkownika, który ostatnio zmodyfikowa³ zdarzenie</member>
-		    <member>moddate - data ostatniej modyfikacji zdarzenia</member>
                </simplelist>
           </sect2>
           <sect2 id="eventassignments">

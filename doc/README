@@ -1,10 +1,10 @@
-LMS - LAN Management System 1.11-git
+LMS - LAN Management System 1.11.13 Dira
 
    [logo-small.png]
 
 LMS Developers
 
-   Copyright © 2001-2013 LMS Developers
+   Copyright © 2001-2011 LMS Developers
      __________________________________________________________________
 
    Table of Contents
@@ -317,7 +317,7 @@ Chapter 2. Installation and configuration
 
 2.2.2. PHP Interpreter
 
-   Interpreter version should be 5.2.x or higher. PHP can be downloaded
+   Interpreter version should be 4.2.x or higher. PHP can be downloaded
    from www.php.net. At least following PHP modules needs to be installed
    (look for "extension" in php.ini or in output of phpinfo function):
      * pcre, posix,
@@ -334,14 +334,15 @@ Chapter 2. Installation and configuration
    MySQL server in version 5.x is supported. Probably LMS won't work
    correctly with older versions.
 
-   PostgreSQL in version 8.4.x or higher is supported.
+   PostgreSQL in version 8.2.x or higher is supported.
      __________________________________________________________________
 
 2.2.4. Smarty Library
 
-   LMS-UI requires Smarty library (http://www.smarty.net) in version 3.0
-   or higher. Newer versions of Smarty requires that you have not enabled
-   "magic_quotes_runtime" (set to Off) option in PHP configuration.
+   LMS-UI requires Smarty library (http://www.smarty.net) in version 2.6.0
+   or higher (don't use 2.6.4 version). Newer versions of Smarty requires
+   that you have not enabled "magic_quotes_runtime" (set to Off) option in
+   PHP configuration.
      __________________________________________________________________
 
 2.2.5. Perl
@@ -462,6 +463,8 @@ mysql> CREATE DATABASE lms CHARACTER SET utf8 COLLATE utf8_polish_ci;
 mysql> GRANT USAGE ON lms.* TO lms@localhost;
 mysql> GRANT ALL ON lms.* TO lms@localhost IDENTIFIED BY '[your_password]';
 mysql> flush privileges;
+mysql> use lms;
+mysql> source doc/lms.mysql;
      __________________________________________________________________
 
 2.5.1.4. LMS Configuration (lms.ini)
@@ -491,7 +494,7 @@ password = your_password
 
 2.5.2.1. Intro
 
-   LMS require PostgreSQL 8.4 or higher. If you have not installed
+   LMS require PostgreSQL 8.2 or higher. If you have not installed
    PostgreSQL server, you can compile it yourself from sources available
    on www.postgresql.org.
      __________________________________________________________________
@@ -514,8 +517,8 @@ $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
 
    Warning
 
-           Applies to version <= 9.1.x: It's required to add in postgresql.conf:
-           custom_variable_classes = 'lms'
+           It's required to add in postgresql.conf: custom_variable_classes =
+           'lms'
      __________________________________________________________________
 
 2.5.2.3. Database Creation
@@ -524,6 +527,7 @@ $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
    owner, both named 'lms' and loading database schema:
 $ /usr/local/pgsql/bin/createuser -DPRS lms
 $ /usr/local/pgsql/bin/createdb -E UNICODE -O lms lms
+$ /usr/local/pgsql/bin/psql -d lms -U lms -f /lms/doc/lms.pgsql
      __________________________________________________________________
 
 2.5.2.4. LMS Configuration (lms.ini)
@@ -1268,10 +1272,9 @@ Chapter 3. User Interface (LMS-UI)
         You need GD or Ming library compiled in PHP to be able to use graphical
         map.
    Use 'map_type' option in section [phpui] section to specify type of
-   map. Set it to "flash" if you've got Ming library, "gd" for graphic
-   images or "openlayers" if you want to use map based on this library. By
-   default (option not set) LMS will try to generate flash map, and when
-   this fails, t will fallback to GD.
+   map. Set it to "flash" if you've got Ming library or "gd" for graphic
+   images. By default (option not set) LMS will try to generate flash map,
+   and when this fails, t will fallback to GD.
 
    Device status is shown on the map - computers in black are offline.
    Question mark on device icon means that its status is unknown (device
@@ -1864,7 +1867,6 @@ query = SELECT p.mail_bcc
    %cid - customer ID
    %pin - customer PIN
    %last_10_in_a_table - last 10 operations on customer account
-   %bankaccount - bank account number
      __________________________________________________________________
 
 3.10.3. Configuration
@@ -2701,7 +2703,6 @@ http://www.bigpro.com/
        day
        %current_period - current month in MM/YYYY format
        %next_period - next month in MM/YYYY format
-       %prev_period - previous month in MM/YYYY format
        %desc - tariff description
        Example: comment = 'Subscription for %current_month'
      * settlement_comment (optional)
@@ -5328,9 +5329,6 @@ Chapter 7. For curious
    failedlogindate - date of last failed login attempt
    failedloginip - IP of last failed login attempt
    deleted - if is deleted boolean (0/1)
-   access - whether the account is active (0/1)
-   accessfrom - date from which the account is active
-   accessto - date to which the account is active
      __________________________________________________________________
 
 7.2.2. Customers ('customers')
@@ -5347,7 +5345,6 @@ Chapter 7. For curious
    zip - zip code
    city - location (city)
    countryid - country identifier
-   post_name - correspondence address - name
    post_address - correspondence address - street, apartment, flat, etc
    post_zip - correspondence address - zip code
    post_city - correspondence address - location (city)
@@ -5416,11 +5413,7 @@ Chapter 7. For curious
 
    id - serial number
    name - name
-   location - physical location text
-   location_city - city identifier
-   location_street - street identifier
-   location_house - house number
-   location_flat - flat number
+   location - physical location
    description - device summary
    producer - manufacturer's name
    model - model number
@@ -5434,8 +5427,6 @@ Chapter 7. For curious
    secret - password (radius)
    community - SNMP community
    channelid - STM channel identifier (ewx_channels table)
-   longitude - geog. longitude
-   latitude - geog latitude
      __________________________________________________________________
 
 7.2.8. Network connections ('netlinks')
@@ -5468,14 +5459,10 @@ Chapter 7. For curious
    halfduplex - half/full duplex mode (0/1)
    lastonline - last network activity timestamp
    info - additional information
-   location_address - address string
-   location_city - city identifier
-   location_street - street identifier
-   location_house - house number
-   location_flat - flat number
+   location_address - address - street, apartment, flat, etc
+   location_zip - address - zip code
+   location_city - address - location (city)
    nas - NAS flag (1/0)
-   longitude - geog. longitude
-   latitude - geog latitude
      __________________________________________________________________
 
 7.2.10. MAC addresses ('macs')
@@ -5588,7 +5575,6 @@ Chapter 7. For curious
    quota_ftp_limit - quota limit of ftp account
    quota_sql_limit - quota limit of sql account
    description - description for subscription
-   disabled - disabled/enabled flag (1/0)
      __________________________________________________________________
 
 7.2.19. Promotions ('promotions')
@@ -5652,8 +5638,7 @@ Chapter 7. For curious
    datefrom - start date for assignment
    dateto - end date for assignment
    invoice - invoice writeout? (1 - yes, 0 - no)
-   pdiscount - discount percentage
-   vdiscount - discount value
+   discount - discount percentage
    suspended - is this payment suspended? (1 - yes, 0 - no)
    settlement - do deficient period settlement? (1 - yes, 0 - no)
    paytype - invoice payment type identifier
@@ -5731,7 +5716,6 @@ Chapter 7. For curious
    numberplanid - numbering plan identifier
    type - document type (1 - invoice, 2 - cash receipt)
    cdate - date of write out
-   sdate - sale date (for invoices)
    paytime - deadline in days
    paytype - payment type (1-cash, 2-transfer, 3-transfer/cash, 4-card,
    5-compensation, 6-barter, 7-contract)
@@ -5767,8 +5751,7 @@ Chapter 7. For curious
    docid - invoice serial number
    itemid - invoice item identifier
    value - amount
-   pdiscount - discount percentage
-   vdiscount - discount value
+   discount - discount percentage
    taxid - tax rate identifier
    prodid - product/service classification number
    content - used unit (usually 'pc.')
@@ -5888,7 +5871,6 @@ Chapter 7. For curious
    login - login
    passwd - password
    phone - phone number
-   access - enabled/disabled (1/0)
    creationdate - date of account creation
    moddate - date of last account modification
    creatorid - creator (user) identifier
@@ -5988,8 +5970,6 @@ Chapter 7. For curious
    customerid - customer ID
    private - status (private/public)
    closed - is event closed? (1-yes/0-no)
-   moduserid - id of last user that modified the event
-   moddate - date of last event modification
      __________________________________________________________________
 
 7.2.55. Timetable - assignments ('eventassignments')

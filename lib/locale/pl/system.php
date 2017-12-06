@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: system.php,v 1.2 2011/01/18 08:12:07 alec Exp $
  */
 
 function check_ten($ten)
@@ -71,6 +71,21 @@ function check_ssn($ssn)
 function check_zip($zip)
 {
 	return preg_match('/^[0-9]{2}-[0-9]{3}$/', $zip);
+}
+
+function check_gg($im)
+{
+	return preg_match('/^[0-9]{0,32}$/', $im);  // gadu-gadu ID check
+}
+
+function check_yahoo($im)
+{
+	return preg_match('/^[-_.a-z0-9]{0,32}$/i', $im);
+}
+
+function check_skype($im)
+{
+	return preg_match('/^[-_.a-z0-9]{0,32}$/i', $im);
 }
 
 function check_regon($regon)
@@ -130,46 +145,26 @@ function check_icn($icn)
 	return preg_match('/^[A-Z]{2}[0-9]{7}$/i', $icn) || preg_match('/^[A-Z]{3}[0-9]{6}$/i', $icn);
 }
 
-function bankaccount($id, $account = NULL) {
-	return iban_account('PL', 26, $id, $account);
-}
+function bankaccount($id, $account=NULL)
+{
+	global $DB;
 
-function check_bankaccount($account) {
-	return iban_check_account('PL', 26, $account);
-}
+	if($account === NULL)
+		$account = $DB->GetOne('SELECT account FROM divisions
+			WHERE id IN (SELECT divisionid
+                    		FROM customers WHERE id = ?)', array($id));	
 
-function format_bankaccount($account) {
-	return preg_replace('/(..)(....)(....)(....)(....)(....)(....)/i', '${1} ${2} ${3} ${4} ${5} ${6} ${7}', $account);
-}
+	$acclen = strlen($account);
+	
+	if(!empty($account) && $acclen < 21 && $acclen >= 8)
+	{
+		$cc = '2521';	// Kod kraju - Polska
+		$format = '%0'.(24 - $acclen) .'d';
+		$account .= sprintf($format, $id);
+		return sprintf('%02d', 98-bcmod($account.$cc.'00', 97)).$account;
+	} 
 
-function getHolidays($year = null) {
-	if(!$year) $year = date("Y");
-	$easterDay = easter_date($year);
-
-	$days[mktime(0,0,0,1,1,$year)] = 'Nowy Rok';
-	$days[mktime(0,0,0,1,6,$year)] = 'Objawienie Pańskie (Trzech Króli)';
-	$days[$easterDay] = 'Pierwszy dzień Wielkiej Nocy (Niedziela Wielkanocna)';
-	$days[strtotime('+1 day', $easterDay)] = 'Drugi dzień Wielkiej Nocy (Poniedziałek Wielkanocny)';
-	$days[mktime(0,0,0,5,1,$year)] = 'Święto Państwowe (Święto Pracy)';
-	$days[mktime(0,0,0,5,3,$year)] = 'Święto Narodowe Trzeciego Maja (Święto Konstytucji Trzeciego Maja)';
-	$days[strtotime('+49 day', $easterDay)] = 'Zesłanie Ducha Świętego (Zielone Świątki)';
-	$days[strtotime('+60 day', $easterDay)] = 'Ciała i Krwi Pańskiej (Boże Ciało)';
-	$days[mktime(0,0,0,8,15,$year)] = 'Wniebowzięcie Najświętszej Maryi Panny';
-	$days[mktime(0,0,0,11,1,$year)] = 'Wszystkich Świętych (Dzień Zmarłych)';
-	$days[mktime(0,0,0,11,11,$year)] = 'Narodowe Święto Niepodległości (Dzień Niepodległości)';
-	$days[mktime(0,0,0,12,25,$year)] = 'Pierwszy dzień Bożego Narodzenia';
-	$days[mktime(0,0,0,12,26,$year)] = 'Drugi dzień Bożego Narodzenia';
-
-	return $days;
-}
-
-/*!
- * \brief Generate random postcode
- *
- * \return string
- */
-function generateRandomPostcode() {
-    return sprintf("%02d", rand(0, 99)) . '-' . sprintf("%03d", rand(0, 999));
+	return $account;
 }
 
 ?>

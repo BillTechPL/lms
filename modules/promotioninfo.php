@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotioninfo.php,v 1.1 2011/03/02 10:31:05 alec Exp $
  */
 
 
@@ -52,11 +52,11 @@ if (!empty($promotion['schemas'])) {
         array($promotion['id']));
 }
 
-$layout['pagetitle'] = trans('Promotion Info: $a', $promotion['name']);
+$layout['pagetitle'] = trans('Promotion Info: $0', $promotion['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('promotion', $promotion);
-$SMARTY->display('promotion/promotioninfo.html');
+$SMARTY->display('promotioninfo.html');
 
 ?>

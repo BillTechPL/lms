@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: daemon.sgml,v 1.87 2011/03/17 13:12:15 alec Exp $ -->
 <chapter id="daemon">
 	<title>LMS Daemon</title>
 	<sect1 id="daemon-intro">
@@ -1833,11 +1833,6 @@ $IPT -t filter -I FORWARD -s %i -m limit --limit %plimit/s -j ACCEPT										</
 						<para>default_downceil</para>
 						<para>Warto¶æ downceil dla domy¶lnego kana³u. Domy¶lnie: 0</para>
 						<para>Przyk³ad: <prompt>default_downceil = 20000</prompt></para>
-					</listitem>
-					<listitem>
-						<para>default_halfduplex</para>
-						<para>Okre¶la czy domy¶lny kana³ ma pracowaæ w trybie half duplex. Domy¶lnie: nie</para>
-						<para>Przyk³ad: <prompt>default_halfduplex = tak</prompt></para>
 					</listitem>
 				</itemizedlist>
 			</sect3>

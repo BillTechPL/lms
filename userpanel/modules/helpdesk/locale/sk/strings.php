@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.5 2011/01/18 08:12:35 alec Exp $
  */
 
 $_LANG['Allows you to contact with network administrator'] = 'Umožňuje vám kontaktovať správcu siete';
@@ -50,7 +50,7 @@ $_LANG['No such requests in database.'] = 'Žiadna požiadavka nenájdená v dat
 $_LANG['Number:'] = 'Číslo:';
 $_LANG['open'] = 'otvoriť';
 $_LANG['Request history'] = 'História požiadavok';
-$_LANG['Request No. $a'] = 'Požiadavok Č $a';
+$_LANG['Request No. $0'] = 'Požiadavok Č $0';
 $_LANG['resolved'] = 'vyriešený';
 $_LANG['- select queue -'] = '- vyber radu -';
 $_LANG['- select user -'] = '- zvol zákazníka -';

@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,39 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: functions.php,v 1.4 2011/01/18 08:12:00 alec Exp $
  */
 
-// Load autloader
-$composer_autoload_path = SYS_DIR . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php';
-if (file_exists($composer_autoload_path)) {
-    require_once $composer_autoload_path;
-} else {
-    die("Composer autoload not found. Run 'composer install' command from LMS directory and try again. More informations at https://getcomposer.org/");
-}
-
-$_MAILDBTYPE = ConfigHelper::getConfig('database.mail_db_type');
-$_MAILDBHOST = ConfigHelper::getConfig('database.mail_db_host');
-$_MAILDBUSER = ConfigHelper::getConfig('database.mail_db_user');
-$_MAILDBPASS = ConfigHelper::getConfig('database.mail_db_password');
-$_MAILDBNAME = ConfigHelper::getConfig('database.mail_db_database');
+$_MAILDBTYPE = $CONFIG['database']['mail_db_type'];
+$_MAILDBHOST = $CONFIG['database']['mail_db_host'];
+$_MAILDBUSER = $CONFIG['database']['mail_db_user'];
+$_MAILDBPASS = $CONFIG['database']['mail_db_password'];
+$_MAILDBNAME = $CONFIG['database']['mail_db_database'];
 
 // Initialize mail database
-
-$DB_MAIL = null;
-
-try {
-
-    $DB_MAIL = LMSDB::getDB($_MAILDBTYPE, $_MAILDBHOST, $_MAILDBUSER, $_MAILDBPASS, $_MAILDBNAME);
-
-} catch (Exception $ex) {
-    
-    trigger_error($ex->getMessage(), E_USER_WARNING);
-    
-    // can't working without database
-    die("Fatal error: cannot connect to database!\n");
-    
-}
+$DB_MAIL = DBInit($_MAILDBTYPE, $_MAILDBHOST, $_MAILDBUSER, $_MAILDBPASS, $_MAILDBNAME);
 
 
 if (defined('USERPANEL_SETUPMODE'))
@@ -62,8 +40,8 @@ if (defined('USERPANEL_SETUPMODE'))
     {
 	global $SMARTY, $LMS;
 	
-	$SMARTY->assign('mail_limit', ConfigHelper::getConfig('userpanel.mail_limit'));
-	$SMARTY->assign('mail_allowed_domains', ConfigHelper::getConfig('userpanel.mail_allowed_domains'));
+	$SMARTY->assign('mail_limit', $LMS->CONFIG['userpanel']['mail_limit']);
+	$SMARTY->assign('mail_allowed_domains', $LMS->CONFIG['userpanel']['mail_allowed_domains']);
 
 	$SMARTY->display('module:accounts:setup.html');
     }
@@ -138,8 +116,8 @@ function module_mailadd()
 {
     global $SMARTY,$_GET,$SESSION,$DB_MAIL,$LMS,$_POST;
 
-    $mail_limit = ConfigHelper::getConfig('userpanel.mail_limit');
-    $mail_allowed_domains = ConfigHelper::getConfig('userpanel.mail_allowed_domains');
+    $mail_limit = $LMS->CONFIG['userpanel']['mail_limit'];
+    $mail_allowed_domains = $LMS->CONFIG['userpanel']['mail_allowed_domains'];
 
     $mailboxes = GetCustomerMailBoxes($SESSION->id);
 
@@ -226,7 +204,7 @@ function module_main()
     global $SMARTY,$_GET,$SESSION,$LMS;
 
     $mailboxes = GetCustomerMailBoxes($SESSION->id);
-    $SMARTY->assign('mail_limit', ConfigHelper::getConfig('userpanel.mail_limit'));
+    $SMARTY->assign('mail_limit', $LMS->CONFIG['userpanel']['mail_limit']);
     $SMARTY->assign('mailboxes', $mailboxes);
     $SMARTY->display('module:accounts.html');
 
@@ -319,16 +297,16 @@ function create_salt ()
    return $salt;
 }
 
-if (!function_exists('hex2bin')) {
-	function hex2bin($str) {
-		$len = strlen($str);
-		$nstr = "";
-		for ($i = 0; $i < $len; $i += 2) {
-			$num = sscanf (substr ($str,$i,2), "%x");
-			$nstr.= chr ($num[0]);
-		}
-		return $nstr;
-	}
+function hex2bin ($str)
+{
+   $len = strlen ($str);
+   $nstr = "";
+   for ($i=0;$i<$len;$i+=2)
+   {
+      $num = sscanf (substr ($str,$i,2), "%x");
+      $nstr.=chr ($num[0]);
+   }
+   return $nstr;
 }
 
 function to64 ($v, $n)

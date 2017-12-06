@@ -8,7 +8,7 @@ Licensed under GNU Lesser General Public License (LGPL).
 Modified by kondi for LMS project (mailto:lms@kondi.net).
 *******************************************************/
 
-function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
+function AutoSuggest(form,elem,uri,autosubmit) {
 
 	//The 'me' variable allow you to access the AutoSuggest object
 	//from the elem's event handlers defined below.
@@ -16,19 +16,9 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 
 	//A reference to the element we're binding the list to.
 	this.elem = elem;
-
-	this.request_delay = 250; // time in milliseconds
-	this.timer;               // delay handler
-
-	if (/autosuggest-(left|top|right|bottom)/i.exec(elem.className) !== null)
-		this.placement = RegExp.$1;
-	else
-		this.placement = 'bottom';
-
 	this.form = form;
 	this.uri = uri;
-	this.autosubmit = (autosubmit == 1 || autosubmit == 'true');
-	this.onsubmit = onsubmit;
+	this.autosubmit = autosubmit;
 
 	//Arrow to store a subset of eligible suggestions that match the user's input
 	this.eligible = [];
@@ -47,9 +37,7 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 	var RET = 13;
 	var TAB = 9;
 	var ESC = 27;
-	var KEYLEFT = 37;
 	var KEYUP = 38;
-	var KEYRIGHT = 39;
 	var KEYDN = 40;
 
 	//The browsers' own autocomplete feature can be problematic, since it will 
@@ -74,74 +62,33 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 	elem.onkeydown = function(ev) {
 		var key = me.getKeyCode(ev);
 
-		if (/autosuggest-(left|top|right|bottom)/i.exec(elem.className) !== null)
-			var suggest = RegExp.$1;
-		else
-			var suggest = 'bottom';
-
 		switch(key) {
 			case ENT:
 			case RET:
-				me.useSuggestion();
+			me.useSuggestion();
 			break;
 
 			case TAB:
-				if (me.highlighted == -1)
-					me.hideDiv();
-				else
-					me.useSuggestion();
+			me.useSuggestion();
 			break;
 
 			case ESC:
-				me.hideDiv();
+			me.hideDiv();
 			break;
 
 			case KEYUP:
-				if ((suggest == 'top' || suggest == 'bottom') && me.highlighted == -1)
-					me.highlighted = me.eligible.length - 1;
-				else if (me.highlighted > 0)
-					--me.highlighted;
-				else if (me.highlighted == 0)
-					me.highlighted = (me.eligible.length - 1);
-
-				me.changeHighlight(key);
+			if (me.highlighted > 0) {
+				me.highlighted--;
+			}
+			me.changeHighlight(key);
 			break;
 
 			case KEYDN:
-				if ((suggest == 'top' || suggest == 'bottom') && me.highlighted < (me.eligible.length - 1))
-					++me.highlighted;
-				else if (me.highlighted != -1 && me.highlighted < (me.eligible.length - 1))
-					++me.highlighted;
-				else if(me.highlighted == (me.eligible.length - 1))
-					me.highlighted = 0;
-
-				me.changeHighlight(key);
+			if (me.highlighted < (me.eligible.length - 1)) {
+				me.highlighted++;
+			}
+			me.changeHighlight(key);
 			break;
-			
-			case KEYLEFT:
-				if (suggest == 'left' && me.highlighted == -1 && me.highlighted < (me.eligible.length - 1)) {
-					me.highlighted++;
-					me.changeHighlight(key);
-				}
-				else if (suggest == 'right') {
-					me.highlighted = -1;
-					me.changeHighlight(key);
-				}
-			break;
-			
-			case KEYRIGHT:
-				if (suggest == 'right' && me.highlighted == -1 && me.highlighted < (me.eligible.length - 1)) {
-					me.highlighted++;
-					me.changeHighlight(key);
-				}
-				else if (suggest == 'left') {
-					me.highlighted = -1;
-					me.changeHighlight(key);
-				}
-			break;
-
-			default:
-				clearTimeout(me.timer);
 		}
 	};
 
@@ -164,8 +111,7 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 		default:
 
 			if (this.value != me.inputText && this.value.length > 0) {
-				clearTimeout(me.timer);
-				me.timer = setTimeout(function(){ me.HTTPpreload(); }, me.request_delay);
+				me.HTTPpreload();
 			} else {
 				me.hideDiv();
 			}
@@ -191,7 +137,7 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 	remove the suggestion dropdown.
 	********************************************************/
 	this.useSuggestion = function() {
-		if (this.highlighted > -1 && this.div.style.display != 'none') {
+		if (this.highlighted > -1) {
 			this.elem.value = this.eligible[this.highlighted];
 			var gotothisuri = this.actions[this.highlighted];
 			this.hideDiv();
@@ -203,40 +149,15 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 			this.form.onsubmit = function () { return false; };
 			setTimeout("document.getElementById('" + this.form.id + "').onsubmit = function () { return true; }",10);
 			//Go to search results.
-			if (this.autosubmit) location.href = gotothisuri;
-			if (this.onsubmit !== undefined)
-				eval(this.onsubmit);
+			if (this.autosubmit == 1) location.href = gotothisuri;
 		}
 	};
 
 	/********************************************************
 	Display the dropdown. Pretty straightforward.
 	********************************************************/
-	this.showDiv = function() {	
-		this.div.style.visibility = 'hidden';
+	this.showDiv = function() {
 		this.div.style.display = 'block';
-
-		var x = parseInt( this.div.style.left );
-		var y = parseInt( this.div.style.top );
-
-		switch (this.placement) {
-			case 'left':
-				x -= this.div.offsetWidth;
-				break;
-			case 'right':
-				x += this.elem.offsetWidth;
-				break;
-			case 'top':
-				y -= this.div.offsetHeight;
-				break;
-			default: // bottom
-				y += this.elem.offsetHeight;
-				break;
-		}
-
-		this.div.style.left = x + "px";
-		this.div.style.top = y + "px";
-		this.div.style.visibility = 'visible';
 	};
 
 	/********************************************************
@@ -269,7 +190,7 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 	this.positionDiv = function() {
 		var el = this.elem;
 		var x = 0;
-		var y = 0;
+		var y = el.offsetHeight;
 
 		//Walk up the DOM and add up all of the offset positions.
 		while (el.offsetParent && el.tagName.toUpperCase() != 'BODY') {
@@ -300,25 +221,17 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 			var ds = document.createElement('span');
 			var li = document.createElement('li');
 			var a = document.createElement('a');
-			if ((dest)&&(!this.autosubmit)) {
+			if ((dest)&&(this.autosubmit)) {
 				a.href = dest;
 				a.innerHTML = word;
-				ds.innerHTML = desc;
-				a.appendChild(ds);
 				li.onclick = function() { me.useSuggestion(); }
 				li.appendChild(a);
 			} else {
-				word_len = word.length;
-
-				if (word_len > AUTOSUGGEST_MAX_LENGTH)
-					li.innerHTML = word.substring(0, AUTOSUGGEST_MAX_LENGTH) + " ...";
-				else
-					li.innerHTML = word;
-
+				li.innerHTML = word;
 				li.onclick = function() { me.useSuggestion(); }
-				ds.innerHTML = desc;
-				li.appendChild(ds);
 			}
+			ds.innerHTML = desc;
+			li.appendChild(ds);
 
 			if (me.highlighted == i) {
 				li.className = "selected";
@@ -378,7 +291,7 @@ function AutoSuggest(form,elem,uri,autosubmit, onsubmit) {
 	this.HTTPpreload = function() {
 		xmlhttp=me.setXMLHTTP();
 		xmlhttp.onreadystatechange = this.HTTPloaded;
-		xmlhttp.open("GET", this.uri + encodeURIComponent(this.elem.value), true);
+		xmlhttp.open("GET", this.uri + encodeURI(this.elem.value), true);
 		xmlhttp.send(null);
 	}
 

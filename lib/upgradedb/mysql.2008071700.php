@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2008071700.php,v 1.5 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->Execute("ALTER TABLE customers CHANGE status status smallint NOT NULL DEFAULT '0'");
+$DB->Execute("ALTER TABLE customers CHANGE status status smallint NOT NULL DEFAULT '0'");
 
-$this->Execute("ALTER TABLE customers ADD type smallint NOT NULL DEFAULT '0'");
-$this->Execute("UPDATE customers SET type = 1 WHERE regon != '' OR ten != ''");
-$this->Execute("DROP VIEW customersview");
-$this->Execute("CREATE VIEW customersview AS
+$DB->Execute("ALTER TABLE customers ADD type smallint NOT NULL DEFAULT '0'");
+$DB->Execute("UPDATE customers SET type = 1 WHERE regon != '' OR ten != ''");
+$DB->Execute("DROP VIEW customersview");
+$DB->Execute("CREATE VIEW customersview AS
         SELECT c.* FROM customers c
 	        WHERE NOT EXISTS (
 	        SELECT 1 FROM customerassignments a
@@ -37,6 +37,6 @@ $this->Execute("CREATE VIEW customersview AS
 	                WHERE e.userid = lms_current_user() AND a.customerid = c.id);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008071700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008071700', 'dbversion'));
 
 ?>

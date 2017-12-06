@@ -1,7 +1,7 @@
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cutoff.c,v 1.44 2011/03/13 09:46:13 alec Exp $
  */
 
 #include <stdio.h>
@@ -56,15 +56,15 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 
 	char *nets = strdup(" AND EXISTS (SELECT 1 FROM networks net "
 				"WHERE (%nets) "
-	                        "AND ((ipaddr > net.address AND ipaddr < broadcast(net.address, inet_aton(net.mask))) "
-				"OR (ipaddr_pub > net.address AND ipaddr_pub < broadcast(net.address, inet_aton(net.mask)))) "
+	                        "AND ((ipaddr > net.address AND ipaddr < ("BROADCAST")) "
+				"OR (ipaddr_pub > net.address AND ipaddr_pub < ("BROADCAST"))) "
 				")");
 
-	char *nets_cust = strdup(" AND EXISTS (SELECT 1 FROM vnodes n, networks net "
+	char *nets_cust = strdup(" AND EXISTS (SELECT 1 FROM nodes n, networks net "
 				"WHERE n.ownerid = c.id "
 				"AND (%nets) "
-	                        "AND ((ipaddr > net.address AND ipaddr < broadcast(net.address, inet_aton(net.mask))) "
-				"OR (ipaddr_pub > net.address AND ipaddr_pub < broadcast(net.address, inet_aton(net.mask)))) "
+	                        "AND ((ipaddr > net.address AND ipaddr < ("BROADCAST")) "
+				"OR (ipaddr_pub > net.address AND ipaddr_pub < ("BROADCAST"))) "
 				")");
 				
 	char *netnames = strdup(c->networks);
@@ -73,15 +73,15 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 
 	char *enets = strdup(" AND NOT EXISTS (SELECT 1 FROM networks net "
 				"WHERE (%enets) "
-	                        "AND ((ipaddr > net.address AND ipaddr < broadcast(net.address, inet_aton(net.mask))) "
-				"OR (ipaddr_pub > net.address AND ipaddr_pub < broadcast(net.address, inet_aton(net.mask)))) "
+	                        "AND ((ipaddr > net.address AND ipaddr < ("BROADCAST")) "
+				"OR (ipaddr_pub > net.address AND ipaddr_pub < ("BROADCAST"))) "
 				")");
 
-	char *enets_cust = strdup(" AND NOT EXISTS (SELECT 1 FROM vnodes n, networks net "
+	char *enets_cust = strdup(" AND NOT EXISTS (SELECT 1 FROM nodes n, networks net "
 				"WHERE n.ownerid = c.id "
 				"AND (%enets) "
-	                        "AND ((ipaddr > net.address AND ipaddr < broadcast(net.address, inet_aton(net.mask))) "
-				"OR (ipaddr_pub > net.address AND ipaddr_pub < broadcast(net.address, inet_aton(net.mask)))) "
+	                        "AND ((ipaddr > net.address AND ipaddr < ("BROADCAST")) "
+				"OR (ipaddr_pub > net.address AND ipaddr_pub < ("BROADCAST"))) "
 				")");
 				
 	char *enetnames = strdup(c->excluded_networks);
@@ -153,7 +153,7 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 	if(strlen(enetsql))
 	{
 		g->str_replace(&enets, "%enets", enetsql);
-		g->str_replace(&enets_cust, "%enets", enetsql);
+		g->str_replace(&enets_cust, "%nets", netsql);
 	}
 
 	while( k>1 )
@@ -204,7 +204,7 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 		            		"WHERE customerid = a.customerid "
 				        "AND (datefrom <= %NOW% OR datefrom = 0) "
 					"AND (dateto >= %NOW% OR dateto = 0) "
-					"AND tariffid IS NULL AND liabilityid IS NULL "
+					"AND tariffid = 0 AND liabilityid = 0 "
 				")";   
 	else
 		suspended = "";
@@ -235,14 +235,14 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 	if(c->nodeassignments)
 	{
 		query = strdup(
-			"SELECT n.id, n.ownerid FROM vnodes n "
-        		"WHERE n.ownerid IS NOT NULL AND n.access = 1 "
+			"SELECT n.id, n.ownerid FROM nodes n "
+        		"WHERE n.ownerid > 0 AND n.access = 1 "
 	                    	"AND NOT EXISTS "
 				"(SELECT 1 FROM nodeassignments, assignments a "
 					"WHERE nodeid = n.id AND assignmentid = a.id "
 						"AND (datefrom <= %NOW% OR datefrom = 0) "
 						"AND (dateto >= %NOW% OR dateto = 0) "
-						"AND (tariffid IS NOT NULL OR liabilityid IS NOT NULL) "
+						"AND (tariffid != 0 OR liabilityid != 0) "
 						"%suspended"
 				")"
 				"%groups%egroups%nets%enets"
@@ -255,24 +255,24 @@ void reload(GLOBAL *g, struct cutoff_module *c)
     		g->str_replace(&query, "%suspended", suspended);
     		g->str_replace(&query, "%ownerid", "n.ownerid");
 	
-		res = g->db->pquery(g->db->conn, query);
+		res = g->db_pquery(g->conn, query);
 
-		for(i=0; i<g->db->nrows(res); i++) 
+		for(i=0; i<g->db_nrows(res); i++) 
 		{
-			char *nodeid = g->db->get_data(res,i,"id");
-			char *ownerid = g->db->get_data(res,i,"ownerid");
+			char *nodeid = g->db_get_data(res,i,"id");
+			char *ownerid = g->db_get_data(res,i,"ownerid");
 		
-			n = g->db->pexec(g->db->conn, "UPDATE nodes SET access = 0 WHERE id = ?", nodeid);
+			n = g->db_pexec(g->conn, "UPDATE nodes SET access = 0 WHERE id = ?", nodeid);
 
 			execn = 1;
 			
 			if(*c->expwarning && n)
 			{
-				u = g->db->pexec(g->db->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->expwarning, ownerid);
+				u = g->db_pexec(g->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->expwarning, ownerid);
 				execu = 1;
 			}
 		}	
-		g->db->free(&res);
+		g->db_free(&res);
 
 		free(query);
 	}
@@ -280,7 +280,7 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 	{
 		// customers without tariffs (or with expired assignments)
 		query = strdup(
-			"SELECT DISTINCT c.id FROM customers c, vnodes n "
+			"SELECT DISTINCT c.id FROM customers c, nodes n "
 			"WHERE c.id = n.ownerid "
 				"AND deleted = 0 "
 				"AND access = 1 "
@@ -288,7 +288,7 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 					"WHERE a.customerid = c.id "
 						"AND (datefrom <= %NOW% OR datefrom = 0) "
 						"AND (dateto >= %NOW% OR dateto = 0) "
-						"AND (tariffid IS NOT NULL OR liabilityid IS NOT NULL) "
+						"AND (tariffid != 0 OR liabilityid != 0) "
 						"%suspended"
 					")"
 				"%groups%egroups%nets%enets"
@@ -301,23 +301,23 @@ void reload(GLOBAL *g, struct cutoff_module *c)
     		g->str_replace(&query, "%suspended", suspended);
     		g->str_replace(&query, "%ownerid", "c.id");
 
-		res = g->db->pquery(g->db->conn, query);
+		res = g->db_pquery(g->conn, query);
 
-		for(i=0; i<g->db->nrows(res); i++) 
+		for(i=0; i<g->db_nrows(res); i++) 
 		{
-			char *customerid = g->db->get_data(res,i,"id");
+			char *customerid = g->db_get_data(res,i,"id");
 
-			n = g->db->pexec(g->db->conn, "UPDATE nodes SET access = 0 WHERE ownerid = ?", customerid);
+			n = g->db_pexec(g->conn, "UPDATE nodes SET access = 0 WHERE ownerid = ?", customerid);
 
 			execn = 1;
 			
 			if(*c->expwarning && n)
 			{
-				u = g->db->pexec(g->db->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->expwarning, customerid);
+				u = g->db_pexec(g->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->expwarning, customerid);
 				execu = 1;
 			}
 		}	
-		g->db->free(&res);
+		g->db_free(&res);
 
 		free(query);
 	}
@@ -343,18 +343,18 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 		g->str_replace(&query, "%enets", strlen(enetsql) ? enets_cust : "");	
     		g->str_replace(&query, "%ownerid", "d.customerid");
 
-		res = g->db->pquery(g->db->conn, query, itoa(c->deadline)); 
+		res = g->db_pquery(g->conn, query, itoa(c->deadline)); 
 	
-		for(i=0; i<g->db->nrows(res); i++) 
+		for(i=0; i<g->db_nrows(res); i++) 
 		{
-			char *customerid = g->db->get_data(res,i,"id");
+			char *customerid = g->db_get_data(res,i,"id");
 		
 			if(c->warn_only)
-				n = g->db->pexec(g->db->conn, "UPDATE nodes SET warning = 1 WHERE ownerid = ? AND warning = 0", customerid);
+				n = g->db_pexec(g->conn, "UPDATE nodes SET warning = 1 WHERE ownerid = ? AND warning = 0", customerid);
 			else if(c->nodegroup_only)
-				n = g->db->pexec(g->db->conn, "INSERT INTO nodegroupassignments (nodegroupid, nodeid) "
+				n = g->db_pexec(g->conn, "INSERT INTO nodegroupassignments (nodegroupid, nodeid) "
 			                "SELECT ?, n.id "
-					"FROM vnodes n "
+					"FROM nodes n "
 					"WHERE n.ownerid = ? "
 					"AND NOT EXISTS ( "
 						"SELECT 1 FROM nodegroupassignments na "
@@ -362,33 +362,20 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 					group, customerid, group	
 					);
 			else 
-				n = g->db->pexec(g->db->conn, "UPDATE nodes SET access = 0 ? WHERE ownerid = ? AND access = 1", (*c->warning ? ", warning = 1" : ""), customerid);
+				n = g->db_pexec(g->conn, "UPDATE nodes SET access = 0 ? WHERE ownerid = ? AND access = 1", (*c->warning ? ", warning = 1" : ""), customerid);
 
 			execn = n ? 1 : execn;
 			
 			if(*c->warning && !c->nodegroup_only && n)
 			{
-				u = g->db->pexec(g->db->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->warning, customerid);
+				u = g->db_pexec(g->conn, "UPDATE customers SET message = '?' WHERE id = ?", c->warning, customerid);
 				execu = u ? 1 : execu;
 			}
 		}	
-		g->db->free(&res);
+		g->db_free(&res);
 
 		free(query);
 	}
-	//Connect devices where no debt
-	if(c->connect)
-	            {
-		    n = g->db->pexec(g->db->conn, "UPDATE nodes n1,"
-			"(SELECT n.id FROM vnodes n LEFT JOIN nodeassignments ON n.id = nodeassignments.nodeid "
-			"LEFT JOIN assignments ON nodeassignments.assignmentid=assignments.id "
-			"WHERE (assignments.dateto > %NOW% or assignments.dateto='0') "
-			"AND assignments.datefrom < %NOW% "
-			"AND assignments.suspended = 0 "
-			"AND access = 0 AND (SELECT SUM(value) FROM cash WHERE customerid = n.ownerid) >= 0) "
-			"AS n2 SET n1.access=1, n1.warning=0 WHERE n1.id = n2.id");
-		    execn = 1;
-	            }
 
 	// debtors
 	if(plimit)
@@ -418,7 +405,11 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 			") t ON (t.customerid = c.id) "
 			"WHERE c.deleted = 0 "
 				"AND c.cutoffstop < %NOW% "
+#ifdef USE_PGSQL
+				"AND balance * -1 > (?/100::numeric * tariff) "
+#else
 				"AND balance * -1 > (?/100 * tariff) "
+#endif
 				"%groups%egroups%nets%enets" 
 		);
 	else
@@ -440,20 +431,20 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 	g->str_replace(&query, "%ownerid", "c.id");
 
 	if(plimit)
-		res = g->db->pquery(g->db->conn, query, itoa(plimit)); 
+		res = g->db_pquery(g->conn, query, itoa(plimit)); 
 	else
-		res = g->db->pquery(g->db->conn, query, itoa(limit)); 
+		res = g->db_pquery(g->conn, query, itoa(limit)); 
 	
-	for(i=0; i<g->db->nrows(res); i++) 
+	for(i=0; i<g->db_nrows(res); i++) 
 	{
-		char *customerid = g->db->get_data(res,i,"id");
+		char *customerid = g->db_get_data(res,i,"id");
 		
 		if(c->warn_only)
-			n = g->db->pexec(g->db->conn, "UPDATE nodes SET warning = 1 WHERE ownerid = ? AND warning = 0", customerid);
+			n = g->db_pexec(g->conn, "UPDATE nodes SET warning = 1 WHERE ownerid = ? AND warning = 0", customerid);
 		else if(c->nodegroup_only)
-			n = g->db->pexec(g->db->conn, "INSERT INTO nodegroupassignments (nodegroupid, nodeid) "
+			n = g->db_pexec(g->conn, "INSERT INTO nodegroupassignments (nodegroupid, nodeid) "
 			                "SELECT ?, n.id "
-					"FROM vnodes n "
+					"FROM nodes n "
 					"WHERE n.ownerid = ? "
 					"AND NOT EXISTS ( "
 						"SELECT 1 FROM nodegroupassignments na "
@@ -461,25 +452,25 @@ void reload(GLOBAL *g, struct cutoff_module *c)
 					group, customerid, group	
 					);
 		else 
-			n = g->db->pexec(g->db->conn, "UPDATE nodes SET access = 0 ? WHERE ownerid = ? AND access = 1", (*c->warning ? ", warning = 1" : ""), customerid);
+			n = g->db_pexec(g->conn, "UPDATE nodes SET access = 0 ? WHERE ownerid = ? AND access = 1", (*c->warning ? ", warning = 1" : ""), customerid);
 
 		execn = n ? 1 : execn;
 			
 		if(*c->warning && !c->nodegroup_only && n)
 		{
 			char *warning = strdup(c->warning);
-			char *balance = g->db->get_data(res,i,"balance");
+			char *balance = g->db_get_data(res,i,"balance");
 
 			g->str_replace(&warning, "%B", balance);
 			g->str_replace(&warning, "%b", balance[0] == '-' ? balance+1 : balance);
 
-			u = g->db->pexec(g->db->conn, "UPDATE customers SET message = '?' WHERE id = ?", warning, customerid);
+			u = g->db_pexec(g->conn, "UPDATE customers SET message = '?' WHERE id = ?", warning, customerid);
 			execu = u ? 1 : execu;
 
 			free(warning);
 		}
 	}	
-	g->db->free(&res);
+	g->db_free(&res);
 
 	free(query);
 
@@ -538,15 +529,14 @@ struct cutoff_module * init(GLOBAL *g, MODULE *m)
 	c->excluded_customergroups = strdup(g->config_getstring(c->base.ini, c->base.instance, "excluded_customergroups", ""));
 	c->networks = strdup(g->config_getstring(c->base.ini, c->base.instance, "networks", ""));
 	c->excluded_networks = strdup(g->config_getstring(c->base.ini, c->base.instance, "excluded_networks", ""));
-	c->connect = g->config_getbool(c->base.ini, c->base.instance, "connect", 0);
-
+	
 	c->nodegroup_only = 0;
 	nodegroup = g->config_getstring(c->base.ini, c->base.instance, "setnodegroup_only", "");
 	if(strlen(nodegroup))
 	{
-		res = g->db->pquery(g->db->conn, "SELECT id FROM nodegroups WHERE UPPER(name) = UPPER('?')", nodegroup);
-		if(g->db->nrows(res))
-			c->nodegroup_only = atoi(g->db->get_data(res,0,"id"));
+		res = g->db_pquery(g->conn, "SELECT id FROM nodegroups WHERE UPPER(name) = UPPER('?')", nodegroup);
+		if(g->db_nrows(res))
+			c->nodegroup_only = atoi(g->db_get_data(res,0,"id"));
 	}
 #ifdef DEBUG1
 	syslog(LOG_INFO,"DEBUG: [%s/cutoff] initialized", c->base.instance);

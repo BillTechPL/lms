@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: aliasedit.php,v 1.15 2011/01/18 08:12:20 alec Exp $
  */
 
 function AliasExists($login, $domain)
@@ -45,7 +45,7 @@ if(!$aliasold)
 	$SESSION->redirect('?'.$SESSION->get('backto'));
 }
 
-$layout['pagetitle'] = trans('Alias Edit: $a', $aliasold['login'] .'@'. $aliasold['domain']);
+$layout['pagetitle'] = trans('Alias Edit: $0', $aliasold['login'] .'@'. $aliasold['domain']);
 
 if(isset($_POST['alias']))
 {
@@ -146,7 +146,7 @@ else
 			WHERE p.id IN (SELECT accountid FROM aliasassignments
 				WHERE aliasid = ? AND mail_forward=\'\')', 'id', array($alias['id'])); 
 	$mailforwards = $DB->GetAllByKey('SELECT mail_forward
-			FROM aliasassignments WHERE aliasid = ? AND accountid IS NULL AND mail_forward <> \'\' 
+			FROM aliasassignments WHERE aliasid = ? AND accountid = 0 AND mail_forward <> \'\' 
 			ORDER BY mail_forward',
 			'mail_forward', array($alias['id']));
 	$alias['mailforwards'] = array();
@@ -176,6 +176,6 @@ $SMARTY->assign('alias', $alias);
 $SMARTY->assign('error', $error);
 $SMARTY->assign('accountlist', $accountlist);
 $SMARTY->assign('domainlist', $DB->GetAll('SELECT id, name FROM domains ORDER BY name'));
-$SMARTY->display('alias/aliasedit.html');
+$SMARTY->display('aliasedit.html');
 
 ?>

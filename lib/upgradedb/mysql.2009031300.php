@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2009031300.php,v 1.5 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("CREATE TABLE messages (
+$DB->Execute("CREATE TABLE messages (
         id 	int(11) 	NOT NULL auto_increment,
         subject varchar(255)	DEFAULT '' NOT NULL,
 	body 	text		DEFAULT '' NOT NULL,
@@ -37,9 +37,9 @@ $this->Execute("CREATE TABLE messages (
         PRIMARY KEY (id),
 	INDEX cdate (cdate, type),
 	INDEX userid (userid)
-) ENGINE=MyISAM");
+) TYPE=MyISAM");
 
-$this->Execute("CREATE TABLE messageitems (
+$DB->Execute("CREATE TABLE messageitems (
         id 		int(11) 	NOT NULL auto_increment,
 	messageid 	int(11)		DEFAULT 0 NOT NULL,
 	customerid 	int(11) 	DEFAULT 0 NOT NULL,
@@ -50,10 +50,10 @@ $this->Execute("CREATE TABLE messageitems (
         PRIMARY KEY (id),
 	INDEX messageid (messageid),
 	INDEX customerid (customerid)
-) ENGINE=MyISAM");
+) TYPE=MyISAM");
 
-$this->Execute('UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?', array('2009031300', 'dbversion'));
+$DB->Execute('UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?', array('2009031300', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

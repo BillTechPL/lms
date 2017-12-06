@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: statedel.php,v 1.4 2011/01/18 08:12:25 alec Exp $
  */
 
 $id = intval($_GET['id']);
@@ -29,12 +29,8 @@ $id = intval($_GET['id']);
 if (isset($_GET['is_sure']) && $_GET['is_sure'] == 1 && $id) {
 	if (!$DB->GetOne('SELECT 1 FROM zipcodes WHERE stateid=? LIMIT 1', array($id))) {
 		$DB->Execute('DELETE FROM states WHERE id=?', array($id));
-		if ($SYSLOG) {
-			$args = array(SYSLOG::RES_STATE => $id);
-			$SYSLOG->AddMessage(SYSLOG::RES_STATE, SYSLOG::OPER_DELETE, $args);
-		}
 	}
-}
+}	
 
 $SESSION->redirect('?'.$SESSION->get('backto'));
 

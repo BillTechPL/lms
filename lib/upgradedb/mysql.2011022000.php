@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,9 +21,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 CREATE TABLE promotions (
     id int(11)      NOT NULL auto_increment,
     name varchar(255) NOT NULL,
@@ -33,7 +33,7 @@ CREATE TABLE promotions (
     UNIQUE KEY name (name)
 ) ENGINE=InnoDB");
 
-$this->Execute("
+$DB->Execute("
 CREATE TABLE promotionschemas (
     id int(11)      NOT NULL auto_increment,
     name varchar(255) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE promotionschemas (
     UNIQUE KEY promotionid (promotionid, name)
 ) ENGINE=InnoDB");
 
-$this->Execute("
+$DB->Execute("
 CREATE TABLE promotionassignments (
     id int(11)      NOT NULL auto_increment,
     promotionschemaid int(11) DEFAULT NULL
@@ -59,11 +59,11 @@ CREATE TABLE promotionassignments (
     INDEX tariffid (tariffid)
 ) ENGINE=InnoDB");
 
-$this->Execute("ALTER TABLE tariffs DROP KEY name");
-$this->Execute("ALTER TABLE tariffs ADD UNIQUE KEY name (name, value, period)");
+$DB->Execute("ALTER TABLE tariffs DROP KEY name");
+$DB->Execute("ALTER TABLE tariffs ADD UNIQUE KEY name (name, value, period)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011022000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011022000', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

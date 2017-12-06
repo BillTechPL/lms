@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,32 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotiondel.php,v 1.1 2011/03/02 10:31:05 alec Exp $
  */
 
-$id = intval($_GET['id']);
-
-if ($id && $_GET['is_sure'] == '1') {
-	$args = array(SYSLOG::RES_PROMO => $id);
-	if ($SYSLOG) {
-		$SYSLOG->AddMessage(SYSLOG::RES_PROMO, SYSLOG::OPER_DELETE, $args);
-		$schemas = $DB->GetAll('SELECT id, ctariffid FROM promotionschemas
-			WHERE promotionid = ?', array_values($args));
-		if (!empty($schemas))
-			foreach ($schemas as $schema) {
-				$args[SYSLOG::RES_PROMOSCHEMA] = $schema['id'];
-				$args[SYSLOG::RES_TARIFF] = $schema['ctariffid'];
-				$SYSLOG->AddMessage(SYSLOG::RES_PROMOSCHEMA, SYSLOG::OPER_DELETE, $args);
-				$assigns = $DB->GetCol('SELECT id FROM promotionassignments
-					WHERE promotionschemaid = ?', array($schema['id']));
-				if (!empty($assigns))
-					foreach ($assigns as $assign) {
-						$args[SYSLOG::RES_PROMOASSIGN] = $assign;
-						$SYSLOG->AddMessage(SYSLOG::RES_PROMOASSIGN, SYSLOG::OPER_DELETE, $args);
-					}
-			}
-	}
-	$DB->Execute('DELETE FROM promotions WHERE id = ?', array($id));
+if ($_GET['is_sure'] == '1') {
+	$DB->Execute('DELETE FROM promotions WHERE id = ?',
+		array(intval($_GET['id'])));
 }
 
 $SESSION->redirect('?m=promotionlist');

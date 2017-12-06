@@ -1,7 +1,7 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
  *  (C) Copyright 2009 Webvisor Sp. z o.o.
  *
@@ -22,12 +22,12 @@
  *
  */
 
-$allTables=$this->ListTables();
+$allTables=$DB->ListTables();
 
 foreach ($allTables as $table){
-  $this->Execute("ALTER TABLE $table engine=innodb");
+  $DB->Execute("ALTER TABLE $table engine=innodb");
   }
   
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111000', 'dbversion'));
 
 ?>

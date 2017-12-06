@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: functions.php,v 1.6 2011/01/18 08:12:33 alec Exp $
  */
 
 if (defined('USERPANEL_SETUPMODE'))
@@ -30,11 +30,11 @@ if (defined('USERPANEL_SETUPMODE'))
     {
 	global $SMARTY,$LMS;
 
-	$SMARTY->assign('disable_transferform', ConfigHelper::getConfig('userpanel.disable_transferform'));
-	$SMARTY->assign('disable_invoices', ConfigHelper::getConfig('userpanel.disable_invoices'));
-	$SMARTY->assign('invoice_duplicate', ConfigHelper::getConfig('userpanel.invoice_duplicate'));
-	$SMARTY->assign('show_tariffname', ConfigHelper::getConfig('userpanel.show_tariffname'));
-	$SMARTY->assign('show_speeds', ConfigHelper::getConfig('userpanel.show_speeds'));
+	$SMARTY->assign('disable_transferform', $LMS->CONFIG['userpanel']['disable_transferform']);
+	$SMARTY->assign('disable_invoices', $LMS->CONFIG['userpanel']['disable_invoices']);
+	$SMARTY->assign('invoice_duplicate', $LMS->CONFIG['userpanel']['invoice_duplicate']);
+	$SMARTY->assign('show_tariffname', $LMS->CONFIG['userpanel']['show_tariffname']);
+	$SMARTY->assign('show_speeds', $LMS->CONFIG['userpanel']['show_speeds']);
 	$SMARTY->display('module:finances:setup.html');
     }
 

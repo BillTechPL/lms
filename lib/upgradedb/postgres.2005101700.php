@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,38 +21,38 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005101700.php,v 1.11 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-//$lastupgrade = $this->GetOne("SELECT keyvalue FROM dbinfo where keytype='dbversion'");
+//$lastupgrade = $DB->GetOne("SELECT keyvalue FROM dbinfo where keytype='dbversion'");
 
 // we have 2005092900 (1.7.3) database - it was wrong upgrade
 // so we need to fix something
 if($lastupgrade == '2005092900')
 {
-	$this->Execute("ALTER TABLE cash ADD COLUMN type smallint");
-	$this->Execute("UPDATE cash SET type = 0");
-	$this->Execute("ALTER TABLE cash ALTER type SET NOT NULL");
-	$this->Execute("ALTER TABLE cash ALTER type SET DEFAULT 0");
+	$DB->Execute("ALTER TABLE cash ADD COLUMN type SMALLINT");
+	$DB->Execute("UPDATE cash SET type = 0");
+	$DB->Execute("ALTER TABLE cash ALTER type SET NOT NULL");
+	$DB->Execute("ALTER TABLE cash ALTER type SET DEFAULT 0");
 	// set type for network operations
-	$this->Execute("UPDATE cash SET type = 1 WHERE customerid = 0");
+	$DB->Execute("UPDATE cash SET type = 1 WHERE customerid = 0");
 }
 else
 {
-	$this->Execute("UPDATE cash SET value = -value WHERE type = 2 OR type = 4");
-	$this->Execute("UPDATE cash SET customerid = 0 WHERE type = 1 OR type = 2");
-	$this->Execute("UPDATE cash SET type = 1 WHERE type < 4");
-	$this->Execute("UPDATE cash SET type = 0 WHERE type != 1"); // "type!=1" <-> "type=4"
+	$DB->Execute("UPDATE cash SET value = -value WHERE type = 2 OR type = 4");
+	$DB->Execute("UPDATE cash SET customerid = 0 WHERE type = 1 OR type = 2");
+	$DB->Execute("UPDATE cash SET type = 1 WHERE type < 4");
+	$DB->Execute("UPDATE cash SET type = 0 WHERE type != 1"); // "type!=1" <-> "type=4"
 }
 
 // "type" values after change: 
 // 1 - payments e.g. cash payments
 // 0 - liabilities e.g. invoices
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005101700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2005101700', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

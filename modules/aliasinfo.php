@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: aliasinfo.php,v 1.7 2011/01/18 08:12:20 alec Exp $
  */
 
 $alias = $DB->GetRow('SELECT a.id, a.login, a.domainid, d.name AS domain
@@ -38,18 +38,18 @@ $alias['accounts'] = $DB->GetAllByKey('SELECT p.id, p.login, d.name AS domain
 		WHERE p.id IN (SELECT accountid FROM aliasassignments
 			WHERE aliasid = ?)', 'id', array($alias['id'])); 
 $mailforwards = $DB->GetAllByKey('SELECT mail_forward
-		FROM aliasassignments WHERE aliasid = ? AND accountid IS NULL AND mail_forward <> \'\'',
+		FROM aliasassignments WHERE aliasid = ? AND accountid = 0 AND mail_forward <> \'\'',
 		'mail_forward', array($alias['id']));
 $alias['mailforwards'] = array();
 if(sizeof($mailforwards))
 	foreach($mailforwards as $mailforward => $idx)
 		$alias['mailforwards'][] = $mailforward;
 
-$layout['pagetitle'] = trans('Alias Info: $a', $alias['login'] .'@'. $alias['domain']);
+$layout['pagetitle'] = trans('Alias Info: $0', $alias['login'] .'@'. $alias['domain']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('alias', $alias);
-$SMARTY->display('alias/aliasinfo.html');
+$SMARTY->display('aliasinfo.html');
 
 ?>

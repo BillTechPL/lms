@@ -1,10 +1,10 @@
-LMS - LAN Management System 1.11-git
+LMS - LAN Management System 1.11.13 Dira
 
    [logo-small.png]
 
 LMS Developers
 
-   Copyright © 2001-2013 LMS Developers
+   Copyright © 2001-2011 LMS Developers
      __________________________________________________________________
 
    Spis treści
@@ -26,7 +26,6 @@ LMS Developers
         2.7. Prawa dostępu
         2.8. Upgrade
         2.9. Dokumenty
-        2.10. Baza podziału terytorialnego (TERYT)
 
    3. Interfejs Użytkownika (LMS-UI)
 
@@ -341,9 +340,10 @@ Rozdział 2. Instalacja i konfiguracja
 
 2.2.2. Interpreter PHP
 
-   Interpreter powinien być w wersji 5.2.x lub nowszej. PHP można ściągnąć
-   ze strony www.php.net. W szczególności wymagane są następujące moduły
-   (sprawdź "extension" w php.ini lub wyjście funkcji phpinfo()):
+   Interpreter powinien być w wersji 4.2.x lub nowszej (unikać wersji
+   4.2.2). PHP można ściągnąć ze strony www.php.net. W szczególności
+   wymagane są następujące moduły (sprawdź "extension" w php.ini lub
+   wyjście funkcji phpinfo()):
      * pcre, posix,
      * zlib (dla kompresowanych backupów),
      * gd i/lub ming (tylko dla mapy sieci),
@@ -356,13 +356,14 @@ Rozdział 2. Instalacja i konfiguracja
 
    LMS nie będzie działał prawidłowo na wersjach MySQL starszych od 5.0.
 
-   LMS współpracuje także z PostgreSQL w wersji 8.4.x lub nowszych.
+   LMS współpracuje także z PostgreSQL w wersji 8.2.x lub nowszych.
      __________________________________________________________________
 
 2.2.4. Biblioteka Smarty
 
    LMS-UI do pracy wymaga jeszcze biblioteki Smarty
-   (http://www.smarty.net) w wersji 3.0 lub wyższej.
+   (http://www.smarty.net) w wersji 2.6.0 lub wyższej (unikać wersji
+   2.6.4).
      __________________________________________________________________
 
 2.2.5. Perl
@@ -505,6 +506,8 @@ mysql> CREATE DATABASE lms CHARACTER SET utf8 COLLATE utf8_polish_ci;
 mysql> GRANT USAGE ON lms.* TO lms@localhost;
 mysql> GRANT ALL ON lms.* TO lms@localhost IDENTIFIED BY 'twoje_hasło';
 mysql> flush privileges;
+mysql> use lms;
+mysql> source doc/lms.mysql;
      __________________________________________________________________
 
 2.5.1.4. Konfiguracja LMS (lms.ini)
@@ -538,7 +541,7 @@ password = hasło_z_pkt.3
 
 2.5.2.1. Wstęp
 
-   LMS jest testowany na PostgreSQL 8.4.x i nowszych, możesz mieć problemy
+   LMS jest testowany na PostgreSQL 8.2.x i nowszych, możesz mieć problemy
    korzystając ze starszych wersji. Jeżeli nie masz zainstalowanego
    serwera PostgreSQL, możesz np. własnoręcznie skompilować go ze źródeł
    dostępnych na stronie www.postgresql.org.
@@ -562,8 +565,8 @@ $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
 
    Ostrzeżenie
 
-   Dotyczy wersji <= 9.1.x: Wymagane jest dodanie wpisu w postgresql.conf:
-   custom_variable_classes = 'lms'
+   Wymagane jest dodanie wpisu w postgresql.conf: custom_variable_classes
+   = 'lms'
      __________________________________________________________________
 
 2.5.2.3. Utworzenie bazy danych
@@ -572,6 +575,7 @@ $ /usr/local/pgsql/bin/postmaster -D /usr/local/pgsql/data >logfile 2>&1 &
    'lms', której właścicielem będzie użytkownik z loginem 'lms'.
 $ /usr/local/pgsql/bin/createuser -DPRS lms
 $ /usr/local/pgsql/bin/createdb -E UNICODE -O lms lms
+$ /usr/local/pgsql/bin/psql -d lms -U lms -f /lms/doc/lms.pgsql
      __________________________________________________________________
 
 2.5.2.4. Konfiguracja LMS (lms.ini)
@@ -1127,14 +1131,6 @@ $engine = array(
    dokumencie.
      __________________________________________________________________
 
-2.10. Baza podziału terytorialnego (TERYT)
-
-   LMS obsługuje bazę podziału terytorialnego TERYT w sposób umożliwiający
-   przypisanie adresów zgodnych z zawartością tej bazy do komputerów oraz
-   urządzeń sieciowych. Aby mieć możliwość wyboru adresów z listy należy
-   zaimportować bazę TERYT. Służy do tego skrypt lms-teryt.
-     __________________________________________________________________
-
 Rozdział 3. Interfejs Użytkownika (LMS-UI)
 
    LMS'owy Interfejs Użytkownika to panel administracyjny do tworzenia i
@@ -1428,9 +1424,8 @@ Rozdział 3. Interfejs Użytkownika (LMS-UI)
          Do wygenerowania mapy potrzebna jest wbudowana w PHP obsługa biblioteki
          graficznej GD lub Ming.
    Aby wybrać typ mapy musisz skorzystać z opcji map_type z sekcji
-   [phpui]. Ustaw "flash" jeśli używasz biblioteki Ming, "gd" jeśli chcesz
-   generować obrazki przy pomocy gdlib lub "openlayers" jeśli chcesz
-   używać biblioteki OpenLayers do generowania mapy. Domyślnie (opcja
+   [phpui]. Ustaw "flash" jeśli używasz biblioteki Ming lub "gd" jeśli
+   chcesz generować obrazki przy pomocy gdlib. Domyślnie (opcja
    nieustawiona) LMS spróbuje wykryć jaką bibliotekę masz dostępną w
    systemie, przy czym w pierwszej kolejności szuka możliwości
    wygenerowania mapy we flashu, a jak się to nie uda, to użyje GD.
@@ -2214,7 +2209,6 @@ MISC_OTHER="-A -x -j"
    %cid - ID klienta
    %pin - PIN klienta
    %last_10_in_a_table - lista ostatnich 10 operacji na koncie klienta
-   %bankaccount - numer konta bankowego
      __________________________________________________________________
 
 3.10.3. Konfiguracja
@@ -2913,7 +2907,6 @@ Rozdział 4. Skrypty
    lms-fping Badanie aktywności komputerów.
    lms-reminder Przypominanie o zaplanowanych zadaniach z Terminarza
    lms-rtparser Backend do Helpdesk'a.
-   lms-teryt Import bazy TERYT
      __________________________________________________________________
 
 4.3. Opis i konfiguracja
@@ -3156,7 +3149,6 @@ http://www.naszasiec.pl/
        jego końca
        %current_period - bieżący miesiąc w formacie MM/RRRR
        %next_period - następny miesiąc w formacie MM/RRRR
-       %prev_period - poprzedni miesiąc w formacie MM/RRRR
        %desc - opis taryfy
        Przykład: comment = 'Abonament za %current_month w/g taryfy
        %tariff'
@@ -3872,73 +3864,6 @@ endif
        dane klienta, jeżeli został on rozpoznany po adresie mailowym.
        Domyślnie: włączona.
        Przykład: include_customerinfo = 0
-     __________________________________________________________________
-
-4.3.19. lms-teryt
-
-   Skrypt służący do importu i aktualizacji danych bazy TERYT. Zawiera
-   również możliwość pobrania plików bazy z Internetu, a także procedurę
-   przypisywania identyfikatorów TERYT do istniejących komputerów, które
-   mają zdefiniowany adres ale nie mają przypisanego TERYTu.
-
-   Skrypt zawiera następujące opcje uruchomieniowe, które można łączyć:
-     * -f, --fetch
-       Włącza procedurę pobierania (i rozpakowania) plików bazy TERYT z
-       Internetu. Wymagane jest umożliwienie połączenia HTTP z serwerem
-       określonych w opcji 'url' oraz zainstalowanie programu unzip.
-     * -l, --list=<lista>
-       Zawęża działanie opcji importu/aktualizacji do określonych
-       województw. Podobnie jak w opcji konfiguracyjnej 'state_list'
-       podajemy tutaj numeryczne identyfikatory oddzielone przecinkami. Ze
-       względu na duży rozmiar całej bazy, wskazane jest ograniczenie się
-       tylko do wybranych województw. Identyfikatory można znaleźć w pliku
-       TERC.xml.
-
-       2 - dolnośląskie
-       4 - kujawsko-pomorskie
-       6 - lubelskie
-       8 - lubuskie
-       10 - łódzkie
-       12 - małopolskie
-       14 - mazowieckie
-       16 - opolskie
-       18 - podkarpackie
-       20 - podlaskie
-       22 - pomorskie
-       24 - śląskie
-       26 - świętokrzyskie
-       28 - warmiśko-mazurskie
-       30 - wielkopolskie
-       32 - zachodniopomorskie
-     * -u, --update
-       Import danych do bazy LMSa. Jeśli baza była już wcześniej
-       importowana, nastąpi aktualizacja bazy.
-     * -m, --merge
-       Przypisanie identyfikatorów TERYT dla komputerów/urządzeń, które
-       nie zostały jaszcze przypisane, ale posiadają wpisany adres
-       lokalizacji. Algorytm jest dość prosty i nie ma pewności, że
-       wszystkie adresy zostaną rozpoznane.
-
-   Konfigurację tego skryptu zawiera sekcja [teryt] w pliku lms.ini:
-     * url
-       Adres strony pobierania plików bazy TERYT. Domyślnie zawiera
-       poniższy link.
-       Przykład: url =
-       http://www.stat.gov.pl/broker/access/prefile/listPreFiles.jspa
-     * dir
-       Katalog w którym, są przechowywane rozpakowane pliki (xml) bazy
-       TERYT. W tym katalogu zostaną też zapisane pobrane pliki.
-       Domyślnie: katalog uruchomienia skryptu.
-       Przykład: dir = /var/lib/teryt
-     * unzip_binary
-       Lokalizacja programu unzip. Domyślnie: /usr/bin/unzip.
-       Przykład: unzip_binary = /sbin/unzip
-     * state_list
-       Lista identyfikatorów województw, oddzielonych przecinkami, które
-       będą brane pod uwagę podczas importu. W celu minimalizacji rozmiaru
-       bazy danych i czasu działania skryptu najlepiej ograniczyć się do
-       wybranych województw.
-       Przykład: state_list = 2
      __________________________________________________________________
 
 Rozdział 5. Generator plików konfiguracyjnych (lms-mgc)
@@ -5741,10 +5666,6 @@ $IPT -t filter -I FORWARD -s %i -m limit --limit %plimit/s -j ACCEPT
      * default_downceil
        Wartość downceil dla domyślnego kanału. Domyślnie: 0
        Przykład: default_downceil = 20000
-     * default_halfduplex
-       Określa czy domyślny kanał ma pracować w trybie half duplex.
-       Domyślnie: nie
-       Przykład: default_halfduplex = tak
      __________________________________________________________________
 
 6.3. T-Script
@@ -6170,7 +6091,7 @@ syslog("Komunikat");
    listą adresów i nazw komputerów (oraz urządzeń).
 
    Przykład 6-1. Parser: Tworzenie pliku /etc/hosts
-{result = SELECT name, inet_ntoa(ipaddr) AS ip FROM vnodes}\
+{result = SELECT name, inet_ntoa(ipaddr) AS ip FROM nodes}\
 127.0.0.1    localhost
 {for (r=0; r<number(result); r++)}\
 {result[r].name}{"\t"}{result[r].ip}
@@ -6195,7 +6116,7 @@ for (r=0; r<number(CUSTOMERS); r++)
    adresu.
 
    Przykład 6-3. Parser: Opisy komputerów dla iptrafa.
-{list = SELECT LOWER(mac) AS mac, UPPER(name) AS name, inet_ntoa(ipaddr) AS ip from vnodes}\
+{list = SELECT LOWER(mac) AS mac, UPPER(name) AS name, inet_ntoa(ipaddr) AS ip from nodes}\
 {for(i=0; i<number(list); i++)}\
 {replace(":","",list[i].mac)}:{list[i].name} {list[i].ip}
 {/for}
@@ -6282,7 +6203,7 @@ PS. Poniżej załączamy ostatnie 10 operacji na Państwa koncie.
    Przykład 6-6. Parser: Statystyki.
 {
 log = "/var/log/traffic.log";
-nodes = SELECT id, INET_NTOA(ipaddr) AS ip, INET_NTOA(ipaddr_pub) AS ip_pub FROM vnodes;
+nodes = SELECT id, INET_NTOA(ipaddr) AS ip, INET_NTOA(ipaddr_pub) AS ip_pub FROM nodes;
 if(! fileexists(log))
     exit;
 /if;
@@ -6351,9 +6272,6 @@ Rozdział 7. Dla dociekliwych
    failedlogindate - data ostatniej nieudanej próby logowania
    failedloginip - adres IP, z którego próbowano się zalogować
    deleted - czy usunięty (0/1)
-   access - czy konto aktywne (0/1)
-   accessfrom - data od której konto jest aktywne
-   accessto - data do której konto jest aktywne
      __________________________________________________________________
 
 7.2.2. Klienci ('customers')
@@ -6370,7 +6288,6 @@ Rozdział 7. Dla dociekliwych
    zip - kod pocztowy
    city - nazwa miasta
    countryid - identyfikator kraju
-   post_name - adres korespondencyjny (adresat)
    post_address - adres korespondencyjny (ulica, nr domu, nr lokalu)
    post_zip - adres korespondencyjny - kod pocztowy
    post_city - adres korespondencyjny - nazwa miasta
@@ -6441,11 +6358,7 @@ Rozdział 7. Dla dociekliwych
 
    id - identyfikator
    name - nazwa
-   location - lokalizacja, tekst
-   location_city - identyfikator miejscowości (TERYT)
-   location_street - identyfikator ulicy (TERYT)
-   location_house - numer domu
-   location_flat - numer mieszkania
+   location - lokalizacja
    description - opis
    producer - producent
    model - model
@@ -6460,8 +6373,6 @@ Rozdział 7. Dla dociekliwych
    secret - hasło (radius)
    community - community SNMP
    channelid - identyfikator kanału STM (tabela ewx_channels)
-   longitude - długość geograficzna
-   latitude - szerokość geograficzna
      __________________________________________________________________
 
 7.2.8. Połączenia sieciowe ('netlinks')
@@ -6495,14 +6406,10 @@ Rozdział 7. Dla dociekliwych
    warning - ostrzegaj/nie ostrzegaj (1/0)
    lastonline - znacznik czasu ostatniej obecności w sieci
    info - informacje dodatkowe
-   location - adres lokalizacji, tekst
-   location_city - identyfikator miejscowości (TERYT)
-   location_street - identyfikator ulicy (TERYT)
-   location_house - numer domu
-   location_flat - numer mieszkania
+   location_address - adres lokalizacji - ulica, nr domu, nr lokalu
+   location_zip - adres lokalizacji - kod pocztowy
+   location_city - adres lokalizacji - miasto
    nas - flaga NAS (0/1)
-   longitude - długość geograficzna
-   latitude - szerokość geograficzna
      __________________________________________________________________
 
 7.2.10. Adresy MAC ('macs')
@@ -6624,7 +6531,6 @@ Rozdział 7. Dla dociekliwych
    quota_ftp_limit - limit quoty dla konta ftp
    quota_sql_limit - limit quoty dla konta sql
    description - opis
-   disabled - status taryfy: włączona/wyłączona (0/1)
      __________________________________________________________________
 
 7.2.20. Promocje ('promotions')
@@ -6688,8 +6594,7 @@ Rozdział 7. Dla dociekliwych
    datefrom - data obowiązywania zobowiązania
    dateto - data obowiązywania zobowiązania
    invoice - określa czy ma być wystawiana faktura (1 - tak, 0 - nie)
-   pdiscount - wartość procentowa rabatu
-   vdiscount - wartość kwotowa rabatu
+   discount - wartość procentowa rabatu
    suspended - zawieszenie płatności (1 - tak, 0 - nie)
    settlement - rozliczenie okresu niepełnego (1 - tak, 0 - nie)
    paytype - identyfikator typu płatności faktury
@@ -6758,7 +6663,6 @@ Rozdział 7. Dla dociekliwych
    numberplanid - identyfikator planu numeracyjnego
    type - typ dokumentu (1-faktura, 2-KP)
    cdate - data wystawienia
-   sdate - data sprzedaży (dla faktur)
    paytime - termin płatności (ilość dni)
    paytype - rodzaj płatności (1-gotówka, 2-przelew, 3-przelew/gotówka,
    4-karta, 5-kompensata, 6-barter, 7-umowa)
@@ -6794,8 +6698,7 @@ Rozdział 7. Dla dociekliwych
    docid - identyfikator faktury
    itemid - nr pozycji
    value - kwota pozycji
-   pdiscount - wartość procentowa rabatu
-   vdiscount - wartość kwotowa rabatu
+   discount - wartość procentowa rabatu
    taxid - identyfikator stawki podatkowej
    prodid - numer PKWiU
    content - użyta jednostka (najczęściej 'szt.')
@@ -6915,7 +6818,6 @@ Rozdział 7. Dla dociekliwych
    login - login
    passwd - hasło
    phone - numer telefonu
-   access - włączone/wyłączone (1/0)
    creationdate - data utworzenia
    moddate - date ostatniej zmiany
    creatorid - identyfikator użytkownika
@@ -7015,8 +6917,6 @@ Rozdział 7. Dla dociekliwych
    customerid - identyfikator klienta
    private - prywatny/publiczny
    closed - status zamknięcia
-   moduserid - id użytkownika, który ostatnio zmodyfikował zdarzenie
-   moddate - data ostatniej modyfikacji zdarzenia
      __________________________________________________________________
 
 7.2.55. Terminarz - powiązania ('eventassignments')

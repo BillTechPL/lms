@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: daemoninstancelist.php,v 1.16 2011/01/18 08:12:21 alec Exp $
  */
 
 function GetInstanceList($hostid)
@@ -52,6 +52,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 $SMARTY->assign('instancelist', $instancelist);
 $SMARTY->assign('hostid', $hostid);
 $SMARTY->assign('hosts', $DB->GetAll('SELECT id, name FROM hosts ORDER BY name'));
-$SMARTY->display('daemon/daemoninstancelist.html');
+$SMARTY->display('daemoninstancelist.html');
 
 ?>

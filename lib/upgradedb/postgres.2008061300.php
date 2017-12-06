@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2008061300.php,v 1.8 2011/03/10 12:06:43 alec Exp $
  */
 
-$tables = $this->ListTables();
-$versions = $this->GetAllByKey("SELECT keytype, keyvalue FROM dbinfo WHERE keytype ?LIKE? 'up_%'", 'keytype');
+$tables = $DB->ListTables();
+$versions = $DB->GetAllByKey("SELECT keytype, keyvalue FROM dbinfo WHERE keytype ?LIKE? 'up_%'", 'keytype');
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-if (!in_array('up_rights', $tables)) $this->Execute("
+if (!in_array('up_rights', $tables)) $DB->Execute("
 
     CREATE SEQUENCE up_rights_id_seq;
     CREATE TABLE up_rights (
@@ -42,7 +42,7 @@ if (!in_array('up_rights', $tables)) $this->Execute("
     )
 ");	  
 
-if (!in_array('up_rights_assignments', $tables)) $this->Execute("
+if (!in_array('up_rights_assignments', $tables)) $DB->Execute("
 
     CREATE SEQUENCE up_rights_assignments_id_seq;
     CREATE TABLE up_rights_assignments (
@@ -54,7 +54,7 @@ if (!in_array('up_rights_assignments', $tables)) $this->Execute("
     )
 ");	  
 
-if (!in_array('up_customers', $tables)) $this->Execute("
+if (!in_array('up_customers', $tables)) $DB->Execute("
 
     CREATE SEQUENCE up_customers_id_seq;
     CREATE TABLE up_customers (
@@ -69,7 +69,7 @@ if (!in_array('up_customers', $tables)) $this->Execute("
     )
 ");	  
 
-if (!in_array('up_help', $tables)) $this->Execute("
+if (!in_array('up_help', $tables)) $DB->Execute("
 
     CREATE SEQUENCE up_help_id_seq;
     CREATE TABLE up_help (
@@ -81,7 +81,7 @@ if (!in_array('up_help', $tables)) $this->Execute("
     )
 ");
 
-if (!in_array('up_info_changes', $tables)) $this->Execute("
+if (!in_array('up_info_changes', $tables)) $DB->Execute("
 
     CREATE SEQUENCE up_info_changes_id_seq;
     CREATE TABLE up_info_changes (
@@ -95,64 +95,64 @@ if (!in_array('up_info_changes', $tables)) $this->Execute("
 
 if (empty($versions['up_module_finances']) || $versions['up_module_finances']['keyvalue'] < 2005081901)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled) 
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled) 
 		VALUES ('userpanel', 'disable_transferform', '0', '', 0)");
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'disable_invoices', '0', '', 0)");
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'invoice_duplicate', '0', '', 0)");
 }
 if (empty($versions['up_module_finances']) || $versions['up_module_finances']['keyvalue'] < 2005090601)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value) VALUES ('userpanel', 'show_tariffname', '1')");
-	$this->Execute("INSERT INTO uiconfig (section, var, value) VALUES ('userpanel', 'show_speeds', '1')");
+	$DB->Execute("INSERT INTO uiconfig (section, var, value) VALUES ('userpanel', 'show_tariffname', '1')");
+	$DB->Execute("INSERT INTO uiconfig (section, var, value) VALUES ('userpanel', 'show_speeds', '1')");
 }
 
 if (empty($versions['up_module_helpdesk']) || $versions['up_module_helpdesk']['keyvalue'] < 2005081901)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'default_queue', '1', '', 0)");
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'default_userid', '0', '', 0)");
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'debug_email', '', '', 0)");
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'lms_url', '', '', 0)");
 }
 
 if (empty($versions['up_module_info']) || $versions['up_module_info']['keyvalue'] < 2005091701)
 {
-	$this->Execute("INSERT INTO up_rights(module, name, description)
+	$DB->Execute("INSERT INTO up_rights(module, name, description)
     		VALUES ('info', 'edit_addr_ack', 'Customer can change address information with admin acknowlegment')");
-	$this->Execute("INSERT INTO up_rights(module, name, description)
+	$DB->Execute("INSERT INTO up_rights(module, name, description)
 	        VALUES ('info', 'edit_addr', 'Customer can change address information')");
-	$this->Execute("INSERT INTO up_rights(module, name, description, setdefault)
+	$DB->Execute("INSERT INTO up_rights(module, name, description, setdefault)
 	        VALUES ('info', 'edit_contact_ack', 'Customer can change contact information with admin acknowlegment', 0)");
-	$this->Execute("INSERT INTO up_rights(module, name, description)
+	$DB->Execute("INSERT INTO up_rights(module, name, description)
 	        VALUES ('info', 'edit_contact', 'Customer can change contact information')");
 }
 
 if (empty($versions['up_module_info']) || $versions['up_module_info']['keyvalue'] < 2006070500)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'hide_nodesbox', '0', '', 0)");
 }
 
 if (empty($versions['up_module_logout']) || $versions['up_module_logout']['keyvalue'] < 2005081901)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'logout_url', '', '', 0)");
 }
 
 if (empty($versions['up_module_stats']) || $versions['up_module_stats']['keyvalue'] < 2005081901)
 {
-	$this->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
+	$DB->Execute("INSERT INTO uiconfig (section, var, value, description, disabled)
 		VALUES ('userpanel', 'owner_stats', '0', '', 0)");
 }
 
-$this->Execute("DELETE FROM dbinfo WHERE keytype ?LIKE? 'up_%'");
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008061300', 'dbversion'));
+$DB->Execute("DELETE FROM dbinfo WHERE keytype ?LIKE? 'up_%'");
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008061300', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

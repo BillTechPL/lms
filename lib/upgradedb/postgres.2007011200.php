@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,16 +21,16 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2007011200.php,v 1.6 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("CREATE INDEX nodes_ownerid_idx ON nodes (ownerid)");
-$this->Execute("CREATE INDEX nodes_ipaddr_pub_idx ON nodes (ipaddr_pub)");
+$DB->Execute("CREATE INDEX nodes_ownerid_idx ON nodes (ownerid)");
+$DB->Execute("CREATE INDEX nodes_ipaddr_pub_idx ON nodes (ipaddr_pub)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007011200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007011200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

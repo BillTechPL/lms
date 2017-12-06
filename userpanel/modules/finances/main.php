@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: main.php,v 1.5 2011/01/18 08:12:33 alec Exp $
  */
 
 global $LMS,$SMARTY,$SESSION,$DB;
@@ -35,11 +35,10 @@ if(isset($balance['docid']))
 		if($balance['doctype'][$idx] == 1)
 		{
 			if($number = $LMS->docnumber($val))
-				$balance['number'][$idx] = trans('Invoice No. $a', $number);
+				$balance['number'][$idx] = trans('Invoice No. $0', $number);
 		}
 	}
 
-$SMARTY->assign('custom_content','');
 $SMARTY->assign('userinfo', $userinfo);
 $SMARTY->assign('balancelist', $balance);
 $SMARTY->assign('assignments', $assignments);

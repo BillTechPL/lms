@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,45 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: checkdirs.php,v 1.39 2011/01/18 08:12:05 alec Exp $
  */
 
-$startup_errors = array();
-
 if(!is_dir(SMARTY_COMPILE_DIR))
-	$startup_errors[] = 'mkdir '.SMARTY_COMPILE_DIR;
+	die('Missing directory <B>'.SMARTY_COMPILE_DIR.'</B>. Can anybody make them?');
 
 if(!is_writable(SMARTY_COMPILE_DIR))
-	$startup_errors[] = 'chown -R '.posix_geteuid().':'.posix_getegid().' '.SMARTY_COMPILE_DIR."\nchmod -R 755 ".SMARTY_COMPILE_DIR;
+	die('Can\'t write to directory <B>'.SMARTY_COMPILE_DIR.'</B>. Run: <BR><PRE>chown '.posix_geteuid().':'.posix_getegid().' '.SMARTY_COMPILE_DIR."\nchmod 755 ".SMARTY_COMPILE_DIR.'</PRE>This helps me to work. Thanks.');
 
 if(!is_dir(BACKUP_DIR))
-	$startup_errors[] = 'mkdir '.BACKUP_DIR;
+	die('Missing directory <B>'.BACKUP_DIR.'</B>. Can anybody make them?');
 	
 if(!is_writable(BACKUP_DIR))
-	$startup_errors[] = 'chown -R '.posix_geteuid().':'.posix_getegid().' '.BACKUP_DIR."\nchmod -R 755 ".BACKUP_DIR;
+	die('Can\'t write to directory <B>'.BACKUP_DIR.'</B>. Run: <BR><PRE>chown '.posix_geteuid().':'.posix_getegid().' '.BACKUP_DIR."\nchmod 755 ".BACKUP_DIR.'</PRE>This helps me to work. Thanks.');
 
 if(!is_dir(DOC_DIR))
-	$startup_errors[] = 'mkdir '.DOC_DIR;
+	die('Missing directory <B>'.DOC_DIR.'</B>. Can anybody make them?');
 	
 if(!is_writable(DOC_DIR))
-	$startup_errors[] = 'chown -R '.posix_geteuid().':'.posix_getegid().' '.DOC_DIR."\nchmod -R 755 ".DOC_DIR;
-
-$__xajax_deferred_dir = SYS_DIR . DIRECTORY_SEPARATOR . 'img' . DIRECTORY_SEPARATOR . 'xajax_js' . DIRECTORY_SEPARATOR . 'deferred';
-
-if (!is_dir($__xajax_deferred_dir))
-	$startup_errors[] = 'mkdir ' . $__xajax_deferred_dir;
-
-if (!is_writable($__xajax_deferred_dir))
-	$startup_errors[] = 'chown -R ' . posix_geteuid() . ':' . posix_getegid() . ' ' . $__xajax_deferred_dir
-		. "\nchmod -R 755 " . $__xajax_deferred_dir;
-
-if (count($startup_errors) > 0) {
-	print('Can not start because detected some problems. Please run:<PRE>');
-	foreach ($startup_errors as &$err) {
-            print ($err."\n");
-        }
-	print('</PRE>This helps me to work. Thanks.');
-	die();
-}
+	die('Can\'t write to directory <B>'.DOC_DIR.'</B>. Run: <BR><PRE>chown '.posix_geteuid().':'.posix_getegid().' '.DOC_DIR."\nchmod 755 ".DOC_DIR.'</PRE>This helps me to work. Thanks.');
 
 ?>

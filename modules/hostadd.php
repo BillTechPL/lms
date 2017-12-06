@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: hostadd.php,v 1.11 2011/01/18 08:12:23 alec Exp $
  */
 
 function GetHostIdByName($name)
@@ -48,25 +48,18 @@ if($hostadd)
 		$error['name'] = trans('Host with specified name exists!');
 
 	if (!$error) {
-		$args = array(
-			'name' => $hostadd['name'],
-			'description' => $hostadd['description']
-		);
-		$DB->Execute('INSERT INTO hosts (name, description) VALUES (?,?)', array_values($args));
+		$DB->Execute('INSERT INTO hosts (name, description) VALUES (?,?)',
+			array($hostadd['name'], $hostadd['description']));
 
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_HOST] = $DB->GetLastInsertID('hosts');
-			$SYSLOG->AddMessage(SYSLOG::RES_HOST, SYSLOG::OPER_ADD, $args);
-		}
-
-		if (!isset($hostadd['reuse']))
+		if (!isset($hostadd['reuse'])) {
 			$SESSION->redirect('?m=hostlist');
-
+		}
+		
 		unset($hostadd['name']);
 		unset($hostadd['description']);
 	}
 
-}
+}	
 
 $layout['pagetitle'] = trans('New Host');
 
@@ -74,6 +67,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('error', $error);
 $SMARTY->assign('hostadd', $hostadd);
-$SMARTY->display('host/hostadd.html');
+$SMARTY->display('hostadd.html');
 
 ?>

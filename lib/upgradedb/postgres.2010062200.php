@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,20 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2010062200.php,v 1.2 2011/01/18 08:12:17 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE assignments ADD paytype smallint DEFAULT NULL;
     ALTER TABLE assignments ADD numberplanid integer DEFAULT NULL
         REFERENCES numberplans (id) ON DELETE SET NULL ON UPDATE CASCADE;
     CREATE INDEX assignments_numberplanid_idx ON assignments (numberplanid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010062200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010062200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: LMS.menu.php,v 1.7 2011/01/18 08:12:32 alec Exp $
  */
 
 // variables
-$CONFIG['directories']['userpanel_dir'] = (!isset($CONFIG['directories']['userpanel_dir']) ? getcwd() . DIRECTORY_SEPARATOR . 'userpanel' : $CONFIG['directories']['userpanel_dir']);
-
-define('USERPANEL_DIR', $CONFIG['directories']['userpanel_dir']);
-define('USERPANEL_LIB_DIR', USERPANEL_DIR . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR);
-define('USERPANEL_MODULES_DIR', USERPANEL_DIR . DIRECTORY_SEPARATOR . 'modules' . DIRECTORY_SEPARATOR);
+define('USERPANEL_DIR', $LMS->CONFIG['directories']['userpanel_dir']);
+define('USERPANEL_MODULES_DIR', USERPANEL_DIR.'/modules/');
+define('USERPANEL_LIB_DIR', USERPANEL_DIR.'/lib/');
 
 @include(USERPANEL_DIR.'/lib/locale/'.$_ui_language.'/strings.php');
 
@@ -57,7 +55,7 @@ $submenu[] =
 
 // Include userpanel.class
 require_once(USERPANEL_DIR.'/lib/Userpanel.class.php');
-$USERPANEL = new USERPANEL($DB, $SESSION);
+$USERPANEL = new USERPANEL($DB, $SESSION, $CONFIG);
 
 // Initialize modules
 $dh  = opendir(USERPANEL_MODULES_DIR);
@@ -78,9 +76,9 @@ foreach($USERPANEL->MODULES as $menupos)
 
 
 // Add Userpanel menu to LMS main menu
-$menu['userpanel'] = array(
+$menu[] = array(
 	'name' => trans('Userpanel'),
-	'css' => 'lms-ui-icon-userpanel',
+	'img' => 'cms.gif',
 	'link' => '?m=userpanel',
 	'tip' => trans('Userpanel'),
 	'prio' => '80',

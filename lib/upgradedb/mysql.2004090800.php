@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004090800.php,v 1.12 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->Execute("ALTER TABLE users ADD COLUMN pin INT(6) NOT NULL DEFAULT '0'");
-$this->Execute("UPDATE users SET pin=RAND()*10 + RAND()*100 + RAND()*1000 + RAND()*10000 + RAND()*100000-1");
+$DB->Execute("ALTER TABLE users ADD COLUMN pin INT(6) NOT NULL DEFAULT '0'");
+$DB->Execute("UPDATE users SET pin=RAND()*10 + RAND()*100 + RAND()*1000 + RAND()*10000 + RAND()*100000-1");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004090800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004090800', 'dbversion'));
 
 ?>

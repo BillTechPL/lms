@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netremap.php,v 1.37 2011/01/18 08:12:23 alec Exp $
  */
 
 if(!$LMS->NetworkExists($_GET['id'])||!$LMS->NetworkExists($_GET['mapto']))
@@ -43,10 +43,10 @@ if(!$error)
 		$SESSION->redirect('?m=netinfo&id='.$network['dest']['id']);
 
 	}else{
-		$layout['pagetitle'] = trans('Readdressing Network $a',strtoupper($network['source']['name']));
+		$layout['pagetitle'] = trans('Readdressing Network $0',strtoupper($network['source']['name']));
 		$SMARTY->display('header.html');
 		echo '<H1>'.$layout['pagetitle'].'</H1>';
-		echo '<P>'.trans('Are you sure, you want to readdress network $a to network $b ?',strtoupper($network['source']['name']).' ('.$network['source']['address'].'/'.$network['source']['prefix'].')', strtoupper($network['dest']['name']).' ('.$network['dest']['address'].'/'.$network['dest']['prefix'].')').'</P>';
+		echo '<P>'.trans('Are you sure, you want to readdress network $0 to network $1 ?',strtoupper($network['source']['name']).' ('.$network['source']['address'].'/'.$network['source']['prefix'].')', strtoupper($network['dest']['name']).' ('.$network['dest']['address'].'/'.$network['dest']['prefix'].')').'</P>';
 		echo '<A href="?m=netremap&id='.$_GET['id'].'&mapto='.$_GET['mapto'].'&is_sure=1">'.trans('Yes, I am sure.').'</A>';
 		$SMARTY->display('footer.html');
 	}
@@ -55,7 +55,7 @@ if(!$error)
 	$SMARTY->assign('network',$network['source']);
 	$SMARTY->assign('networks',$networks);
 	$SMARTY->assign('error',$error);
-	$SMARTY->display('net/netinfo.html');
+	$SMARTY->display('netinfo.html');
 }
 	
 ?>

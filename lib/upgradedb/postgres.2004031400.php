@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- * (C) Copyright 2001-2013 LMS Developers
+ * (C) Copyright 2001-2011 LMS Developers
  *
  * Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,11 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  *
- * $Id$
+ * $Id: postgres.2004031400.php,v 1.13 2011/01/18 08:12:12 alec Exp $
  */
 
-$this->Execute("BEGIN");
-$this->Execute("
+$DB->Execute("BEGIN");
+$DB->Execute("
 	ALTER TABLE admins ALTER lastloginip SET DEFAULT '';
 	ALTER TABLE admins ALTER failedloginip SET DEFAULT '';
 	UPDATE admins SET lastloginip='' WHERE lastloginip IS NULL;
@@ -33,9 +33,9 @@ $this->Execute("
 	ALTER TABLE admins ALTER lastloginip SET NOT NULL;
 	ALTER TABLE admins ALTER failedloginip SET NOT NULL;
 ");
-$this->Execute("ALTER TABLE admins ADD UNIQUE (login)");
+$DB->Execute("ALTER TABLE admins ADD UNIQUE (login)");
 
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE invoicecontents ALTER invoiceid SET DEFAULT 0;
 	ALTER TABLE invoicecontents ALTER count SET DEFAULT 0;
 	ALTER TABLE invoicecontents ALTER value SET DEFAULT 0;
@@ -47,7 +47,7 @@ $this->Execute("
 	UPDATE invoicecontents SET pkwiu='' WHERE pkwiu IS NULL;
 	ALTER TABLE invoicecontents ALTER pkwiu SET NOT NULL;
 ");
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE invoices ALTER number SET DEFAULT 0;
 	ALTER TABLE invoices ALTER cdate SET DEFAULT 0;
 	ALTER TABLE invoices ALTER paytime SET DEFAULT 0;
@@ -64,7 +64,7 @@ $this->Execute("
 	ALTER TABLE invoices ALTER pesel SET NOT NULL;
 	ALTER TABLE invoices ALTER nip SET NOT NULL;
 ");
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE netdevices ALTER name SET DEFAULT '';
 	UPDATE netdevices SET name='' WHERE name IS NULL;
 	ALTER TABLE netdevices ALTER name SET NOT NULL;	
@@ -87,9 +87,9 @@ $this->Execute("
 	UPDATE netdevices SET ports=0 WHERE ports IS NULL;
 	ALTER TABLE netdevices ALTER ports SET NOT NULL;
 ");
-$this->Execute("ALTER TABLE netlinks ADD UNIQUE (src, dst)");
+$DB->Execute("ALTER TABLE netlinks ADD UNIQUE (src, dst)");
 
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE networks ALTER name SET DEFAULT '';
 	ALTER TABLE networks ALTER address SET DEFAULT 0;	
 	ALTER TABLE networks ALTER mask SET DEFAULT '';
@@ -118,7 +118,7 @@ $this->Execute("
 	ALTER TABLE networks ALTER dhcpstart SET NOT NULL;
 	ALTER TABLE networks ALTER dhcpend SET NOT NULL;
 ");
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE nodes ALTER name SET DEFAULT '';
 	ALTER TABLE nodes ALTER mac SET DEFAULT '';
 	ALTER TABLE nodes ALTER ipaddr SET DEFAULT 0;
@@ -128,16 +128,16 @@ $this->Execute("
 	ALTER TABLE nodes ADD UNIQUE (mac);	
 	ALTER TABLE nodes ADD UNIQUE (ipaddr);	
 ");	
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE payments ALTER description SET DEFAULT '';
 	UPDATE payments SET description='' WHERE description IS NULL;
 	ALTER TABLE payments ALTER description SET NOT NULL;
 ");
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE rtattachments ALTER filename SET DEFAULT '';
 	ALTER TABLE rtattachments ALTER contenttype SET DEFAULT '';
 ");
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE tariffs ALTER name SET DEFAULT '';
 	ALTER TABLE tariffs ALTER pkwiu SET DEFAULT '';
 	UPDATE tariffs SET pkwiu='' WHERE pkwiu IS NULL;
@@ -153,9 +153,9 @@ $this->Execute("
 	ALTER TABLE tariffs ALTER description SET NOT NULL;	
 	ALTER TABLE tariffs ADD UNIQUE (name);
 ");
-$this->Execute("ALTER TABLE timestamps ADD UNIQUE (tablename)");
+$DB->Execute("ALTER TABLE timestamps ADD UNIQUE (tablename)");
 
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE users ALTER lastname SET DEFAULT '';
 	ALTER TABLE users ALTER name SET DEFAULT '';
 	UPDATE users SET lastname='' WHERE lastname IS NULL;
@@ -196,7 +196,7 @@ $this->Execute("
 	ALTER TABLE users ALTER info SET NOT NULL;
 	ALTER TABLE users ALTER message SET NOT NULL;
 ");
-$this->Execute("UPDATE dbinfo SET keyvalue='2004031400' WHERE keytype='dbversion'");
+$DB->Execute("UPDATE dbinfo SET keyvalue='2004031400' WHERE keytype='dbversion'");
 
-$this->Execute("COMMIT");
+$DB->Execute("COMMIT");
 ?>

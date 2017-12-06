@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,14 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: info.php,v 1.11 2011/01/18 08:12:05 alec Exp $
  */
 
 $engine = array(
 	'name' => 'default', 	// template directory
 	'engine' => 'default', 	// engine.php directory
 				// you can use other engine
-	'type' => DOC_CONTRACT,			// it's also possible to use array of document types in this field
 	'template' => 'template.html', 		// template file (in 'name' dir)
 	'title' => trans('Default document'), 	// description for UI
 	'content_type' => 'text/html', 		// output file type

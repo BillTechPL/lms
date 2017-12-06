@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,20 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005052300.php,v 1.10 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->Execute("ALTER TABLE assignments CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE events CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE rttickets CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE rtmessages CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE cash CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE cash DROP INDEX userid");
-$this->Execute("ALTER TABLE cash ADD INDEX customerid (customerid)");
-$this->Execute("ALTER TABLE userassignments CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE userassignments DROP INDEX userassignment");
-$this->Execute("ALTER TABLE userassignments ADD UNIQUE (usergroupid, customerid)");
+$DB->Execute("ALTER TABLE assignments CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE events CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE rttickets CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE rtmessages CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE cash CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE cash DROP INDEX userid");
+$DB->Execute("ALTER TABLE cash ADD INDEX customerid (customerid)");
+$DB->Execute("ALTER TABLE userassignments CHANGE userid customerid INT(11) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE userassignments DROP INDEX userassignment");
+$DB->Execute("ALTER TABLE userassignments ADD UNIQUE (usergroupid, customerid)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005052300', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2005052300', 'dbversion'));
 
 ?>

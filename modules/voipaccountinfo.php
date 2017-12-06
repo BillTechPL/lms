@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,19 +21,23 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: voipaccountinfo.php,v 1.8 2011/03/10 11:36:39 alec Exp $
  */
 
-if (!preg_match('/^[0-9]+$/', $_GET['id'])) {
+if(!preg_match('/^[0-9]+$/', $_GET['id']))
+{
 	$SESSION->redirect('?m=voipaccountlist');
 }
 
-if (!$LMS->VoipAccountExists($_GET['id'])) {
+if(!$LMS->VoipAccountExists($_GET['id']))
 	if(isset($_GET['ownerid']))
+	{
 		$SESSION->redirect('?m=customerinfo&id='.$_GET['ownerid']);
+	}
 	else
+	{
 		$SESSION->redirect('?m=voipaccountlist');
-}
+	}
 
 $voipaccountid = $_GET['id'];
 $voipaccountinfo = $LMS->GetVoipAccount($voipaccountid);
@@ -43,22 +47,12 @@ include(MODULES_DIR.'/customer.inc.php');
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
-if (!isset($_GET['ownerid']))
+if(!isset($_GET['ownerid']))
 	$SESSION->save('backto', $SESSION->get('backto').'&ownerid='.$customerid);
 
-$layout['pagetitle'] = trans('Voip Account Info: $a', $voipaccountinfo['login']);
-
-$hook_data = $plugin_manager->executeHook(
-    'voipaccountinfo_before_display', 
-    array(
-        'voipaccountinfo' => $voipaccountinfo,
-        'smarty' => $SMARTY,
-    )
-);
-
-$voipaccountinfo = $hook_data['voipaccountinfo'];
+$layout['pagetitle'] = trans('Voip Account Info: $0', $voipaccountinfo['login']);
 
 $SMARTY->assign('voipaccountinfo',$voipaccountinfo);
-$SMARTY->display('voipaccount/voipaccountinfo.html');
+$SMARTY->display('voipaccountinfo.html');
 
 ?>

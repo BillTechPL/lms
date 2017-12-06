@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,20 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004120400.php,v 1.11 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("
+$DB->BeginTrans();
+$DB->Execute("
     CREATE TABLE aliases (
 	id int(11) NOT NULL auto_increment,
 	login varchar(255) NOT NULL DEFAULT '',
 	accountid int(11) NOT NULL DEFAULT '0',
 	PRIMARY KEY (id),
 	UNIQUE KEY (login)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
-$this->Execute("UPDATE dbinfo SET keyvalue = '2004120400' WHERE keytype = 'dbversion'");
-$this->CommitTrans();
+$DB->Execute("UPDATE dbinfo SET keyvalue = '2004120400' WHERE keytype = 'dbversion'");
+$DB->CommitTrans();
 
 ?>

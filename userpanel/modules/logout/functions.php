@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: functions.php,v 1.5 2011/01/18 08:12:36 alec Exp $
  */
 
 function module_main() 
@@ -30,9 +30,9 @@ function module_main()
     
     $SESSION->LogOut();
 
-    if (ConfigHelper::getConfig('userpanel.logout_url')!='')
+    if ($LMS->CONFIG['userpanel']['logout_url']!='')
     {
-	header('Location: '.ConfigHelper::getConfig('userpanel.logout_url'));
+	header('Location: '.$LMS->CONFIG['userpanel']['logout_url']);
     } 
     else
     {
@@ -45,7 +45,7 @@ if (defined('USERPANEL_SETUPMODE'))
     function module_setup() 
     {
 	global $SMARTY,$LMS;
-        $SMARTY->assign('logouturl', ConfigHelper::getConfig('userpanel.logout_url'));
+        $SMARTY->assign('logouturl', $LMS->CONFIG['userpanel']['logout_url']);
 	$SMARTY->display('module:logout:setup.html');
     }
 

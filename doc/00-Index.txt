@@ -15,5 +15,5 @@ html/		- directory with HTML version of User Manual
 sgml/		- directory with DocBook sources of User Manual
 
 --------------------------------------------------------------------------
-$Id$
+$Id: 00-Index.txt,v 1.16 2008/05/27 07:59:10 alec Exp $
 ---------------------------------------------------------------------------

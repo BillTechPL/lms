@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,74 +21,45 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: eventprint.php,v 1.22 2011/04/01 10:35:12 alec Exp $
  */
 
-function GetEvents($date=NULL, $userid=0, $type = 0, $customerid=0, $privacy = 0, $closed = '')
+function GetEvents($date=NULL, $userid=0, $customerid=0)
 {
-	global $AUTH;
+	global $DB, $AUTH;
 
-	$DB = LMSDB::getInstance();
-
-	switch ($privacy) {
-		case 0:
-			$privacy_condition = '(private = 0 OR (private = 1 AND userid = ' . intval(Auth::GetCurrentUser()) . '))';
-			break;
-		case 1:
-			$privacy_condition = 'private = 0';
-			break;
-		case 2:
-			$privacy_condition = 'private = 1 AND userid = ' . intval(Auth::GetCurrentUser());
-			break;
-	}
-
-	$enddate = $date + 86400;
 	$list = $DB->GetAll(
-	        'SELECT events.id AS id, title, note, description, date, begintime, enddate, endtime, closed, events.type, c.id AS customerid,'
-		.$DB->Concat('UPPER(c.lastname)',"' '",'c.name'). ' AS customername, '
-	        .$DB->Concat('c.city',"', '",'c.address').' AS customerlocation,
-		events.address_id, va.location, nodeid, nodes.location AS nodelocation, cc.customerphone,
-		ticketid
-		 FROM events
-		 LEFT JOIN vaddresses va ON va.id = events.address_id
-		 LEFT JOIN customerview c ON (customerid = c.id)
-		 LEFT JOIN vnodes nodes ON (nodeid = nodes.id)
-		LEFT JOIN (
-			SELECT ' . $DB->GroupConcat('contact', ', ') . ' AS customerphone, customerid
-			FROM customercontacts
-			WHERE type & ? > 0 AND type & ? = 0
-			GROUP BY customerid
-		) cc ON cc.customerid = c.id
-		 WHERE ((date >= ? AND date < ?) OR (enddate <> 0 AND date < ? AND enddate >= ?)) AND ' . $privacy_condition
+	        'SELECT events.id AS id, title, description, begintime, endtime, closed, note, '
+		.$DB->Concat('UPPER(customers.lastname)',"' '",'customers.name'). ' AS customername, 
+		 customers.address AS customeraddr, customers.city AS customercity,
+		 (SELECT phone FROM customercontacts WHERE customerid = customers.id ORDER BY id LIMIT 1) AS customerphone 
+		 FROM events LEFT JOIN customers ON (customerid = customers.id)
+		 WHERE date = ? AND (private = 0 OR (private = 1 AND userid = ?)) '
 		 .($customerid ? 'AND customerid = '.intval($customerid) : '')
-		.(!empty($userid) ? ' AND EXISTS (
-			SELECT 1 FROM eventassignments
-			WHERE eventid = events.id AND userid ' . (is_array($userid) ? 'IN (' . implode(',', array_filter($userid, 'intval')) . ')' : '=' . intval($userid)) . '
-			)' : '')
-		. (!empty($type) ? ' AND events.type ' . (is_array($type) ? 'IN (' . implode(',', array_filter($type, 'intval')) . ')' : '=' . intval($type)) : '')
-		 . ($closed != '' ? ' AND closed = ' . intval($closed) : '')
-		 .' ORDER BY date, begintime',
-		array(CONTACT_MOBILE | CONTACT_FAX | CONTACT_LANDLINE, CONTACT_DISABLED,
-			$date, $enddate, $enddate, $date));
+		 .' ORDER BY begintime',
+		 array($date, $AUTH->id));
 
-	$list2 = array();
-	if ($list)
-		foreach ($list as $idx => $row) {
-			$row['userlist'] = $DB->GetAll('SELECT userid AS id, vusers.name
-				FROM eventassignments, vusers
-				WHERE userid = vusers.id AND eventid = ? ',
-				array($row['id']));
-			$endtime = $row['endtime'];
-			if ($row['enddate'] && $row['enddate'] - $row['date']) {
-				$days = round(($row['enddate'] - $row['date']) / 86400);
-				$row['enddate'] = $row['date'] + 86400;
-				$row['endtime'] = 0;
-				$list2[] = $row;
-			} else
-				$list2[] = $row;
+	if($list)
+		foreach($list as $idx => $row)
+		{
+			$list[$idx]['userlist'] = $DB->GetAll('SELECT userid AS id, users.name
+								    FROM eventassignments, users
+								    WHERE userid = users.id AND eventid = ? ',
+								    array($row['id']));
+
+			if($userid && sizeof($list[$idx]['userlist']))
+				foreach($list[$idx]['userlist'] as $user)
+					if($user['id'] == $userid)
+					{
+						$list2[] = $list[$idx];
+						break;
+					}
 		}
 
-	return $list2;
+	if($userid)
+		return $list2;
+	else
+		return $list;
 }
 
 $date = $_GET['day'];
@@ -98,7 +69,7 @@ if(!$date)
 	$SESSION->redirect('?m=eventlist');
 }
 
-$eventlist = GetEvents($date, $_GET['a'], $_GET['t'], $_GET['u'], intval($_GET['privacy']), $_GET['closed']);
+$eventlist = GetEvents($date, $_GET['a'], $_GET['u']);
 
 $layout['pagetitle'] = trans('Timetable');
 
@@ -106,6 +77,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('eventlist', $eventlist);
 $SMARTY->assign('date', $date);
-$SMARTY->display('event/eventprint.html');
+$SMARTY->display('eventprint.html');
 
 ?>

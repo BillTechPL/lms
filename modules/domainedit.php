@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: domainedit.php,v 1.32 2011/01/18 08:12:22 alec Exp $
  */
 
 function GetDomainIdByName($name)
@@ -43,10 +43,10 @@ if($id && !DomainExists($id))
 	$SESSION->redirect('?'.$SESSION->get('backto'));
 }
 
-$domain = $DB->GetRow('SELECT id, name, ownerid, description, master, last_check, type, notified_serial, account, mxbackup
+$domain = $DB->GetRow('SELECT id, name, ownerid, description, master, last_check, type, notified_serial, account
 	FROM domains WHERE id = ?', array($id));
 
-$layout['pagetitle'] = trans('Domain Edit: $a', $domain['name']);
+$layout['pagetitle'] = trans('Domain Edit: $0', $domain['name']);
 
 if(isset($_POST['domain']))
 {
@@ -89,7 +89,7 @@ if(isset($_POST['domain']))
 		        		array($domainadd['ownerid']));
 		
 			if($limits['domain_limit'] == 0 || $limits['domain_limit'] <= $cnt)
-			        $error['ownerid'] = trans('Exceeded domains limit of selected customer ($a)!', $limits['domain_limit']);
+			        $error['ownerid'] = trans('Exceeded domains limit of selected customer ($0)!', $limits['domain_limit']);
 		}
 	}
 
@@ -97,22 +97,21 @@ if(isset($_POST['domain']))
 	{
 		$DB->Execute('UPDATE domains SET name = ?, ownerid = ?, description = ?,
 			master = ?, last_check = ?, type = ?, notified_serial = ?,
-			account = ?, mxbackup = ? WHERE id = ?', 
+			account = ? WHERE id = ?', 
 			array(	$domain['name'],
-				empty($domain['ownerid']) ? null : $domain['ownerid'],
+				$domain['ownerid'],
 				$domain['description'],
 				$domain['master'],
 				$domain['last_check'],
 				$domain['type'],
 				$domain['notified_serial'],
 				$domain['account'],
-				empty($domain['mxbackup']) ? 0 : 1,
 				$domain['id']
 				));
 		
 		// accounts owner update
 		if($domain['ownerid'])
-			$DB->Execute('UPDATE passwd SET ownerid = ? WHERE domainid = ? AND ownerid IS NOT NULL',
+			$DB->Execute('UPDATE passwd SET ownerid = ? WHERE domainid = ? AND ownerid != 0',
 					array($domain['ownerid'], $domain['id'])); 
 
 		$SESSION->redirect('?m=domainlist');
@@ -124,6 +123,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 $SMARTY->assign('error', $error);
 $SMARTY->assign('domain', $domain);
 $SMARTY->assign('customers', $LMS->GetCustomerNames());
-$SMARTY->display('domain/domainedit.html');
+$SMARTY->display('domainedit.html');
 
 ?>

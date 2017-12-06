@@ -1,9 +1,9 @@
-<?php
+<?
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: modinfo-sample.php,v 1.12 2011/01/18 08:12:23 alec Exp $
  */
 		      
 $_MODINFO['sample'] = array(
@@ -29,14 +29,14 @@ $_MODINFO['sample'] = array(
 			'en' => 'Example template for modinfo.php',
 			'pl' => 'Przykładowy szablon dla modinfo.php'
 			),
-		'version' => '1.11-git', // version
+		'version' => '1.11.13 Dira', // version
 		'description' => array( // description
 			'en' => 'This is sample module that contains template for modinfo.php',
 			'pl' => 'To jest przykładowy moduł, który tak naprawdę zawiera tylko przykładowy modinfo.php',
 			),
 		'author' => 'LMS-developers', // author information
 		'url' => 'http://www.lms.org.pl', // url of module homepage
-		'revision' => '$Revision$', // cvs revision, optiona
+		'revision' => '$Revision: 1.12 $', // cvs revision, optiona
 		'notpublic' => TRUE, // notpublic - this means, that user can't access any actions of this module
 					// directly, ie. using modified URL
 		'menus' => array( // this part of modinfo contains information about menus that this module provides

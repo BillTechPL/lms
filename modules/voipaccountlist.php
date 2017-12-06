@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: voipaccountlist.php,v 1.4 2011/01/18 08:12:26 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Voip Accounts List');
@@ -47,28 +47,16 @@ if ($SESSION->is_set('valp') && !isset($_GET['page']))
 	$SESSION->restore('valp', $_GET['page']);
 	
 $page = (!isset($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.voipaccountlist_pagelimit', $listdata['total']);
+$pagelimit = (!isset($CONFIG['phpui']['voipaccountlist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['voipaccountlist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('valp', $page);
-
-$hook_data = $plugin_manager->executeHook(
-    'voipaccountlist_before_display', 
-    array(
-        'voipaccountlist' => $voipaccountlist,
-        'listdata' => $listdata,
-        'smarty' => $SMARTY,
-    )
-);
-
-$voipaccountlist = $hook_data['voipaccountlist'];
-$listdata = $hook_data['listdata'];
 
 $SMARTY->assign('page',$page);
 $SMARTY->assign('pagelimit',$pagelimit);
 $SMARTY->assign('start',$start);
 $SMARTY->assign('voipaccountlist',$voipaccountlist);
 $SMARTY->assign('listdata',$listdata);
-$SMARTY->display('voipaccount/voipaccountlist.html');
+$SMARTY->display('voipaccountlist.html');
 
 ?>

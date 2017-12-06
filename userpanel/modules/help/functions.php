@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: functions.php,v 1.6 2011/01/18 08:12:34 alec Exp $
  */
 
 function get_solution($id)
@@ -33,7 +33,7 @@ function get_solution($id)
 function get_first_solution()
 {
     global $DB;
-    return $DB->GetOne('SELECT id FROM up_help WHERE reference IS NULL');
+    return $DB->GetOne('SELECT id FROM up_help WHERE reference = 0');
 }
 
 function update_solution($id,$title,$body)
@@ -97,7 +97,6 @@ function module_main()
     }
     $solution = get_solution($problem);
     $questions = get_questions($problem);
-
     $SMARTY->assign('solution', $solution);
     $SMARTY->assign('questions', $questions);    
     $SMARTY->display('module:help.html');
@@ -108,7 +107,7 @@ if (defined('USERPANEL_SETUPMODE'))
     function module_setup() {
 	global $SMARTY,$LMS;
         $questions = fetch_questions(0);
-	$treefile = ConfigHelper::getConfig('directories.userpanel_dir').'/modules/help/templates/tree.html';
+	$treefile = $LMS->CONFIG['directories']['userpanel_dir'].'/modules/help/templates/tree.html';
         $SMARTY->assign('tree', $questions);
 	$SMARTY->assign('treefile', $treefile);
         $SMARTY->display('module:help:setup.html');

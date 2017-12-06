@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdevsearch.php,v 1.8 2011/03/02 11:37:14 alec Exp $
  */
 
 function NetDevSearch($order='name,asc', $search=NULL, $sqlskey='AND')
@@ -35,7 +35,7 @@ function NetDevSearch($order='name,asc', $search=NULL, $sqlskey='AND')
         switch($order)
         {
 		case 'id':
-		        $sqlord = ' ORDER BY id';
+                        $sqlord = ' ORDER BY id';
 		break;
 		case 'producer':
 		        $sqlord = ' ORDER BY producer';
@@ -84,9 +84,6 @@ function NetDevSearch($order='name,asc', $search=NULL, $sqlskey='AND')
 				case 'ports':
 				        $searchargs[] = "ports = ".intval($value);
 				break;
-				case 'location':
-					$searchargs[] = "UPPER(a.$idx) ?LIKE? UPPER(".$DB->Escape("%$value%").')';
-					break;
 				default:
 					// UPPER here is a postgresql ILIKE bug workaround
 					$searchargs[] = "UPPER(d.$idx) ?LIKE? UPPER(".$DB->Escape("%$value%").')';
@@ -98,13 +95,12 @@ function NetDevSearch($order='name,asc', $search=NULL, $sqlskey='AND')
 	if(isset($searchargs))
                 $searchargs = ' WHERE ('.implode(' '.$sqlskey.' ',$searchargs).')';
 
-	$netdevlist = $DB->GetAll('SELECT DISTINCT d.id, d.name, a.location, d.description, d.producer,
-					d.model, d.serialnumber, d.ports,
-					(SELECT COUNT(*) FROM vnodes WHERE netdev = d.id AND ownerid IS NOT NULL)
-					+ (SELECT COUNT(*) FROM netlinks WHERE src = d.id OR dst = d.id) AS takenports
-				FROM netdevices d
-					LEFT JOIN vaddresses a ON d.address_id = a.id'
-				.(isset($nodes) ? ' LEFT JOIN vnodes n ON (netdev = d.id AND n.ownerid IS NULL)' : '')
+	$netdevlist = $DB->GetAll('SELECT DISTINCT d.id, d.name, d.location, d.description, d.producer, 
+				d.model, d.serialnumber, d.ports,
+                		(SELECT COUNT(*) FROM nodes WHERE netdev = d.id AND ownerid > 0)
+	            		+ (SELECT COUNT(*) FROM netlinks WHERE src = d.id OR dst = d.id) AS takenports
+	        		FROM netdevices d'
+				.(isset($nodes) ? ' LEFT JOIN vnodes n ON (netdev = d.id AND ownerid = 0)' : '')
 				.(isset($searchargs) ? $searchargs : '')
 				.($sqlord != '' ? $sqlord.' '.$direction : ''));
 
@@ -159,7 +155,7 @@ if(isset($_GET['search']))
     			$SESSION->restore('ndlsp', $_GET['page']);
 	
 		$page = (! $_GET['page'] ? 1 : $_GET['page']);
-		$pagelimit = ConfigHelper::getConfig('phpui.nodelist_pagelimit', $listdata['total']);
+		$pagelimit = (! $CONFIG['phpui']['nodelist_pagelimit'] ? $listdata['total'] : $CONFIG['phpui']['nodelist_pagelimit']);
 		$start = ($page - 1) * $pagelimit;
 
 		$SESSION->save('ndlsp', $page);
@@ -170,7 +166,7 @@ if(isset($_GET['search']))
 		$SMARTY->assign('netdevlist', $netdevlist);
 		$SMARTY->assign('listdata', $listdata);
 
-		$SMARTY->display('netdev/netdevsearchresults.html');
+		$SMARTY->display('netdevsearchresults.html');
 	}
 }
 else
@@ -180,7 +176,7 @@ else
 	$SESSION->remove('ndlsp');
 	
 	$SMARTY->assign('k',$k);
-	$SMARTY->display('netdev/netdevsearch.html');
+	$SMARTY->display('netdevsearch.html');
 }
 
 ?>

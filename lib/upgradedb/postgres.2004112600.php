@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004112600.php,v 1.11 2011/01/18 08:12:13 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("
+$DB->BeginTrans();
+$DB->Execute("
     CREATE SEQUENCE uiconfig_id_seq;
     CREATE TABLE uiconfig (
 	id integer DEFAULT nextval('uiconfig_id_seq'::text) NOT NULL,
@@ -38,6 +38,6 @@ $this->Execute("
     );
     UPDATE dbinfo SET keyvalue = '2004112600' WHERE keytype = 'dbversion';
 ");
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

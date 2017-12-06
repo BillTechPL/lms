@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: userif.sgml,v 1.93 2011/03/10 11:36:38 alec Exp $ -->
 <chapter id="user">
  <title>Interfejs U¿ytkownika (LMS-UI)</title>
  <para>LMS'owy Interfejs U¿ytkownika to panel administracyjny do tworzenia
@@ -243,8 +243,7 @@
 		biblioteki graficznej GD lub Ming.</para></note>
 		Aby wybraæ typ mapy musisz skorzystaæ z opcji <filename>map_type</filename>
 		z sekcji <emphasis>[phpui]</emphasis>. Ustaw "flash" je¶li u¿ywasz biblioteki
-		Ming, "gd" je¶li chcesz generowaæ obrazki przy pomocy gdlib lub "openlayers" je¶li
-		chcesz u¿ywaæ biblioteki OpenLayers do generowania mapy. Domy¶lnie
+		Ming lub "gd" je¶li chcesz generowaæ obrazki przy pomocy gdlib. Domy¶lnie
 		(opcja nieustawiona) LMS spróbuje wykryæ jak± bibliotekê masz dostêpn± w systemie, przy czym
 		w pierwszej kolejno¶ci szuka mo¿liwo¶ci wygenerowania mapy we flashu, a jak
 		siê to nie uda, to u¿yje GD.
@@ -984,7 +983,6 @@ MISC_OTHER="-A -x -j"
 			<member><prompt>%cid</prompt> - ID klienta</member>
 			<member><prompt>%pin</prompt> - PIN klienta</member>
 			<member><prompt>%last_10_in_a_table</prompt> - lista ostatnich 10 operacji na koncie klienta</member>
-			<member><prompt>%bankaccount</prompt> - numer konta bankowego</member>
 		</simplelist>
 		</para>
 	</sect2>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2009091600.php,v 1.3 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->Execute("ALTER TABLE aliasassignments ADD mail_forward varchar(255) DEFAULT '' NOT NULL");
-$this->Execute("ALTER TABLE aliasassignments DROP KEY aliasid");
-$this->Execute("ALTER TABLE aliasassignments ADD UNIQUE KEY aliasid (aliasid, accountid, mail_forward)");
+$DB->Execute("ALTER TABLE aliasassignments ADD mail_forward varchar(255) DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE aliasassignments DROP KEY aliasid");
+$DB->Execute("ALTER TABLE aliasassignments ADD UNIQUE KEY aliasid (aliasid, accountid, mail_forward)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009091600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009091600', 'dbversion'));
 
 ?>

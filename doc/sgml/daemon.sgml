@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: daemon.sgml,v 1.112 2011/03/17 13:01:03 alec Exp $ -->
 <chapter id="daemon">
      <title>LMS Daemon</title>
      <sect1 id="daemon-intro">

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: daemonconfigadd.php,v 1.16 2011/01/18 08:12:21 alec Exp $
  */
 
 $config = isset($_POST['config']) ? $_POST['config'] : NULL;
@@ -42,43 +42,37 @@ if($config)
 		$error['var'] = trans('Option name is required!');
 	elseif($DB->GetOne('SELECT id FROM daemonconfig WHERE var=? AND instanceid=?', array($config['var'], $config['instanceid'])))
 		$error['var'] = trans('Option with specified name exists in that instance!');
-
-	if (!$error) {
+	
+	if(!$error)
+	{
 		$config['value'] = str_replace("\r\n","\n",$config['value']);
-
-		$args = array(
-			'var' => $config['var'], 
-			SYSLOG::RES_DAEMONINST => $config['instanceid'], 
-			'description' => $config['description'],
-			'value' => $config['value']
-		);
-		$DB->Execute('INSERT INTO daemonconfig (var, instanceid, description, value) VALUES (?,?,?,?)', array_values($args));
-
-		if ($SYSLOG) {
-			$hostid = $DB->GetOne('SELECT hostid FROM daemoninstances WHERE id = ?', array($config['instanceid']));
-			$args[SYSLOG::RES_DAEMONCONF] = $DB->GetLastInsertID('daemonconfig');
-			$args[SYSLOG::RES_HOST] = $hostid;
-			$SYSLOG->AddMessage(SYSLOG::RES_DAEMONCONF, SYSLOG::OPER_ADD, $args);
-		}
-
-		if (!isset($config['reuse']))
+		
+		$DB->Execute('INSERT INTO daemonconfig (var, instanceid, description, value) VALUES (?,?,?,?)',
+				    array($config['var'], 
+					    $config['instanceid'], 
+					    $config['description'],
+					    $config['value']));
+		
+		if(!isset($config['reuse']))
+		{
 			$SESSION->redirect('?m=daemoninstanceview&id='.$config['instanceid']);
-
+		}
+		
 		unset($config['var']);
 		unset($config['value']);
 		unset($config['description']);
 	}
-}
+}	
 
 $instance = $DB->GetRow('SELECT daemoninstances.name AS name, hosts.name AS hostname FROM daemoninstances, hosts WHERE hosts.id=hostid AND daemoninstances.id=?', array($_GET['id']));
 
-$layout['pagetitle'] = trans('New Option for Instance: $a/$b', $instance['name'], $instance['hostname']);
+$layout['pagetitle'] = trans('New Option for Instance: $0/$1', $instance['name'], $instance['hostname']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('error', $error);
 $SMARTY->assign('instanceid', $_GET['id']);
 $SMARTY->assign('config', $config);
-$SMARTY->display('daemon/daemonconfigadd.html');
+$SMARTY->display('daemonconfigadd.html');
 
 ?>

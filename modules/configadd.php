@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,68 +21,57 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: configadd.php,v 1.26 2011/01/18 08:12:20 alec Exp $
  */
 
 $layout['pagetitle'] = trans('New Config Option');
 
 $config = isset($_POST['config']) ? $_POST['config'] : array();
 
-if (sizeof($config)) {
+if(sizeof($config))
+{
 	foreach($config as $key => $val)
-		if ($key != 'wysiwyg')
-			$config[$key] = trim($val);
-
-	if(!($config['var'] || $config['value'] || $config['description']))
+	    $config[$key] = trim($val);
+	
+	if(!($config['name'] || $config['value'] || $config['description']))
 	{
 		$SESSION->redirect('?m=configlist');
 	}
 	
-	if($config['var']=='')
-		$error['var'] = trans('Option name is required!');
-	elseif(strlen($config['var'])>64)
-		$error['var'] = trans('Option name is too long (max.64 characters)!');
-	elseif(!preg_match('/^[a-z0-9_-]+$/', $config['var']))
-		$error['var'] = trans('Option name contains forbidden characters!');
-	elseif($LMS->GetConfigOptionId($config['var'], $config['section']))
-		$error['var'] = trans('Option exists!');
+	if($config['name']=='')
+		$error['name'] = trans('Option name is required!');
+	elseif(strlen($config['name'])>64)
+		$error['name'] = trans('Option name is too long (max.64 characters)!');
+	elseif(!preg_match('/^[a-z0-9_-]+$/', $config['name']))
+    		$error['name'] = trans('Option name contains forbidden characters!');
+	elseif($LMS->GetConfigOptionId($config['name'], $config['section']))
+		$error['name'] = trans('Option exists!'); 
 
-	$section = empty($config['section']) ? $config['newsection'] : $config['section'];
-	if (empty($section))
-		$error['newsection'] = trans('Section name can\'t be empty!');
-	elseif (!preg_match('/^[a-z0-9_-]+$/', $section))
-		$error[empty($config['section']) ? 'newsection' : 'section'] = trans('Section name contains forbidden characters!');
-
-	$option = $config['section'] . '.' . $config['var'];
-	if(!ConfigHelper::checkPrivilege('superuser') || $config['type'] == CONFIG_TYPE_AUTO)
-		$config['type'] = $LMS->GetConfigDefaultType($option);
-
-	if($msg = $LMS->CheckOption($option, $config['value'], $config['type']))
-		$error['value'] = $msg;
+	if(!preg_match('/^[a-z0-9_-]+$/', $config['section']) && $config['section']!='')
+    		$error['section'] = trans('Section name contains forbidden characters!');
+	    
+	if($config['value']=='')
+		$error['value'] = trans('Option with empty value not allowed!');
+	elseif($msg = $LMS->CheckOption($config['name'], $config['value']))
+	        $error['value'] = $msg;
 	
 	if(!isset($config['disabled'])) $config['disabled'] = 0;
 
-	if (!$error) {
-		$args = array(
-			'section' => $section,
-			'var' => $config['var'],
-			'value' => $config['value'],
-			'description' => $config['description'],
-			'disabled' => $config['disabled'],
-			'type' => $config['type']
-		);
-		$DB->Execute('INSERT INTO uiconfig (section, var, value, description, disabled, type) VALUES (?, ?, ?, ?, ?, ?)',
-			array_values($args));
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_UICONF] = $DB->GetLastInsertID('uiconfig');
-			$SYSLOG->AddMessage(SYSLOG::RES_UICONF, SYSLOG::OPER_ADD, $args);
-		}
-
-		if (!isset($config['reuse']))
+	if(!$error)
+	{
+		$DB->Execute('INSERT INTO uiconfig (section, var, value, description, disabled) VALUES (?, ?, ?, ?, ?)', 
+				array(	$config['section'], 
+					$config['name'], 
+					$config['value'],
+					$config['description'],
+					$config['disabled']
+					));
+		
+		if(!isset($config['reuse']))
+		{
 			$SESSION->redirect('?m=configlist');
-
-		unset($config['var']);
+		}
+		unset($config['name']);
 		unset($config['value']);
 		unset($config['description']);
 		unset($config['disabled']);
@@ -94,9 +83,8 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 if(isset($_GET['section']))
 	$config['section'] = $_GET['section'];
 
-$SMARTY->assign('sections', $LMS->GetConfigSections());
 $SMARTY->assign('error', $error);
 $SMARTY->assign('config', $config);
-$SMARTY->display('config/configadd.html');
+$SMARTY->display('configadd.html');
 
 ?>

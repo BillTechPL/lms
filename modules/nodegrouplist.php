@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodegrouplist.php,v 1.14 2011/01/18 08:12:24 alec Exp $
  */
 
 function GroupList()
@@ -47,25 +47,27 @@ function GroupList()
         return $nodegrouplist;
 }
 
-if (isset($_POST['nodegroupids'])) {
-	$nodegroupids = $_POST['nodegroupids'];
-	if (empty($nodegroupids))
-		die;
-	foreach ($nodegroupids as $idx => $nodegroupid) {
-		$DB->Execute('UPDATE nodegroups SET prio = ? WHERE id = ?',
-			array($idx + 1, $nodegroupid));
-		if ($SYSLOG) {
-			$args = array(
-				SYSLOG::RES_NODEGROUP => $nodegroupid,
-				'prio' => $idx + 1,
-			);
-			$SYSLOG->AddMessage(SYSLOG::RES_NODEGROUP, SYSLOG::OPER_UPDATE, $args);
-		}
+if (isset($_POST['from']) && isset($_POST['to']))
+{
+	$from = $_POST['from'];
+	$to = $_POST['to'];
+	if ($from != '' && $to != '' && $from != $to)
+	{
+		$prio['from'] = $DB->GetOne('SELECT prio FROM nodegroups WHERE id=?', array($from));
+		$prio['to'] = $DB->GetOne('SELECT prio FROM nodegroups WHERE id=?', array($to));
+		if ($prio['to'] < $prio['from'])
+			$DB->Execute('UPDATE nodegroups SET prio=prio+1 WHERE id<>? AND prio<? AND prio>=?',
+				array($from, $prio['from'], $prio['to']));
+		else
+			$DB->Execute('UPDATE nodegroups SET prio=prio-1 WHERE id<>? AND prio<=? AND prio>?',
+				array($from, $prio['to'], $prio['from']));
+		$DB->Execute('UPDATE nodegroups SET prio=? WHERE id=?',
+			array($prio['to'], $from));
+		$LMS->CompactNodeGroups();
 	}
-	header('Content-Type: application/json');
-	echo json_encode(array('result' => 'OK'));
-	die;
 }
+else
+	$from = 0;
 
 $layout['pagetitle'] = trans('Node Groups List');
 
@@ -77,9 +79,10 @@ $listdata['nodestotal'] = $nodegrouplist['nodestotal'];
 unset($nodegrouplist['total']);
 unset($nodegrouplist['nodestotal']);
 
+$SMARTY->assign('selectednodegroupid', $from);
 $SMARTY->assign('nodegrouplist', $nodegrouplist);
 $SMARTY->assign('listdata', $listdata);
 
-$SMARTY->display('node/nodegrouplist.html');
+$SMARTY->display('nodegrouplist.html');
 
 ?>

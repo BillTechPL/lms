@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,19 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: checkip.php,v 1.33 2011/01/18 08:12:05 alec Exp $
  */
 
 // Checking if connection is from allowed IP
 
-$allow_from = ConfigHelper::getConfig('phpui.allow_from', null);
-
-if ($allow_from) {
+if(!empty($CONFIG['phpui']['allow_from']))
+{
 	// delete ipv6 prefix if it's present: 
 	
 	$ipaddr = str_replace('::ffff:','',$_SERVER['REMOTE_ADDR']);
 
-	$allowedlist = explode(',', $allow_from);
+	$allowedlist = explode(',',$CONFIG['phpui']['allow_from']);
 
 	$isin = FALSE;
 
@@ -79,3 +78,5 @@ if ($allow_from) {
 		exit(0);
 	}
 }
+
+?>

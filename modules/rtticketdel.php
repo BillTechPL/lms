@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtticketdel.php,v 1.6 2011/01/18 08:12:25 alec Exp $
  */
 
 $ticket = intval($_GET['id']);
-$taction = ($_GET['taction']);
 $queue = $DB->GetOne('SELECT queueid FROM rttickets WHERE id = ?', array($ticket));
-$right = $LMS->GetUserRightsRT(Auth::GetCurrentUser(), $queue);
+$right = $LMS->GetUserRightsRT($AUTH->id, $queue);
 
 if(($right & 4) != 4)
 {
@@ -36,17 +35,11 @@ if(($right & 4) != 4)
 	die;
 }
 
-if ($taction == 'delete')
-{
-	$del = 1;
-	$nodel = 0;
-	$deltime = time();
-	// We use incomplete cascade delete. This means that we delete only messages tah weren't deleted before ticket delete operation.
-	$DB->BeginTrans();
-	$DB->Execute('UPDATE rttickets SET deleted=?, deltime=?, deluserid=? WHERE id = ?', array($del, $deltime, Auth::GetCurrentUser(), $ticket));
-	$DB->Execute('UPDATE rtmessages SET deleted=?, deluserid=? WHERE deleted=? and ticketid = ?', array($del, Auth::GetCurrentUser(), $nodel, $ticket));
-	$DB->CommitTrans();
-}
-$SESSION->redirect('?m=rtqueueview&id='.$queue);
+$DB->Execute('DELETE FROM rttickets WHERE id = ?', array($ticket));
+
+if (isset($CONFIG['rt']['mail_dir']))
+	rrmdir($CONFIG['rt']['mail_dir'] . sprintf('/%06d', $ticket));
+
+header('Location: ?m=rtqueueview&id=' . $queue);
 
 ?>

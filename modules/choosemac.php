@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: choosemac.php,v 1.33 2011/01/18 08:12:20 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Select MAC address');
@@ -37,9 +37,9 @@ elseif($p == 'main')
 
 	$maclist = $LMS->GetMACs();
 
-	if (ConfigHelper::getConfig('phpui.arpd_servers'))
+	if(isset($CONFIG['phpui']['arpd_servers']) && $CONFIG['phpui']['arpd_servers'])
 	{
-		$servers = preg_split('/[\t ]+/', ConfigHelper::getConfig('phpui.arpd_servers'));
+		$servers = preg_split('/[\t ]+/', $CONFIG['phpui']['arpd_servers']);
 		foreach($servers as $server)
 		{
 			$res = explode(':', $server);
@@ -59,6 +59,6 @@ elseif($p == 'main')
 
 $SMARTY->assign('part', $p);
 $SMARTY->assign('js', $js);
-$SMARTY->display('choose/choosemac.html');
+$SMARTY->display('choosemac.html');
 
 ?>

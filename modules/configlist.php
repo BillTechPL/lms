@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,14 +21,32 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: configlist.php,v 1.70 2011/03/31 11:53:13 alec Exp $
  */
 
-function GetConfigList() {
-	$DB = LMSDB::getInstance();
+function GetConfigList($order='var,asc', $section='', $search='')
+{
+	global $DB;
+
+	list($order, $direction) = sscanf($order, '%[^,],%s');
+
+	$direction = ($direction != 'desc') ? 'asc' : 'desc';
+
+	switch($order)
+	{
+		case 'section':
+			$sqlord = " ORDER BY section $direction, var";
+		break;
+		default:
+			$sqlord = " ORDER BY var $direction";
+		break;
+	}
 
 	$config = $DB->GetAll('SELECT id, section, var, value, description as usercomment, disabled 
-			FROM uiconfig WHERE section != \'userpanel\'');
+			FROM uiconfig WHERE section != \'userpanel\''
+			.($section ? ' AND section = '.$DB->Escape($section) : '')
+			.($search ? ' AND var ?LIKE? '.$DB->Escape('%'.$search.'%') : '')
+			.$sqlord);
 
 	if($config) foreach ($config as $idx => $item)
 	{
@@ -36,19 +54,7 @@ function GetConfigList() {
 		{
 			case 'phpui':
 				switch($item['var'])
-				{	
-				case 'autosuggest_max_length':
-					$config[$idx]['description'] = trans('Max length of auto suggest proposal, further characters will be dotted.');
-				break;
-
-				case 'default_autosuggest_placement':
-					$config[$idx]['description'] = trans('Default placement of suggestion window (left/right/top/bottom)');
-				break;
-
-				case 'allow_from2':
-					$config[$idx]['description'] = trans('List of networks and IP addresses, with access to LMS. If empty, every IP address has access to LMS. When you write list of addresses or address pools here, LMS will dismiss every unwanted user with HTTP 403 error.');
-				break;
-
+				{
 				case 'allow_from':
 					$config[$idx]['description'] = trans('List of networks and IP addresses, with access to LMS. If empty, every IP address has access to LMS. When you write list of addresses or address pools here, LMS will dismiss every unwanted user with HTTP 403 error.');
 				break;
@@ -93,7 +99,7 @@ function GetConfigList() {
 					$config[$idx]['description'] = trans('Limit of records displayed on one page in domains list. Default: 100.');
 				break;
 
-				case 'aliaslist_pagelimit':
+    			case 'aliaslist_pagelimit':
 					$config[$idx]['description'] = trans('Limit of records displayed on one page in aliases list. Default: 100.');
 				break;
 
@@ -107,10 +113,6 @@ function GetConfigList() {
 				
 				case 'numberplanlist_pagelimit':
 					$config[$idx]['description'] = trans('Limit of records displayed on one page in numbering plans list. Default: 100.');
-				break;
-				
-				case 'billinglist_pagelimit':
-					$config[$idx]['description'] = trans('Limit of billings displayed on one page. Default: 100.');
 				break;
 
 				case 'divisionlist_pagelimit':
@@ -127,10 +129,6 @@ function GetConfigList() {
 
 				case 'force_ssl':
 					$config[$idx]['description'] = trans('SSL Enforcing. Setting this option to 1 will effect with that LMS will enforce SSL connection with redirect to \'https://\'.$_SERVER[HTTP_HOST].$_SERVER[REQUEST_URI] at every request without SSL. Default: 0 (off).');
-				break;
-
-				case 'reload_timer':
-					$config[$idx]['description'] = trans('Reload timer. If set to true it will display remaining time to configuration reload. If using more than one host, remember to sync time between them.');
 				break;
 				
 				case 'reload_type':
@@ -223,10 +221,6 @@ function GetConfigList() {
 					$config[$idx]['description'] = trans('Value of tax rate which will be selected by default on tax rates lists. Default: 22.0');
 				break;
 
-				case 'default_prodid':
-					$config[$idx]['description'] = trans ('Value of product ID. Default: empty');
-				break;
-
 				case 'helpdesk_reply_body':
 					$config[$idx]['description'] = trans('Adds body of message in ticket reply. Default: false');
 				break;
@@ -275,73 +269,10 @@ function GetConfigList() {
 					$config[$idx]['description'] = trans('Command which returns IP-MAC bindings. Default: internal backend');
 				break;
 
-				case 'report_type':
-					$config[$idx]['description'] = trans('Documents type. You can use "html" or "pdf". Default: html.');
-				break;
-
-				case 'hide_toolbar':
-					$config[$idx]['description'] = trans('Hide toolbar from user interface. Default: false.');
-				break;
-
-				case 'logging':
-					$config[$idx]['description'] = trans('Does this LMS have transaction log support (not opensource). Default: false.');
-				break;
-			
-				case 'add_customer_group_required':
-					$config[$idx]['description'] = trans('If isset "true" when adding new customer select group is required. Default "false"');
-				break;
-
-				case 'event_max_userlist_size':
-					$config[$idx]['description'] = trans('Automatically adjusts the size of the selection list to the number of users when set to 0.');
-				break;
-
-				case 'ping_type':
-					$config[$idx]['description'] = trans('Default ping type. You can use "1" for ping or "2" for arping. Default: 1.');
-				break;
-				
-				case 'default_teryt_city':
-					$config[$idx]['description'] = trans('Default City in TERYT. Set city id in TERYT.');
-				break;
-
-				case 'logout_confirmation':
-					$config[$idx]['description'] = trans('If set to "true" then logout confirmation is required. Default "false"');
-				break;
-
-				case 'helpdesk_notification_mail_subject':
-				case 'helpdesk_notification_mail_body':
-				case 'helpdesk_notification_sms_body':
-					$config[$idx]['description'] = trans('Template for user notice relevant to ticket in Helpdesk. %status - ticket status ; %cat - ticket categories ; %tid - ticket id ; %cid - customer id ; %subject - ticket subject ; %body - ticket body ; %url - ticket url ; %customerinfo - customer information');
-				break;
-
-				case 'helpdesk_customerinfo_mail_body':
-					$config[$idx]['description'] = trans('Template for user email notice relevant to customer info in ticket in Helpdesk. %custname - customer name ; %cid  - customer id ; %address - address ; %email - e-mails ; %phone - phones');
-					break;
-
-				case 'helpdesk_customerinfo_sms_body':
-					$config[$idx]['description'] = trans('Template for user sms notice relevant to customer info in ticket in Helpdesk. %custname - customer name ; %cid  - customer id ; %address - address ; %email - e-mails ; %phone - phones');
-					break;
-
 				default:
 					$config[$idx]['description'] = trans('Unknown option. No description.');
 				break;
 			} //end: var
-			break;
-
-			case 'payments':
-				switch($item['var'])
-				{
-					case 'date_format':
-						$config[$idx]['description'] = trans('Define date format for variable: %period, %aligned_period, %current_month used in payments.comment and payments.settlement_comment');
-					break;
-
-					case 'default_unit_name':
-						$config[$idx]['description'] = trans('Unit name on invoice, default: "pcs."');
-					break;
-
-					default:
-						$config[$idx]['description'] = trans('Unknown option. No description.');
-					break;
-				} //end: var
 			break;
 
 			case 'finances':
@@ -428,10 +359,6 @@ function GetConfigList() {
 						$config[$idx]['description'] = trans('Default invoices paytype. Default: "1" (cash)');
 					break;
 
-					case 'customer_bankaccount':
-						$config[$idx]['description'] = trans('Show bankaccount on invoice. Default: 0');
-					break;
-
 					default:
 						$config[$idx]['description'] = trans('Unknown option. No description.');
 					break;
@@ -504,26 +431,6 @@ function GetConfigList() {
 					case 'smtp_password':
 					case 'smtp_auth_type':
 						$config[$idx]['description'] = trans('SMTP settings.');
-					break;
-
-					case 'backend':
-						$config[$idx]['description'] = trans('Mail backend settings. Available options: pear or phpmailer.');
-					break;
-
-					case 'phpmailer_from':
-						$config[$idx]['description'] = trans('E-mail address from which we send mail.');
-					break;
-
-					case 'phpmailer_from_name':
-						$config[$idx]['description'] = trans('E-mail address name from which we send mail.');
-					break;
-
-					case 'phpmailer_is_html':
-						$config[$idx]['description'] = trans('Email message in html format.');
-					break;
-
-					case 'smtp_secure':
-						$config[$idx]['description'] = trans('Security protocol. Available options: ssl or tls.');
 					break;
 
 					default:
@@ -601,34 +508,72 @@ function GetConfigList() {
                                         case 'default_mailserver_ip':
                                                 $config[$idx]['description'] = trans('IP address of mailserver');
                                         break;
-                                        case 'default_spf':
-                                                $config[$idx]['description'] = trans('Default SPF record. If you leave the field blank, record will not add. Example: "v=spf1 a mx ip4:ADDRESS_MAILSERVER ~all" (Put in quotes).');
-                                        break;
+
                                 } //end: var
                         break;
 		    default:
 				$config[$idx]['description'] = trans('Unknown option. No description.');
 			break;
 		} //end: section
-		if (!empty($config[$idx]['usercomment']))
-			$config[$idx]['usercomment'] = str_replace("\n", '<br>', $config[$idx]['usercomment']);
 	} //end: foreach
+
+	$config['total'] = sizeof($config);
+	$config['order'] = $order;
+	$config['direction'] = $direction;
+	$config['section'] = $section;
 
 	return $config;
 }
 
 $layout['pagetitle'] = trans('User Interface Configuration');
 
-$configlist = GetConfigList();
+if(!isset($_GET['o']))
+	$SESSION->restore('conlo', $o);
+else
+	$o = $_GET['o'];
+$SESSION->save('conlo', $o);
 
-$pagelimit = ConfigHelper::getConfig('phpui.configlist_pagelimit', count($configlist));
+if(!isset($_GET['s']))
+        $SESSION->restore('conls', $s);
+else
+	$s = $_GET['s'];
+$SESSION->save('conls', $s);
+
+if(!isset($_GET['n']))
+    $SESSION->restore('conln', $n);
+else
+	$n = $_GET['n'];
+$SESSION->save('conln', $n);
+
+if ($SESSION->is_set('conlp') && !isset($_GET['page']))
+	$SESSION->restore('conlp', $_GET['page']);
+
+$configlist = GetConfigList($o, $s, $n);
+
+$listdata['total'] = $configlist['total'];
+$listdata['order'] = $configlist['order'];
+$listdata['direction'] = $configlist['direction'];
+$listdata['section'] = $configlist['section'];
+$listdata['search'] = $n;
+
+unset($configlist['total']);
+unset($configlist['order']);
+unset($configlist['direction']);
+unset($configlist['section']);
+
+$page = (!isset($_GET['page']) ? 1 : $_GET['page']); 
+$pagelimit = (! $LMS->CONFIG['phpui']['configlist_pagelimit'] ? $listdata['total'] : $LMS->CONFIG['phpui']['configlist_pagelimit']);
+$start = ($page - 1) * $pagelimit;
+
+$SESSION->save('conlp', $page);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
-$SMARTY->assign('sections', $LMS->GetConfigSections());
 $SMARTY->assign('pagelimit', $pagelimit);
+$SMARTY->assign('page', $page);
+$SMARTY->assign('start', $start);
 $SMARTY->assign('configlist', $configlist);
-$SMARTY->assign('section', isset($_GET['s']) ? $_GET['s'] : '');
-$SMARTY->display('config/configlist.html');
+$SMARTY->assign('listdata', $listdata);
+$SMARTY->display('configlist.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: receiptlist.php,v 1.29 2011/04/01 10:35:12 alec Exp $
  */
 
 function GetReceiptList($registry, $order='', $search=NULL, $cat=NULL, $from=0, $to=0, $advances=0)
 {
-	global $DB;
+	global $CONFIG, $DB;
 
 	list($order,$direction) = sscanf($order, '%[^,],%s');
 
@@ -41,7 +41,7 @@ function GetReceiptList($registry, $order='', $search=NULL, $cat=NULL, $from=0, 
 			$sqlord = " ORDER BY documents.name $direction, documents.cdate";
 		break;
 		case 'user':
-			$sqlord = " ORDER BY vusers.lastname $direction, documents.cdate";
+			$sqlord = " ORDER BY users.name $direction, documents.cdate";
 		break;
 		case 'cdate':
 		default:
@@ -85,18 +85,18 @@ function GetReceiptList($registry, $order='', $search=NULL, $cat=NULL, $from=0, 
 		$where = ' AND closed = 0';
 
 	if($list = $DB->GetAll(
-	        'SELECT documents.id AS id, SUM(value) AS value, number, cdate, customerid,
-		documents.name AS customer, address, zip, city, numberplans.template, extnumber, closed,
-		MIN(description) AS title, COUNT(*) AS posnumber, vusers.name AS user
-		FROM documents
+	        'SELECT documents.id AS id, SUM(value) AS value, number, cdate, customerid, 
+		documents.name AS customer, address, zip, city, template, extnumber, closed,
+		MIN(description) AS title, COUNT(*) AS posnumber, users.name AS user 
+		FROM documents 
 		LEFT JOIN numberplans ON (numberplanid = numberplans.id)
-		LEFT JOIN vusers ON (userid = vusers.id)
-		LEFT JOIN receiptcontents ON (documents.id = docid AND type = ?)
+		LEFT JOIN users ON (userid = users.id)
+		LEFT JOIN receiptcontents ON (documents.id = docid AND type = ?) 
 		WHERE regid = ?'
 		.$where
-		.' GROUP BY documents.id, number, cdate, customerid, documents.name, address, zip, city, numberplans.template, vusers.name, extnumber, closed '
+		.' GROUP BY documents.id, number, cdate, customerid, documents.name, address, zip, city, template, users.name, extnumber, closed '
 		.$having
-		.($sqlord != '' ? $sqlord : ''),
+		.($sqlord != '' ? $sqlord : ''), 
 		array(DOC_RECEIPT, $registry)
 		))
 	{
@@ -105,13 +105,7 @@ function GetReceiptList($registry, $order='', $search=NULL, $cat=NULL, $from=0, 
 
 		foreach($list as $idx => $row)
 		{
-			$list[$idx]['number'] = docnumber(array(
-				'number' => $row['number'],
-				'template' => $row['template'],
-				'cdate' => $row['cdate'],
-				'ext_num' => $row['extnumber'],
-				'customerid' => $row['customerid'],
-			));
+			$list[$idx]['number'] = docnumber($row['number'], $row['template'], $row['cdate'], $row['extnumber']);
 			$list[$idx]['customer'] = $row['customer'].' '.$row['address'].' '.$row['zip'].' '.$row['city'];
 
 			// don't retrive descriptions of all items to not decrease speed
@@ -165,40 +159,33 @@ else
 	$SESSION->restore('rlreg', $regid);
 $SESSION->save('rlreg', $regid);
 
-if (isset($_POST['from'])) {
-	if (!empty($_POST['from'])) {
-		$from = date_to_timestamp($_POST['from']);
-		if (empty($from))
-			$error['datefrom'] = trans('Invalid date format!');
+if(isset($_POST['from']))
+{
+	if($_POST['from'] != '')
+	{
+		list($year, $month, $day) = explode('/', $_POST['from']);
+		$from = mktime(0,0,0, $month, $day, $year);
 	}
-} elseif ($SESSION->is_set('rlf'))
+}
+elseif($SESSION->is_set('rlf'))
 	$SESSION->restore('rlf', $from);
 else
-	$from = 0;
+	$from = mktime(0,0,0);
+$SESSION->save('rlf', $from);
 
-if (isset($_POST['to'])) {
-	if (!empty($_POST['to'])) {
-		$to = date_to_timestamp($_POST['to']);
-		if (empty($to))
-			$error['dateto'] = trans('Invalid date format!');
-		else
-			$to += 86399;
+if(isset($_POST['to']))
+{
+	if($_POST['to'] != '')
+	{
+		list($year, $month, $day) = explode('/', $_POST['to']);
+		$to = mktime(23,59,59, $month, $day, $year);
 	}
-} elseif ($SESSION->is_set('rlt'))
+}
+elseif($SESSION->is_set('rlt'))
 	$SESSION->restore('rlt', $to);
 else
-	$to = 0;
-
-if ($from && $to)
-	if($from > $to) {
-		$error['datefrom'] = trans('Incorrect date range!');
-		$error['dateto'] = trans('Incorrect date range!');
-	}
-else
-{
-	$SESSION->save('rlf', $from);
-	$SESSION->save('rlt', $to);
-}
+	$to = mktime(23,59,59);
+$SESSION->save('rlt', $to);
 
 if(isset($_POST['advances']))
 	$a = 1;
@@ -211,9 +198,9 @@ if(!$regid)
 	$SESSION->redirect('?m=cashreglist');
 }
 
-if (!$DB->GetOne('SELECT rights FROM cashrights WHERE userid = ? AND regid = ? AND (rights & 1) > 0',
-	array(Auth::GetCurrentUser(), $regid))) {
-	$SMARTY->display('noaccess.html');
+if(! $DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($AUTH->id, $regid)) )
+{
+        $SMARTY->display('noaccess.html');
 	$SESSION->close();
 	die;
 }
@@ -242,20 +229,20 @@ $listdata['cashstate'] = $DB->GetOne('SELECT SUM(value) FROM receiptcontents WHE
 if($from > 0)
 	$listdata['startbalance'] = $DB->GetOne(
 		'SELECT SUM(value) FROM receiptcontents
-		LEFT JOIN documents ON (docid = documents.id AND type = ?)
+		LEFT JOIN documents ON (docid = documents.id AND type = ?) 
 		WHERE cdate < ? AND regid = ?',
 		array(DOC_RECEIPT, $from, $regid));
 
 $listdata['endbalance'] = $listdata['startbalance'] + $listdata['totalincome'] - $listdata['totalexpense'];
 
-$pagelimit = ConfigHelper::getConfig('phpui.receiptlist_pagelimit');
+$pagelimit = $CONFIG['phpui']['receiptlist_pagelimit'];
 $page = (!isset($_GET['page']) ? ceil($listdata['total']/$pagelimit) : $_GET['page']);
 $start = ($page - 1) * $pagelimit;
 
-$logentry = $DB->GetRow('SELECT * FROM cashreglog WHERE regid = ?
+$logentry = $DB->GetRow('SELECT * FROM cashreglog WHERE regid = ? 
 			ORDER BY time DESC LIMIT 1', array($regid, $regid));
 
-$layout['pagetitle'] = trans('Cash Registry: $a', $DB->GetOne('SELECT name FROM cashregs WHERE id=?', array($regid)));
+$layout['pagetitle'] = trans('Cash Registry: $0', $DB->GetOne('SELECT name FROM cashregs WHERE id=?', array($regid)));
 
 $SESSION->save('backto', 'm=receiptlist&regid='.$regid);
 
@@ -264,15 +251,13 @@ if($receipt = $SESSION->get('receiptprint'))
 	$SMARTY->assign('receipt', $receipt);
 	$SESSION->remove('receiptprint');
 }
-
-$SMARTY->assign('error',$error);
-$SMARTY->assign('logentry', $logentry);
+$SMARTY->assign('logentry', $logentry); 
 $SMARTY->assign('listdata',$listdata);
 $SMARTY->assign('pagelimit',$pagelimit);
 $SMARTY->assign('start',$start);
 $SMARTY->assign('page',$page);
 $SMARTY->assign('marks',$marks);
 $SMARTY->assign('receiptlist',$receiptlist);
-$SMARTY->display('receipt/receiptlist.html');
+$SMARTY->display('receiptlist.html');
 
 ?>

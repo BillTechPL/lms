@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashreglogadd.php,v 1.12 2011/04/01 10:35:12 alec Exp $
  */
 
 $regid = isset($_GET['regid']) ? $_GET['regid'] : 0;
@@ -30,8 +30,8 @@ if(!$regid)
 {
         $SESSION->redirect('?m=cashreglist');
 }
-
-if($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array(Auth::GetCurrentUser(), $regid))<2)
+	
+if($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($AUTH->id, $regid))<2)
 {
         $SMARTY->display('noaccess.html');
         $SESSION->close();
@@ -57,35 +57,45 @@ if(isset($_POST['reglog']))
 	elseif(!preg_match('/^[-]?[0-9.,]+$/', $reglog['value']))
 	        $error['value'] = trans('Incorrect value!');
 
-	if(!empty($reglog['time']))
+	if($reglog['time'])
 	{
-		$time = datetime_to_timestamp($reglog['time']);
-		if(empty($time))
+		if(preg_match('/^([0-9]{4}\/[0-9]{2}\/[0-9]{2})\s+([0-9]{2}:[0-9]{2})$/', $reglog['time'], $matches))
+		{
+	    		// date format 'yyyy/mm/dd hh:mm'
+			$date = explode('/', $matches[1]);
+			$time = explode(':', $matches[2]);
+
+			if(checkdate($date[1],$date[2],(int)$date[0]))
+			{
+		    		if (!strlen($time[0]) || !strlen($time[1]))
+		    			$time[0] = $time[1] = 0;
+				$time = mktime($time[0],$time[1],0,$date[1],$date[2],$date[0]);
+			}
+			else
+				$error['time'] = trans('Wrong datetime format!');
+		}
+		else
 			$error['time'] = trans('Wrong datetime format!');
 	}
 	else
 		$time = time();
 
-	if (!$error) {
+	if(!$error)
+	{
 		$snapshot = $DB->GetOne('SELECT SUM(value) FROM receiptcontents
-			LEFT JOIN documents ON (docid = documents.id)
-			WHERE cdate <= ? AND regid = ?',
-			array($time, $regid));
+		                        LEFT JOIN documents ON (docid = documents.id)
+					WHERE cdate <= ? AND regid = ?',
+					array($time, $regid));
 
-		$args = array(
-			'time' => $time,
-			'description' => $reglog['description'],
-			'value' => $reglog['value'],
-			SYSLOG::RES_CASHREG => $regid,
-			SYSLOG::RES_USER => Auth::GetCurrentUser(),
-			'snapshot' => str_replace(',','.',floatval($snapshot))
-		);
 		$DB->Execute('INSERT INTO cashreglog (time, description, value, regid, userid, snapshot)
-				VALUES(?, ?, ?, ?, ?, ?)', array_values($args));
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_CASHREGHIST] = $DB->GetLastInsertID('cashreglog');
-			$SYSLOG->AddMessage(SYSLOG::RES_CASHREGHIST, SYSLOG::OPER_ADD, $args);
-		}
+				VALUES(?, ?, ?, ?, ?, ?)',
+				array($time,
+					$reglog['description'],
+					$reglog['value'],
+					$regid,
+					$AUTH->id,
+					str_replace(',','.',floatval($snapshot))
+				));
 
 		$SESSION->redirect('?m=cashreglogview&regid='.$regid);
 	}
@@ -99,6 +109,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('reglog', $reglog);
 $SMARTY->assign('error', $error);
-$SMARTY->display('cash/cashreglogadd.html');
+$SMARTY->display('cashreglogadd.html');
 
 ?>

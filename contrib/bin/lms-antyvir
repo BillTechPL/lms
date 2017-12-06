@@ -1,8 +1,8 @@
 #!/usr/bin/perl -Tw
 #
-# LMS version 1.11-git
+# LMS version 1.11.13 Dira
 #
-#  (C) 2001-2013 LMS Developers
+#  (C) 2001-2011 LMS Developers
 #
 #  Please, see the doc/AUTHORS for more information about authors!
 #
@@ -20,7 +20,7 @@
 #  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 #  USA.
 #
-#  $Id$
+#  $Id: lms-antyvir,v 1.16 2011/01/18 08:11:58 alec Exp $
 
 use DBI;
 use strict;
@@ -31,7 +31,7 @@ use vars qw($configfile $quiet $help $version);
 
 $ENV{'PATH'}='/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin';
 
-my $_version = '1.11-git';
+my $_version = '1.11.13 Dira';
 
 sub dotquad2u32($)
 {
@@ -54,8 +54,8 @@ if($help)
 {
         print STDERR <<EOF;
 lms-antyvir, version $_version
-(C) 2001-2013 LMS Developers
-(C) 2001-2013 Wojciech Swiadkowski
+(C) 2001-2011 LMS Developers
+(C) 2001-2011 Wojciech Swiadkowski
 
 -C, --config-file=/etc/lms/lms.ini      alternate config file (default: /etc/lms
 -h, --help                      print this help and exit;
@@ -70,8 +70,8 @@ if($version)
 {
      print STDERR <<EOF;
 lms-antyvir, version $_version
-(C) 2001-2013 LMS Developers
-(C) 2001-2013 Wojciech Swiadkowski
+(C) 2001-2011 LMS Developers
+(C) 2001-2011 Wojciech Swiadkowski
 
 EOF
     exit 0;
@@ -85,8 +85,8 @@ if(!$configfile)
 if(!$quiet)
 {
 	print STDOUT "lms-antyvir, version $_version\n";
-	print STDOUT "(C) 2001-2013 LMS Developers\n";
-	print STDOUT "(C) 2001-2013 Wojciech Swiadkowski\n";
+	print STDOUT "(C) 2001-2011 LMS Developers\n";
+	print STDOUT "(C) 2001-2011 Wojciech Swiadkowski\n";
 	print STDOUT "Using file $configfile as config.\n";
 }
 
@@ -177,7 +177,7 @@ foreach my $ip (@iplist)
 		if($logmessage)
     		{ 
         		$dbase->do("UPDATE nodes SET warning = 1 WHERE ipaddr = inet_aton('$ip')");
-			my $dbq = $dbase->prepare("SELECT ownerid FROM vnodes WHERE ownerid != 0 AND ipaddr = inet_aton('$ip')");
+			my $dbq = $dbase->prepare("SELECT ownerid FROM nodes WHERE ownerid != 0 AND ipaddr = inet_aton('$ip')");
 			$dbq->execute();
 			if(my $row = $dbq->fetchrow_hashref())
 			{

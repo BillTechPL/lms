@@ -1,7 +1,7 @@
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: notify.c,v 1.30 2011/01/18 08:12:03 alec Exp $
  */
 
 #include <stdio.h>
@@ -111,20 +111,13 @@ void reload(GLOBAL *g, struct notify_module *n)
 	int i, j; 
 	double balance;
 
-	res = g->db->query(g->db->conn, "SELECT customers.id AS id, pin, name, lastname, "
-		"SUM(cash.value) AS balance, "
-		"(SELECT contact FROM customercontacts WHERE customerid = customers.id AND type = 8"
-		"	ORDER BY id LIMIT 1) AS email "
-		"FROM customers "
-		"LEFT JOIN cash ON customers.id = cash.customerid "
-		"WHERE deleted = 0 AND email IS NOT NULL "
-		"GROUP BY customers.id, customer.name, lastname, email, pin");
+	res = g->db_query(g->conn, "SELECT customers.id AS id, email, pin, name, lastname, SUM(cash.value) AS balance FROM customers LEFT JOIN cash ON customers.id = cash.customerid WHERE deleted = 0 AND email!='' GROUP BY customers.id, name, lastname, email, pin");
 	
-	if( g->db->nrows(res) )
+	if( g->db_nrows(res) )
 	{
-		for(i=0; i<g->db->nrows(res); i++) 
+		for(i=0; i<g->db_nrows(res); i++) 
 		{
-			balance = atof(g->db->get_data(res,i,"balance"));
+			balance = atof(g->db_get_data(res,i,"balance"));
 			
 			if( balance < n->limit ) 
 			{
@@ -138,13 +131,13 @@ void reload(GLOBAL *g, struct notify_module *n)
 						char *date, *value, *comment, *temp, *temp2;
 						char *last_ten = strdup("");
 							
-						result = g->db->pquery(g->db->conn, "SELECT comment, time, value FROM cash WHERE customerid = ? ORDER BY time DESC LIMIT 10", g->db->get_data(res,i,"id"));
+						result = g->db_pquery(g->conn, "SELECT comment, time, value FROM cash WHERE customerid = ? ORDER BY time DESC LIMIT 10", g->db_get_data(res,i,"id"));
 						
-						for(j=0; j<g->db->nrows(result); j++) 
+						for(j=0; j<g->db_nrows(result); j++) 
 						{
-							date = utoc(atof(g->db->get_data(result,j,"time")));
-							value = g->db->get_data(result,j,"value");
-							comment = g->db->get_data(result,j,"comment");
+							date = utoc(atof(g->db_get_data(result,j,"time")));
+							value = g->db_get_data(result,j,"value");
+							comment = g->db_get_data(result,j,"comment");
 						
 							temp = (char *) malloc(strlen(date)+strlen(value)+strlen(comment)+12);	
 							sprintf(temp, "%s\t | %s\t\t | %s\n", date, value, comment);
@@ -159,23 +152,23 @@ void reload(GLOBAL *g, struct notify_module *n)
 															
 						g->str_replace(&mailfile, "%last_10_in_a_table", last_ten);
 						
-						g->db->free(&result);
+						g->db_free(&result);
 						free(last_ten);
 					}
 					
-					g->str_replace(&mailfile, "%saldo", g->db->get_data(res,i,"balance"));
-					g->str_replace(&mailfile, "%B", g->db->get_data(res,i,"balance"));
-					g->str_replace(&mailfile, "%b", balance < 0 ? ftoa(balance * -1) : g->db->get_data(res,i,"balance"));
-					g->str_replace(&mailfile, "%pin", g->db->get_data(res,i,"pin"));
-					g->str_replace(&mailfile, "%name", g->db->get_data(res,i,"name"));
-					g->str_replace(&mailfile, "%lastname", g->db->get_data(res,i,"lastname"));
+					g->str_replace(&mailfile, "%saldo", g->db_get_data(res,i,"balance"));
+					g->str_replace(&mailfile, "%B", g->db_get_data(res,i,"balance"));
+					g->str_replace(&mailfile, "%b", balance < 0 ? ftoa(balance * -1) : g->db_get_data(res,i,"balance"));
+					g->str_replace(&mailfile, "%pin", g->db_get_data(res,i,"pin"));
+					g->str_replace(&mailfile, "%name", g->db_get_data(res,i,"name"));
+					g->str_replace(&mailfile, "%lastname", g->db_get_data(res,i,"lastname"));
 				
 					if( write_file(n->file, mailfile) < 0 )
 						syslog(LOG_ERR, "[%s/notify] Unable to write temporary file '%s' for message", n->base.instance, n->file);
 					free(mailfile);
 				
 					if( strlen(n->debugmail) < 1 )
-						g->str_replace(&command, "%address", g->db->get_data(res,i,"email"));
+						g->str_replace(&command, "%address", g->db_get_data(res,i,"email"));
 					else
 						g->str_replace(&command, "%address", n->debugmail);
 					system(command); 
@@ -190,7 +183,7 @@ void reload(GLOBAL *g, struct notify_module *n)
 	else
 		syslog(LOG_ERR, "[%s/notify] Unable to read database", n->base.instance);
 
-	g->db->free(&res);
+	g->db_free(&res);
 	free(n->command);
 	free(n->file);
 	free(n->mailtemplate);

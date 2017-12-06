@@ -1,15 +1,13 @@
 {include file="header.html"}
-<!--// $Id$ //-->
+<!--// $Id: info.html,v 1.2 2008/07/01 12:49:48 alec Exp $ //-->
 <table width="100%" cellpadding="10">
-{if !$usernodes.total && ConfigHelper::checkConfig('userpanel.hide_nodesbox')}
+{if !$usernodes.total && $_config.userpanel.hide_nodesbox}
 	<tr>
 		<td valign="top" width="100%">
 			{include file="module:userinfobox.html"}
-			<br />
-			{include file="module:userdocsbox.html"}
 		</td>
 	</tr>
-	{if ConfigHelper::getConfig('userpanel.data_consent_text') && !$userinfo.consentdate}
+	{if $_config.userpanel.data_consent_text && !$userinfo.consentdate}
 	<tr>
 		<td valign="top" width="100%">
 		{include file="module:consentbox.html"}
@@ -20,11 +18,9 @@
 	<tr>
 		<td valign="top" width="50%">
 			{include file="module:userinfobox.html"}
-			<br />
-			{include file="module:userdocsbox.html"}
 		</td>
 		<td valign="top" width="50%">
-			{if ConfigHelper::getConfig('userpanel.data_consent_text') && !$userinfo.consentdate}
+			{if $_config.userpanel.data_consent_text && !$userinfo.consentdate}
 			{include file="module:consentbox.html"}<br />
 			{/if}
 			{include file="module:usernodesbox.html"}

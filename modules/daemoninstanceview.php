@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: daemoninstanceview.php,v 1.14 2011/01/18 08:12:21 alec Exp $
  */
 
 function GetOptionList($instanceid)
@@ -39,7 +39,7 @@ $instance = $DB->GetRow('SELECT i.id, hosts.id AS hostid, i.name, hosts.name AS 
 	WHERE hosts.id = i.hostid AND i.id = ?',
 	array($_GET['id']));
 
-$layout['pagetitle'] = trans('Configuration of Instance: $a/$b', $instance['name'],
+$layout['pagetitle'] = trans('Configuration of Instance: $0/$1', $instance['name'],
 	'<A href="?m=daemoninstancelist&id='.$instance['hostid'].'">'.$instance['hostname'].'</A>');
 
 $optionlist = GetOptionList($instance['id']);
@@ -48,6 +48,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('optionlist', $optionlist);
 $SMARTY->assign('instance', $instance);
-$SMARTY->display('daemon/daemoninstanceview.html');
+$SMARTY->display('daemoninstanceview.html');
 
 ?>

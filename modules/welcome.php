@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2015 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,51 +21,35 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: welcome.php,v 1.60 2011/01/18 08:12:26 alec Exp $
  */
 
+require_once(LIB_DIR.'/Sysinfo.class.php');
 @include(LIB_DIR.'/locale/'.$_language.'/fortunes.php');
+
+$SI = new Sysinfo;
 
 $layout['pagetitle'] = 'LAN Management System';
 
 $layout['dbversion'] = $DB->GetDBVersion();
-$layout['dbtype'] = ConfigHelper::getConfig('database.type');
+$layout['dbtype'] = $CONFIG['database']['type'];
 
-if (ConfigHelper::checkConfig('privileges.superuser')) {
-    $content = $LMS->CheckUpdates();
+$content = $LMS->CheckUpdates();
 
-    if(isset($content['newer_version'])) {
-    	list($v, ) = preg_split('/\s+/', $LMS->_version);
+if(isset($content['newer_version']))
+{
+	list($v, ) = preg_split('/\s+/', $LMS->_version);
 
-	    if(version_compare($content['newer_version'], $v) > 0)
-		    $SMARTY->assign('newer_version', $content['newer_version']);
-    }
-
-	$SMARTY->assign('regdata', $LMS->GetRegisterData());
+	if(version_compare($content['newer_version'], $v)>0)
+		$SMARTY->assign('newer_version', $content['newer_version']);
 }
 
 $SMARTY->assign('_dochref', is_dir('doc/html/'.$LMS->ui_lang) ? 'doc/html/'.$LMS->ui_lang.'/' : 'doc/html/en/');
+$SMARTY->assign('regdata', $LMS->GetRegisterData());
 $SMARTY->assign('rtstats', $LMS->RTStats());
-
-if (ConfigHelper::checkConfig('privileges.superuser') || !ConfigHelper::checkConfig('privileges.hide_sysinfo')) {
-	$SI = new Sysinfo;
-	$SMARTY->assign('sysinfo', $SI->get_sysinfo());
-}
-
-if (ConfigHelper::checkConfig('privileges.superuser') || !ConfigHelper::checkConfig('privileges.hide_summaries')) {
-	$SMARTY->assign('customerstats', $LMS->CustomerStats());
-	$SMARTY->assign('nodestats', $LMS->NodeStats());
-	$documentsnotapproved=$DB->GetOne('SELECT COUNT(id) AS sum FROM documents WHERE type < 0 AND closed = 0');
-	$SMARTY->assign('documentsnotapproved', ( $documentsnotapproved ? $documentsnotapproved : 0));
-
-	 if (file_exists(ConfigHelper::getConfig('directories.userpanel_dir') . DIRECTORY_SEPARATOR . 'index.php')) {
-		$customerschanges=$DB->GetOne('SELECT COUNT(id) FROM up_info_changes');
-		$SMARTY->assign('customerschanges', ( $customerschanges ? $customerschanges : 0));
-	}
-}
-
-$layout['plugins'] = $plugin_manager->getAllPluginInfo();
-
-$SMARTY->display('welcome/welcome.html');
+$SMARTY->assign('sysinfo',$SI->get_sysinfo());
+$SMARTY->assign('customerstats',$LMS->CustomerStats());
+$SMARTY->assign('nodestats',$LMS->NodeStats());
+$SMARTY->display('welcome.html');
 
 ?>

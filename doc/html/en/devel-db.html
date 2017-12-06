@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN""http://www.w3.org/TR/html4/loose.dtd">
 <HTML
 ><HEAD
 ><TITLE
@@ -7,7 +7,7 @@
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.79"><LINK
 REL="HOME"
-TITLE="LMS - LAN Management System 1.11-git"
+TITLE="LMS - LAN Management System 1.11.13 Dira"
 HREF="index.html"><LINK
 REL="UP"
 TITLE="For curious"
@@ -39,7 +39,7 @@ CELLSPACING="0"
 ><TH
 COLSPAN="3"
 ALIGN="center"
->LMS - LAN Management System 1.11-git</TH
+>LMS - LAN Management System 1.11.13 Dira</TH
 ></TR
 ><TR
 ><TD
@@ -168,18 +168,6 @@ BORDER="0"
 ><TD
 >deleted - if is deleted boolean (0/1)</TD
 ></TR
-><TR
-><TD
->access - whether the account is active (0/1)</TD
-></TR
-><TR
-><TD
->accessfrom - date from which the account is active</TD
-></TR
-><TR
-><TD
->accessto - date to which the account is active</TD
-></TR
 ></TBODY
 ></TABLE
 ></DIV
@@ -241,10 +229,6 @@ BORDER="0"
 ><TR
 ><TD
 >countryid - country identifier</TD
-></TR
-><TR
-><TD
->post_name - correspondence address - name</TD
 ></TR
 ><TR
 ><TD
@@ -510,23 +494,7 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->location - physical location text</TD
-></TR
-><TR
-><TD
->location_city - city identifier</TD
-></TR
-><TR
-><TD
->location_street - street identifier</TD
-></TR
-><TR
-><TD
->location_house - house number</TD
-></TR
-><TR
-><TD
->location_flat - flat number</TD
+>location - physical location</TD
 ></TR
 ><TR
 ><TD
@@ -579,14 +547,6 @@ BORDER="0"
 ><TR
 ><TD
 >channelid - STM channel identifier (ewx_channels table)</TD
-></TR
-><TR
-><TD
->longitude - geog. longitude</TD
-></TR
-><TR
-><TD
->latitude - geog latitude</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -714,35 +674,19 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->location_address - address string</TD
+>location_address - address - street, apartment, flat, etc</TD
 ></TR
 ><TR
 ><TD
->location_city - city identifier</TD
+>location_zip - address - zip code</TD
 ></TR
 ><TR
 ><TD
->location_street - street identifier</TD
-></TR
-><TR
-><TD
->location_house - house number</TD
-></TR
-><TR
-><TD
->location_flat - flat number</TD
+>location_city - address - location (city)</TD
 ></TR
 ><TR
 ><TD
 >nas - NAS flag (1/0)</TD
-></TR
-><TR
-><TD
->longitude - geog. longitude</TD
-></TR
-><TR
-><TD
->latitude - geog latitude</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1170,10 +1114,6 @@ BORDER="0"
 ><TD
 >description - description for subscription</TD
 ></TR
-><TR
-><TD
->disabled - disabled/enabled flag (1/0)</TD
-></TR
 ></TBODY
 ></TABLE
 ></DIV
@@ -1408,11 +1348,7 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->pdiscount - discount percentage</TD
-></TR
-><TR
-><TD
->vdiscount - discount value</TD
+>discount - discount percentage</TD
 ></TR
 ><TR
 ><TD
@@ -1704,10 +1640,6 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->sdate - sale date (for invoices)</TD
-></TR
-><TR
-><TD
 >paytime - deadline in days</TD
 ></TR
 ><TR
@@ -1840,11 +1772,7 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->pdiscount - discount percentage</TD
-></TR
-><TR
-><TD
->vdiscount - discount value</TD
+>discount - discount percentage</TD
 ></TR
 ><TR
 ><TD
@@ -2302,10 +2230,6 @@ BORDER="0"
 ></TR
 ><TR
 ><TD
->access - enabled/disabled (1/0)</TD
-></TR
-><TR
-><TD
 >creationdate - date of account creation</TD
 ></TR
 ><TR
@@ -2681,14 +2605,6 @@ BORDER="0"
 ><TR
 ><TD
 >closed - is event closed? (1-yes/0-no)</TD
-></TR
-><TR
-><TD
->moduserid - id of last user that modified the event</TD
-></TR
-><TR
-><TD
->moddate - date of last event modification</TD
 ></TR
 ></TBODY
 ></TABLE

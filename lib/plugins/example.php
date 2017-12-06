@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, 
  *  USA.
  *
- *  $Id$
+ *  $Id: example.php,v 1.3 2011/03/09 12:55:16 alec Exp $
  */
 
 /**
@@ -69,8 +69,6 @@ $LMS->RegisterHook('node_del_after', array($example_plugin, 'node_after'));
 /*
  List of supported actions:
 
- module_load_before - Just before LMS module load
-
  node_info_init  - Just before displaying nodeinfo.html
 
  node_add_before - Before node creation (just before executing SQL insert queries)
@@ -88,7 +86,4 @@ $LMS->RegisterHook('node_del_after', array($example_plugin, 'node_after'));
  node_warn_after - After changing a warning flag
 
  send_sms_before - Called just before sending SMS, using this you can add your own service handlers
-
- access_table_init - Called after default access table is built
-
 */

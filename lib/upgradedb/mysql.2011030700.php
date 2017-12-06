@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,10 +21,10 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
 $s_arr = array();
-$schemas = $this->GetAll("SELECT * FROM promotionschemas");
+$schemas = $DB->GetAll("SELECT * FROM promotionschemas");
 if ($schemas) foreach ($schemas as $schema) {
     $data = explode(';', $schema['data']);
     $cnt  = count($data);
@@ -33,13 +33,13 @@ if ($schemas) foreach ($schemas as $schema) {
         $s_arr[] = $schema['id'];
         array_pop($data);
         $data = implode(';', $data);
-        $this->Execute("UPDATE promotionschemas SET data = ? WHERE id = ?",
+        $DB->Execute("UPDATE promotionschemas SET data = ? WHERE id = ?",
             array($data, $schema['id']));
     }
 }
 
 if (!empty($s_arr)) {
-    $schemas = $this->GetAll("SELECT * FROM promotionassignments
+    $schemas = $DB->GetAll("SELECT * FROM promotionassignments
         WHERE promotionschemaid IN (".implode(',', $s_arr).")");
     if ($schemas) foreach ($schemas as $schema) {
         $data = explode(';', $schema['data']);
@@ -47,19 +47,19 @@ if (!empty($s_arr)) {
 
         array_pop($data);
         $data = implode(';', $data);
-        $this->Execute("UPDATE promotionassignments SET data = ? WHERE id = ?",
+        $DB->Execute("UPDATE promotionassignments SET data = ? WHERE id = ?",
             array($data, $schema['id']));
     }
 }
 
-$this->Execute("ALTER TABLE promotionschemas ADD ctariffid int(11) DEFAULT NULL
+$DB->Execute("ALTER TABLE promotionschemas ADD ctariffid int(11) DEFAULT NULL
     REFERENCES tariffs (id) ON DELETE RESTRICT ON UPDATE CASCADE");
-$this->Execute("ALTER TABLE promotionschemas ADD INDEX ctariffid (ctariffid)");
-$this->Execute("ALTER TABLE promotionschemas ADD continuation tinyint(1) DEFAULT NULL");
-$this->Execute("UPDATE promotionschemas SET continuation = 1");
+$DB->Execute("ALTER TABLE promotionschemas ADD INDEX ctariffid (ctariffid)");
+$DB->Execute("ALTER TABLE promotionschemas ADD continuation tinyint(1) DEFAULT NULL");
+$DB->Execute("UPDATE promotionschemas SET continuation = 1");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011030700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011030700', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

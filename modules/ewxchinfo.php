@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxchinfo.php,v 1.5 2011/01/18 08:12:22 alec Exp $
  */
 
 $cid = intval($_GET['id']);
@@ -32,8 +32,7 @@ if ($cid)
         LEFT JOIN ewx_stm_channels c2 ON (c.id = c2.cid)
         WHERE c.id = ?', array($cid));
 else
-    $channel = $DB->GetRow('SELECT 0 AS id, ch.upceil, ch.downceil,
-        ch.halfduplex, ch.id AS cid
+	$channel = $DB->GetRow('SELECT 0 AS id, ch.upceil, ch.downceil, ch.id AS cid
         FROM ewx_stm_channels ch
         WHERE ch.cid = 0');
 
@@ -42,13 +41,13 @@ if(!$channel)
 	$SESSION->redirect('?m=ewxchlist');
 }
 
-$layout['pagetitle'] = trans('Info Channel: $a', $channel['name']);
+$layout['pagetitle'] = trans('Info Channel: $0', $channel['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 if ($channel['id']) {
     $channel['devices'] = $DB->GetAll('SELECT id, name, location,
-        (SELECT COUNT(*) FROM vnodes WHERE netdev = netdevices.id AND ownerid IS NOT NULL) AS nodes
+        (SELECT COUNT(*) FROM nodes WHERE netdev = netdevices.id AND ownerid > 0) AS nodes
 	    FROM netdevices
     	WHERE channelid = ? ORDER BY name', array($channel['id']));
 
@@ -58,15 +57,9 @@ if ($channel['id']) {
 } else {
     // default channel
     $channel['devices'] = $DB->GetAll('SELECT id, name, location,
-        (SELECT COUNT(*) FROM vnodes WHERE netdev = netdevices.id AND ownerid IS NOT NULL) AS nodes
+        (SELECT COUNT(*) FROM nodes WHERE netdev = netdevices.id AND ownerid > 0) AS nodes
 	    FROM netdevices WHERE id IN (
-            SELECT netdev
-            FROM vnodes
-            WHERE netdev IS NOT NULL AND id IN (
-                SELECT nodeid
-                FROM ewx_stm_nodes
-                WHERE channelid IN (SELECT id FROM ewx_stm_channels
-                    WHERE cid = 0)))
+	        SELECT nodeid FROM ewx_stm_nodes WHERE channelid = ?)
 	    ORDER BY name', array($channel['id']));
 }
 
@@ -75,6 +68,6 @@ $channel['nodecnt'] = $DB->GetOne('SELECT COUNT(*) FROM ewx_stm_nodes n
     WHERE channelid = ?', array($channel['cid']));
 
 $SMARTY->assign('channel', $channel);
-$SMARTY->display('ewxch/ewxchinfo.html');
+$SMARTY->display('ewxchinfo.html');
 
 ?>

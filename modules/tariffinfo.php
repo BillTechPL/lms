@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,17 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: tariffinfo.php,v 1.41 2011/03/07 12:10:58 alec Exp $
  */
 
 $netid = isset($_GET['netid']) ? intval($_GET['netid']) : NULL;
-$id = isset($_GET['id']) ? intval($_GET['id']) : NULL;
 
-if(!$LMS->TariffExists($_GET['id']) || ($netid != 0 && !$LMS->NetworkExists($netid))) {
-       $SESSION->redirect('?m=tarifflist');
+if(!$LMS->TariffExists($_GET['id']) || ($netid != 0 && !$LMS->NetworkExists($netid)))
+{
+	$SESSION->redirect('?m=tarifflist');
 }
 
-$tariff = $LMS->GetTariff($id, $netid);
+$tariff = $LMS->GetTariff($_GET['id'], $netid);
 
 $tariff['promotions'] = $DB->GetAll('SELECT DISTINCT p.name, p.id
     FROM promotionassignments a
@@ -40,30 +40,14 @@ $tariff['promotions'] = $DB->GetAll('SELECT DISTINCT p.name, p.id
     WHERE a.tariffid = ? OR s.ctariffid = ?
     ORDER BY p.name', array($tariff['id'], $tariff['id']));
 
-if (!empty($tariff['numberplanid']))
-	$tariff['numberplan'] = $DB->GetRow('SELECT template, period FROM numberplans WHERE id = ?', array($tariff['numberplanid']));
-
-$layout['pagetitle'] = trans('Subscription Info: $a',$tariff['name']);
+$layout['pagetitle'] = trans('Subscription Info: $0',$tariff['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
-
-// if selected tariff is phone tariff then load prefixes assigned to this tariff
-if ($tariff['type'] == TARIFF_PHONE) {
-	$SMARTY->assign('voip_fields', $DB->GetRow("SELECT
-                                                    vt.name as pricelist, vt.id as pricelist_id,
-                                                    vr.name as rule_name, vr.id as rule_name_id
-                                                FROM
-                                                    tariffs t
-                                                    left join voip_tariffs vt on t.voip_tariff_id = vt.id
-                                                    left join voip_rule_groups vr on t.voip_tariff_rule_id = vr.id
-                                                WHERE
-                                                    t.id = ?", array($id)));
-}
 
 $SMARTY->assign('netid', $netid);
 $SMARTY->assign('tariff',$tariff);
 $SMARTY->assign('tariffs',$LMS->GetTariffs());
 $SMARTY->assign('networks',$LMS->GetNetworks());
-$SMARTY->display('tariff/tariffinfo.html');
+$SMARTY->display('tariffinfo.html');
 
 ?>

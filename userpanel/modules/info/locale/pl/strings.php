@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.6 2011/01/18 08:12:35 alec Exp $
  */
 
 $_LANG['Actualize data'] = 'Aktualizuj dane';
@@ -73,42 +73,5 @@ $_LANG['Don\'t show customer nodes box if he hasn\'t any nodes'] = 'Jeśli klien
 $_LANG['Text of data processing agreement:'] = 'Tekst zgody na przetwarzanie danych:';
 $_LANG['Enter text of agreement for personal data processing'] = 'Wprowadź tekst zgody na przetwarzanie danych osobowych';
 $_LANG['Personal data processing agreement'] = 'Zgoda na przetwarzanie danych osobowych';
-$_LANG['Your documents'] = 'Twoje dokumenty';
-$_LANG['No such documents on your account.'] = 'Nie ma żadnych dokumentów na Twoim koncie.';
-$_LANG['not approved'] = 'niezatwierdzony';
-$_LANG['indefinitely'] = 'bezterminowo';
-$_LANG['Bank accounts:'] = 'Konta bankowe:';
-$_LANG['Phones:'] = 'Telefony:';
-$_LANG['Postal address:'] = 'Adres korespondencyjny:';
-$_LANG['Show confirmed documents only:'] = 'Pokaż wyłącznie dokumenty zatwierdzone:';
-$_LANG['Show only documents which are confirmed'] = 'Pokaż wyłącznie dokumenty, które zostały zatwierdzone';
-$_LANG['Company data'] = 'Dane firmy';
-$_LANG['Personal data'] = 'Dane osobowe';
-$_LANG['Company name'] = 'Nazwa firmy';
-$_LANG['Information about the subscriber'] = 'Informacje o abonencie';
-
-$_LANG['building'] = 'budynek';
-$_LANG['apartment'] = 'lokal';
-$_LANG['lastname'] = 'nazwa/nazwisko';
-
-$_LANG['Customer data change notifications sent to operator'] = 'Powiadomienia o zmianie danych klienta wysyłane do operatora';
-$_LANG['Mail sender:'] = 'Nadawca listu:';
-$_LANG['Enter customer data change notification mail sender'] = 'Wprowadź nadawcę listu z powiadomieniem o zmianie danych klienta';
-$_LANG['Mail recipient:'] = 'Odbiorca listu:';
-$_LANG['Enter customer data change notification mail recipient'] = 'Wprowadź odbiorcę listu z powiadomieniem o zmianie danych klienta';
-$_LANG['Mail subject:'] = 'Temat listu:';
-$_LANG['Enter customer data change notification mail subject'] = 'Wprowadź temat listu z powiadomieniem o zmianie danych klienta';
-$_LANG['Mail body:'] = 'Treść listu:';
-$_LANG['Enter customer data change notification mail body'] = 'Wprowadź treść listu z powiadomieniem o zmianie danych klienta';
-
-$_LANG['Customer data change notifications sent to customer'] = 'Powiadomienia o zmianie danych klienta wysyłane do klienta';
-$_LANG['Confirmation mail subject:'] = 'Temat listu z potwierdzeniem:';
-$_LANG['Enter customer data change confirmation mail subject'] = 'Wprowadź temat listu z potwierdzeniem o zmianie danych klienta';
-$_LANG['Confirmation mail body:'] = 'Treść listu z potwierdzeniem:';
-$_LANG['Enter customer data change confirmation mail body'] = 'Wprowadź treść listu z potwierdzeniem o zmianie danych klienta';
-$_LANG['Rejection mail subject:'] = 'Temat listu z odmową:';
-$_LANG['Enter customer data change rejection mail subject'] = 'Wprowadź temat listu z odmową zmiany danych klienta';
-$_LANG['Rejection mail body:'] = 'Treść listu z odmową:';
-$_LANG['Enter customer data change rejection mail body'] = 'Wprowadź treść listu z odmową zmiany danych klienta';
 
 ?>

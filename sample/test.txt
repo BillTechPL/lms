@@ -1,4 +1,4 @@
-$Id$
+$Id: test.txt,v 1.6 2007/07/12 10:47:40 alec Exp $
 
 Testowy plik szablonu mailngu.
 

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: stateedit.php,v 1.4 2011/01/18 08:12:25 alec Exp $
  */
 
 $state = $DB->GetRow('SELECT * FROM states WHERE id=?', array($_GET['id']));
@@ -39,29 +39,27 @@ if(sizeof($stateedit))
 	if($stateedit['name'] == '')
 		$error['name'] = trans('State name is required!');
 
-	if (!$error) {
-		$args = array(
-			'name' => $stateedit['name'],
-			'description' => $stateedit['description'],
-			SYSLOG::RES_STATE => $stateedit['id']
-		);
-		$DB->Execute('UPDATE states SET name=?, description=? WHERE id=?', array_values($args));
-
-		if ($SYSLOG)
-			$SYSLOG->AddMessage(SYSLOG::RES_STATE, SYSLOG::OPER_UPDATE, $args);
-
+	if(!$error)
+	{
+		$DB->Execute('UPDATE states SET name=?, description=? WHERE id=?',
+			    array(
+				    $stateedit['name'],
+				    $stateedit['description'],
+				    $stateedit['id']
+				    ));
+		
 		$SESSION->redirect('?m=statelist');
 	}
-
+	
 	$state = $stateedit;
-}
+}	
 
-$layout['pagetitle'] = trans('State Edit: $a', $name);
+$layout['pagetitle'] = trans('State Edit: $0', $name);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('stateedit', $state);
 $SMARTY->assign('error', $error);
-$SMARTY->display('state/stateedit.html');
+$SMARTY->display('stateedit.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,28 +21,28 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2007041200.php,v 1.7 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("ALTER TABLE cashreglog ADD snapshot decimal(9,2) NOT NULL DEFAULT '0'");
+$DB->Execute("ALTER TABLE cashreglog ADD snapshot decimal(9,2) NOT NULL DEFAULT '0'");
 
-$list = $this->GetAll('SELECT id, regid, time FROM cashreglog');
+$list = $DB->GetAll('SELECT id, regid, time FROM cashreglog');
 
 if($list) foreach($list as $row)
-{    
-	$val = $this->GetOne('SELECT SUM(value) FROM receiptcontents
+{
+	$val = $DB->GetOne('SELECT SUM(value) FROM receiptcontents
 	                LEFT JOIN documents ON (docid = documents.id)
 			WHERE cdate <= ? AND regid = ?',
 			array($row['time'], $row['regid']));
 
-	$this->Execute('UPDATE cashreglog SET snapshot = ? WHERE id = ?',  
+	$DB->Execute('UPDATE cashreglog SET snapshot = ? WHERE id = ?',  
 			array(str_replace(',','.',floatval($val)), $row['id']));
 }
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2007041200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007041200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

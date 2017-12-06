@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,9 +22,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	DELETE FROM nodeassignments WHERE assignmentid NOT IN (SELECT id FROM assignments);
 	DELETE FROM nodeassignments WHERE nodeid NOT IN (SELECT id FROM nodes);
 
@@ -39,8 +39,8 @@ $this->Execute("
 	CREATE INDEX nodeassignments_assignmentid_idx ON nodeassignments (assignmentid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010011300', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010011300', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

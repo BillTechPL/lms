@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,19 +21,19 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: messageinfo.php,v 1.7 2011/01/18 08:12:23 alec Exp $
  */
 
 function GetItemList($id, $order='id,desc', $search=NULL, $cat=NULL, $status=NULL)
 {
 	global $DB;
-
+	
 	if($order=='')
 		$order='id,desc';
-
+	
 	list($order,$direction) = sscanf($order, '%[^,],%s');
 	($direction=='desc') ? $direction = 'desc' : $direction = 'asc';
-
+	
 	switch($order)
 	{
 		case 'customer':
@@ -46,10 +46,10 @@ function GetItemList($id, $order='id,desc', $search=NULL, $cat=NULL, $status=NUL
 			$sqlord = ' ORDER BY i.id';
 		break;
 	}
-
+	
 	if($search!='' && $cat)
-	{
-		switch($cat)
+        {
+	        switch($cat)
 		{
 			case 'customerid':
 				$where[] = ' i.customerid = '.intval($search);
@@ -62,7 +62,7 @@ function GetItemList($id, $order='id,desc', $search=NULL, $cat=NULL, $status=NUL
 			break;
 		}
 	}
-
+	
 	if($status)
 	{
 		switch($status)
@@ -70,39 +70,38 @@ function GetItemList($id, $order='id,desc', $search=NULL, $cat=NULL, $status=NUL
 			case MSG_NEW:
 			case MSG_ERROR:
 			case MSG_SENT:
-			case MSG_DELIVERED:
 				$where[] = 'i.status = '.$status;
-				break;
+			break;
 		}
-	}
-
+        }
+	
 	if(!empty($where))
 		$where = ' AND '.implode(' AND ', $where);
-
+	
 	$result = $DB->GetAll('SELECT i.id, i.customerid, i.status, i.error,
-			i.destination, i.lastdate, i.lastreaddate,'
+			i.destination, i.lastdate, '
 			.$DB->Concat('UPPER(c.lastname)',"' '",'c.name').' AS customer
-		FROM messageitems i
-		LEFT JOIN customers c ON (c.id = i.customerid)
+	    	FROM messageitems i
+		JOIN customers c ON (c.id = i.customerid)
 		LEFT JOIN (
 			SELECT DISTINCT a.customerid FROM customerassignments a
-				JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
+			    JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
 			WHERE e.userid = lms_current_user()
 		) e ON (e.customerid = c.id) 
 		WHERE e.customerid IS NULL AND i.messageid = '.intval($id)
 		.(!empty($where) ? $where : '')
-		.$sqlord.' '.$direction);
+    		.$sqlord.' '.$direction);
 
 	$result['status'] = $status;
 	$result['order'] = $order;
 	$result['direction'] = $direction;
-
+			
 	return $result;
-}
+}																																																																																																					       
 
 $message = $DB->GetRow('SELECT m.*, u.name
 		FROM messages m
-		LEFT JOIN vusers u ON (u.id = m.userid) 
+		LEFT JOIN users u ON (u.id = m.userid) 
 		WHERE m.id = ?', array(intval($_GET['id'])));
 
 if(!$message)
@@ -161,13 +160,13 @@ unset($itemlist['direction']);
 $listdata['total'] = sizeof($itemlist);
 
 if ($SESSION->is_set('milp') && !isset($_GET['page']))
-	$SESSION->restore('milp', $_GET['page']);
-
+        $SESSION->restore('milp', $_GET['page']);
+	
 $page = (empty($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.messagelist_pagelimit', $listdata['total']);
+$pagelimit = (empty($CONFIG['phpui']['messagelist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['messagelist_pagelimit']);
 $SESSION->save('milp', $page);
 
-$layout['pagetitle'] = trans('Message Info: $a', $subject);
+$layout['pagetitle'] = trans('Message Info: $0', $subject);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
@@ -179,6 +178,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('marks', $marks);
 $SMARTY->assign('itemlist', $itemlist);
 
-$SMARTY->display('message/messageinfo.html');
+$SMARTY->display('messageinfo.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2008021500.php,v 1.6 2011/03/10 12:06:43 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE aliasassignments_id_seq;
 	CREATE TABLE aliasassignments (
 		id		integer		DEFAULT nextval('passwd_id_seq'::text) NOT NULL,
@@ -47,8 +47,8 @@ $this->Execute("
 	ALTER TABLE aliases ADD CONSTRAINT aliases_login_key UNIQUE (login, domainid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008021500', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008021500', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005061200.php,v 1.10 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE taxes_id_seq;
 	CREATE TABLE taxes (
 	    id	integer DEFAULT nextval('taxes_id_seq'::text) NOT NULL,
@@ -44,7 +44,7 @@ $this->Execute("
 ");
 
 $i=0;
-if($taxes = $this->GetCol("SELECT taxvalue FROM cash GROUP BY taxvalue
+if($taxes = $DB->GetCol("SELECT taxvalue FROM cash GROUP BY taxvalue
 			UNION
 			SELECT taxvalue FROM tariffs GROUP BY taxvalue
 			UNION
@@ -56,21 +56,21 @@ if($taxes = $this->GetCol("SELECT taxvalue FROM cash GROUP BY taxvalue
 		$i++;
 		if( $tax=='' ) //tax-free
 		{
-			$this->Execute("INSERT INTO taxes (value, taxed, label) VALUES(0,0,'tax-free')");
-			$this->Execute("UPDATE cash SET taxid=? WHERE taxvalue IS NULL", array($i));
-			$this->Execute("UPDATE tariffs SET taxid=? WHERE taxvalue IS NULL", array($i));
-			$this->Execute("UPDATE invoicecontents SET taxid=? WHERE taxvalue IS NULL", array($i));
+			$DB->Execute("INSERT INTO taxes (value, taxed, label) VALUES(0,0,'tax-free')");
+			$DB->Execute("UPDATE cash SET taxid=? WHERE taxvalue IS NULL", array($i));
+			$DB->Execute("UPDATE tariffs SET taxid=? WHERE taxvalue IS NULL", array($i));
+			$DB->Execute("UPDATE invoicecontents SET taxid=? WHERE taxvalue IS NULL", array($i));
 		}
 		else
 		{
-			$this->Execute("INSERT INTO taxes (value, taxed, label) VALUES(?,1,?)", array($tax, $tax.' %'));
-			$this->Execute("UPDATE cash SET taxid=? WHERE taxvalue=?", array($i, $tax));
-			$this->Execute("UPDATE tariffs SET taxid=? WHERE taxvalue=?", array($i, $tax));
-			$this->Execute("UPDATE invoicecontents SET taxid=? WHERE taxvalue=?", array($i, $tax));
+			$DB->Execute("INSERT INTO taxes (value, taxed, label) VALUES(?,1,?)", array($tax, $tax.' %'));
+			$DB->Execute("UPDATE cash SET taxid=? WHERE taxvalue=?", array($i, $tax));
+			$DB->Execute("UPDATE tariffs SET taxid=? WHERE taxvalue=?", array($i, $tax));
+			$DB->Execute("UPDATE invoicecontents SET taxid=? WHERE taxvalue=?", array($i, $tax));
 		}
 	}
 	
-$this->Execute("
+$DB->Execute("
 	UPDATE cash SET taxid = 0 WHERE taxid IS NULL;
 	UPDATE tariffs SET taxid = 0 WHERE taxid IS NULL;
 	UPDATE invoicecontents SET taxid = 0 WHERE taxid IS NULL;
@@ -85,8 +85,8 @@ $this->Execute("
 	ALTER TABLE invoicecontents DROP taxvalue;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005061200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005061200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

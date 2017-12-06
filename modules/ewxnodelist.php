@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxnodelist.php,v 1.2 2011/01/18 08:12:22 alec Exp $
  */
 
 $nodes = $DB->GetAll('SELECT n.id, n.name, n.mac,
@@ -35,7 +35,9 @@ $nodes = $DB->GetAll('SELECT n.id, n.name, n.mac,
 if ($nodes) foreach($nodes as $idx => $row)
     $nodes[$idx]['lastonlinedate'] = lastonline_date($row['lastonline']);
 
+$nodes['total'] = count($nodes);
+
 $SMARTY->assign('customernodes', $nodes);
-$SMARTY->display('node/nodelistshort.html');
+$SMARTY->display('nodelistshort.html');
 
 ?>

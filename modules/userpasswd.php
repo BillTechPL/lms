@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,28 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: userpasswd.php,v 1.11 2011/01/18 08:12:26 alec Exp $
  */
 
-$id = (isset($_GET['id'])) ? $_GET['id'] : Auth::GetCurrentUser();
+$id = (isset($_GET['id'])) ? $_GET['id'] : $AUTH->id;
 
-if ($LMS->UserExists($id)) {
-	if(isset($_POST['passwd'])) {
+if($LMS->UserExists($id))
+{
+	if(isset($_POST['passwd']))
+	{
 		$passwd = $_POST['passwd'];
-
-		if ($passwd['passwd'] == '' || $passwd['confirm'] == '')
-			$error['password'] = trans('Empty passwords are not allowed!').'<BR>';
-
-		if ($passwd['passwd'] != $passwd['confirm'])
-			$error['password'] = trans('Passwords does not match!');
-
-		if (!check_password_strength($passwd['passwd']))
-			$error['password'] = trans('The password should contain at least one capital letter, one lower case letter, one digit and should consist of at least 8 characters!');
 		
-		if ($LMS->PasswdExistsInHistory($id, $passwd['passwd']))
-			$error['password'] = trans('You already used this password!');
-
-		if (!$error) {
+		if($passwd['passwd'] == '' || $passwd['confirm'] == '')
+			$error['password'] = trans('Empty passwords are not allowed!').'<BR>';
+		
+		if($passwd['passwd'] != $passwd['confirm'])
+			$error['password'] = trans('Passwords does not match!');
+		
+		if(!$error)
+		{
 			$LMS->SetUserPassword($id, $passwd['passwd']);
 			header('Location: ?'. $SESSION->get('backto'));
 		}
@@ -50,12 +47,15 @@ if ($LMS->UserExists($id)) {
 
 	$passwd['id'] = $id;
 
-	$layout['pagetitle'] = trans('Password Change for User $a', $DB->GetOne('SELECT name FROM vusers WHERE id = ?', array($id)));
+	$layout['pagetitle'] = trans('Password Change for User $0', $DB->GetOne('SELECT name FROM users WHERE id = ?', array($id)));
 
 	$SMARTY->assign('error', $error);
 	$SMARTY->assign('passwd', $passwd);
-	$SMARTY->display('user/userpasswd.html');
-} else
+	$SMARTY->display('userpasswd.html');
+}
+else
+{
 	$SESSION->redirect('?m='. $SESSION->get('lastmodule'));
+}
 
 ?>

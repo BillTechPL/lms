@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,32 +21,24 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netlist.php,v 1.40 2011/01/18 08:12:23 alec Exp $
  */
 
 $layout['pagetitle'] = trans('IP Networks');
 
-if (isset($_GET['o']))
-    $netlist = $LMS->GetNetworkList($_GET['o']);
-else
-    $netlist = $LMS->GetNetworkList();
+$netlist = $LMS->GetNetworkList();
 
 $listdata['size'] = $netlist['size'];
 $listdata['assigned'] = $netlist['assigned'];
 $listdata['online'] = $netlist['online'];
-$listdata['order'] = $netlist['order'];
-$listdata['direction'] = $netlist['direction'];
 
 unset($netlist['assigned']);
 unset($netlist['size']);
 unset($netlist['online']);
-unset($netlist['order']);
-unset($netlist['direction']);
-
 $listdata['total'] = sizeof($netlist);
 
 $SMARTY->assign('listdata',$listdata);
 $SMARTY->assign('netlist',$netlist);
-$SMARTY->display('net/netlist.html');
+$SMARTY->display('netlist.html');
 
 ?>

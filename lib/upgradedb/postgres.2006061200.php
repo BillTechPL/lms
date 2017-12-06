@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,26 +21,26 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2006061200.php,v 1.8 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("ALTER TABLE passwd ADD COLUMN quota_sql integer");
-$this->Execute("UPDATE passwd SET quota_sql = 0");
-$this->Execute("ALTER TABLE passwd ALTER COLUMN quota_sql SET NOT NULL");
-$this->Execute("ALTER TABLE passwd ALTER COLUMN quota_sql SET DEFAULT 0");
+$DB->Execute("ALTER TABLE passwd ADD COLUMN quota_sql integer");
+$DB->Execute("UPDATE passwd SET quota_sql = 0");
+$DB->Execute("ALTER TABLE passwd ALTER COLUMN quota_sql SET NOT NULL");
+$DB->Execute("ALTER TABLE passwd ALTER COLUMN quota_sql SET DEFAULT 0");
 
-$this->Execute("ALTER TABLE domains ADD COLUMN ownerid integer");
-$this->Execute("UPDATE domains SET ownerid = 0");
-$this->Execute("ALTER TABLE domains ALTER COLUMN ownerid SET NOT NULL");
-$this->Execute("ALTER TABLE domains ALTER COLUMN ownerid SET DEFAULT 0");
+$DB->Execute("ALTER TABLE domains ADD COLUMN ownerid integer");
+$DB->Execute("UPDATE domains SET ownerid = 0");
+$DB->Execute("ALTER TABLE domains ALTER COLUMN ownerid SET NOT NULL");
+$DB->Execute("ALTER TABLE domains ALTER COLUMN ownerid SET DEFAULT 0");
 
-$this->Execute("CREATE INDEX passwd_ownerid_idx ON passwd (ownerid)");
-$this->Execute("CREATE INDEX domains_ownerid_idx ON domains (ownerid)");
+$DB->Execute("CREATE INDEX passwd_ownerid_idx ON passwd (ownerid)");
+$DB->Execute("CREATE INDEX domains_ownerid_idx ON domains (ownerid)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2006061200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2006061200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

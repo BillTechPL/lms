@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,19 +21,19 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2008080800.php,v 1.5 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
 CREATE TABLE states (
     	id int(11) NOT NULL auto_increment,
 	name varchar(255) NOT NULL DEFAULT '',
 	description text NOT NULL DEFAULT '',
 	PRIMARY KEY (id),
 	UNIQUE KEY name (name)
-) ENGINE=MyISAM");
+) TYPE=MyISAM");
 
-$this->Execute("
+$DB->Execute("
 CREATE TABLE zipcodes (
     	id int(11) NOT NULL auto_increment,
 	zip varchar(10) NOT NULL DEFAULT '',
@@ -41,32 +41,32 @@ CREATE TABLE zipcodes (
 	PRIMARY KEY (id),
 	UNIQUE KEY zip (zip),
 	INDEX stateid (stateid)
-) ENGINE=MyISAM");
+) TYPE=MyISAM");
 
-$this->Execute("ALTER TABLE customers ADD INDEX zip (zip)");
-$this->Execute("INSERT INTO zipcodes (zip) SELECT DISTINCT zip FROM customers");
+$DB->Execute("ALTER TABLE customers ADD INDEX zip (zip)");
+$DB->Execute("INSERT INTO zipcodes (zip) SELECT DISTINCT zip FROM customers");
 
-if(ConfigHelper::getConfig('phpui.lang') == 'pl' 
-	|| $this->GetOne("SELECT 1 FROM uiconfig WHERE var='lang' AND section='phpui' AND disabled=0 AND value='pl'"))
+if($CONFIG['phpui']['lang'] == 'pl' 
+	|| $DB->GetOne("SELECT 1 FROM uiconfig WHERE var='lang' AND section='phpui' AND disabled=0 AND value='pl'"))
 {
-	$this->Execute("INSERT INTO states (name) VALUES ('dolnośląskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('kujawsko-pomorskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('lubelskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('lubuskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('łódzkie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('małopolskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('mazowieckie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('opolskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('podkarpackie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('podlaskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('pomorskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('śląskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('świętokrzyskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('warmińsko-mazurskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('wielkopolskie')");
-	$this->Execute("INSERT INTO states (name) VALUES ('zachodniopomorskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('dolnośląskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('kujawsko-pomorskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('lubelskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('lubuskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('łódzkie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('małopolskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('mazowieckie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('opolskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('podkarpackie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('podlaskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('pomorskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('śląskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('świętokrzyskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('warmińsko-mazurskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('wielkopolskie')");
+	$DB->Execute("INSERT INTO states (name) VALUES ('zachodniopomorskie')");
 }
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008080800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008080800', 'dbversion'));
 
 ?>

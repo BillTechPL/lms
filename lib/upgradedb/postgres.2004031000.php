@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,25 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004031000.php,v 1.12 2011/01/18 08:12:12 alec Exp $
  */
 
 // Some stuff by maniac.
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE users ADD message text;
     ALTER TABLE users ALTER message SET DEFAULT '';
     UPDATE users SET message='';
     ALTER TABLE users ALTER message SET NOT NULL
 ");
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE nodes ADD warning smallint;
     ALTER TABLE nodes ALTER warning SET DEFAULT 0;
     UPDATE nodes SET warning=0;
     ALTER TABLE nodes ALTER warning SET NOT NULL
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004031000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2004031000', 'dbversion'));
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: numberplanadd.php,v 1.15 2011/01/18 08:12:24 alec Exp $
  */
 
 $numberplanadd = isset($_POST['numberplanadd']) ? $_POST['numberplanadd'] : NULL;
@@ -37,9 +37,8 @@ if(sizeof($numberplanadd))
 
 	if($numberplanadd['template'] == '')
 		$error['template'] = trans('Number template is required!');
-	elseif (!preg_match('/%[1-9]{0,1}N/', $numberplanadd['template'])
-		&& !preg_match('/%[1-9]{0,1}C/', $numberplanadd['template']))
-		$error['template'] = trans('Template must contain "%N" or "%C" specifier!');
+	elseif(!preg_match('/%[1-9]{0,1}N/', $numberplanadd['template']))
+		$error['template'] = trans('Template must consist "%N" specifier!');
 
 	if($numberplanadd['doctype'] == 0)
 		$error['doctype'] = trans('Document type is required!');
@@ -60,38 +59,23 @@ if(sizeof($numberplanadd))
 			$error['doctype'] = trans('Selected document type has already defined default plan!');
 		}
 
-	if (!$error) {
-		$args = array(
-			'template' => $numberplanadd['template'],
-			'doctype' => $numberplanadd['doctype'],
-			'period' => $numberplanadd['period'],
-			'isdefault' => isset($numberplanadd['isdefault']) ? 1 : 0
-		);
-		$DB->Execute('INSERT INTO numberplans (template, doctype, period, isdefault)
-				VALUES (?,?,?,?)', array_values($args));
-
+	if(!$error)
+	{
+		$DB->Execute('INSERT INTO numberplans (template, doctype, period, isdefault) 
+			    VALUES (?,?,?,?)',array(
+				    $numberplanadd['template'],
+				    $numberplanadd['doctype'],
+				    $numberplanadd['period'],
+				    isset($numberplanadd['isdefault']) ? 1 : 0
+				    ));
+	
 		$id = $DB->GetLastInsertID('numberplans');
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_NUMPLAN] = $id;
-			$SYSLOG->AddMessage(SYSLOG::RES_NUMPLAN, SYSLOG::OPER_ADD, $args);
-		}
-
-		if (!empty($_POST['selected']))
-			foreach ($_POST['selected'] as $idx => $name) {
-				$DB->Execute('INSERT INTO numberplanassignments (planid, divisionid)
-						VALUES (?, ?)', array($id, intval($idx)));
-				if ($SYSLOG) {
-					$planassignid = $DB->GetLastInsertID('numberplanassignments');
-					$args = array(
-						SYSLOG::RES_NUMPLANASSIGN => $planassignid,
-						SYSLOG::RES_NUMPLAN => $id,
-						SYSLOG::RES_DIV => intval($idx)
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_NUMPLANASSIGN, SYSLOG::OPER_ADD, $args);
-				}
-			}
-
+	
+		if(!empty($_POST['selected']))
+	                foreach($_POST['selected'] as $idx => $name)
+		                $DB->Execute('INSERT INTO numberplanassignments (planid, divisionid)
+		                	VALUES (?, ?)', array($id, intval($idx)));
+		
 		if(!isset($numberplanadd['reuse']))
 		{
 			$SESSION->redirect('?m=numberplanlist');
@@ -121,8 +105,8 @@ $layout['pagetitle'] = trans('New Numbering Plan');
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('numberplanadd', $numberplanadd);
-$SMARTY->assign('available', $LMS->GetDivisions(array('status' => 0)));
+$SMARTY->assign('available', $DB->GetAllByKey('SELECT id, shortname AS name FROM divisions WHERE status = 0 ORDER BY shortname', 'id'));
 $SMARTY->assign('error', $error);
-$SMARTY->display('numberplan/numberplanadd.html');
+$SMARTY->display('numberplanadd.html');
 
 ?>

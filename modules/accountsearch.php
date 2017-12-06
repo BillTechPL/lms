@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: accountsearch.php,v 1.7 2011/01/18 08:12:19 alec Exp $
  */
 
 function GetAccountList($order='login,asc', $search, $customer=NULL, $type=NULL, $kind=NULL, $domain='')
 {
-	global $DB, $ACCOUNTTYPES;
+	global $DB;
 
 	list($order,$direction) = sscanf($order, '%[^,],%s');
 
@@ -75,14 +75,12 @@ function GetAccountList($order='login,asc', $search, $customer=NULL, $type=NULL,
 
 	$where = isset($where) ? 'WHERE '.implode(' AND ', $where) : '';
 
-	$quota_fields = array();
-	foreach ($ACCOUNTTYPES as $typeidx => $atype)
-		$quota_fields[] = 'p.quota_' . $atype['alias'];
-	$list = $DB->GetAll('SELECT p.id, p.ownerid, p.login, p.lastlogin,
-			p.expdate, d.name AS domain, p.type, ' . implode(', ', $quota_fields) . ', '
+	$list = $DB->GetAll('SELECT p.id, p.ownerid, p.login, p.lastlogin, 
+			p.expdate, d.name AS domain, p.type, 
+			p.quota_www, p.quota_sh, p.quota_mail, p.quota_ftp, p.quota_sql, '
 			.$DB->Concat('c.lastname', "' '",'c.name').' AS customername 
 		FROM passwd p
-		LEFT JOIN customers c ON (c.id = p.ownerid)
+		LEFT JOIN customers c ON (c.id = p.ownerid) 
 		LEFT JOIN domains d ON (d.id = p.domainid) '
 		.$where
 		.($sqlord != '' ? $sqlord : '')
@@ -172,7 +170,7 @@ if(sizeof($search) || isset($_GET['s']))
 		unset($accountlist['direction']);
     
 		$page = (! isset($_GET['page']) ? 1 : $_GET['page']); 
-		$pagelimit = ConfigHelper::getConfig('phpui.accountlist_pagelimit', $queuedata['total']);
+		$pagelimit = (! $CONFIG['phpui']['accountlist_pagelimit'] ? $queuedata['total'] : $CONFIG['phpui']['accountlist_pagelimit']);
 		$start = ($page - 1) * $pagelimit;
 
 		$SESSION->save('asp', $page);
@@ -188,7 +186,7 @@ if(sizeof($search) || isset($_GET['s']))
 		$SMARTY->assign('start',$start);
 		$SMARTY->assign('search', $search);
 		$SMARTY->assign('accountlist',$accountlist);
-		$SMARTY->display('account/accountlist.html');
+		$SMARTY->display('accountlist.html');
 		$SESSION->close();
 		die;
 	}
@@ -198,6 +196,6 @@ $layout['pagetitle'] = trans('Account, Alias, Domain Search');
 
 $SMARTY->assign('customerlist',$LMS->GetAllCustomerNames());
 $SMARTY->assign('search', isset($search) ? $search : $SESSION->get('accountsearch'));
-$SMARTY->display('account/accountsearch.html');
+$SMARTY->display('accountsearch.html');
 
 ?>

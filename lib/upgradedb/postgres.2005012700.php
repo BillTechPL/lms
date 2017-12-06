@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005012700.php,v 1.13 2011/01/18 08:12:13 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("
+$DB->BeginTrans();
+$DB->Execute("
 	ALTER TABLE users ADD zip1 VARCHAR(10);
 	UPDATE users SET zip1=zip;
 	ALTER TABLE users DROP zip;
@@ -35,7 +35,7 @@ $this->Execute("
 	ALTER TABLE users ALTER zip SET NOT NULL;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005012700', 'dbversion'));
-$this->CommitTrans();
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005012700', 'dbversion'));
+$DB->CommitTrans();
 
 ?>

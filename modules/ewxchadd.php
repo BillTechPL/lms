@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxchadd.php,v 1.3 2011/01/18 08:12:22 alec Exp $
  */
 
 if(isset($_POST['channel']))
@@ -75,18 +75,17 @@ if(isset($_POST['channel']))
 
 	if(!$error)
 	{
-		$DB->Execute('INSERT INTO ewx_channels (name, upceil, downceil, upceil_n, downceil_n, halfduplex)
-			VALUES (?, ?, ?, ?, ?, ?)',
+		$DB->Execute('INSERT INTO ewx_channels (name, upceil, downceil, upceil_n, downceil_n)
+			VALUES (?, ?, ?, ?, ?)',
 			array($channel['name'],
 				$channel['upceil'],
 				$channel['downceil'],
 				!empty($channel['upceil_n']) ? $channel['upceil_n'] : NULL,
 				!empty($channel['downceil_n']) ? $channel['downceil_n'] : NULL,
-				!empty($channel['halfduplex']) ? 1 : NULL,
 		));
-
+		
 		$id = $DB->GetLastInsertId('ewx_channels');
-
+	
 		$SESSION->redirect('?m=ewxchinfo&id='.$id);
 	}
 
@@ -96,6 +95,6 @@ if(isset($_POST['channel']))
 
 $layout['pagetitle'] = trans('New Channel');
 
-$SMARTY->display('ewxch/ewxchadd.html');
+$SMARTY->display('ewxchadd.html');
 
 ?>

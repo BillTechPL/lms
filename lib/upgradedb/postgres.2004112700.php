@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- * (C) Copyright 2001-2013 LMS Developers
+ * (C) Copyright 2001-2011 LMS Developers
  *
  * Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  *
- * $Id$
+ * $Id: postgres.2004112700.php,v 1.11 2011/01/18 08:12:13 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("ALTER TABLE uiconfig ADD UNIQUE (section, var)");
-$this->Execute("UPDATE dbinfo SET keyvalue='2004112700' WHERE keytype='dbversion'");
-$this->CommitTrans();
+$DB->BeginTrans();
+$DB->Execute("ALTER TABLE uiconfig ADD UNIQUE (section, var)");
+$DB->Execute("UPDATE dbinfo SET keyvalue='2004112700' WHERE keytype='dbversion'");
+$DB->CommitTrans();
 
 ?>

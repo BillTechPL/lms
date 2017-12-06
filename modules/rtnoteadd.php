@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,33 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtnoteadd.php,v 1.18 2011/03/18 12:37:54 alec Exp $
  */
 
 if(isset($_GET['ticketid']))
 {
 	$note['ticketid'] = intval($_GET['ticketid']);
 
-	if(($LMS->GetUserRightsRT(Auth::GetCurrentUser(), 0, $note['ticketid']) & 2) != 2)
+	if(($LMS->GetUserRightsRT($AUTH->id, 0, $note['ticketid']) & 2) != 2)
         {
 	        $SMARTY->display('noaccess.html');
 	        $SESSION->close();
 	        die;
 	}
 
-	$note = $DB->GetRow('SELECT id AS ticketid, state, cause, queueid, owner FROM rttickets WHERE id = ?', array($note['ticketid']));
-	$reply = $LMS->GetFirstMessage($note['ticketid']);
-	$note['inreplyto'] = $reply['id'];
-	$note['references'] = implode(' ', $reply['references']);
-
-        if(ConfigHelper::checkConfig('phpui.helpdesk_notify')){
-            $note['notify'] = TRUE;
-        }
+	$note = $DB->GetRow('SELECT id AS ticketid, state, cause FROM rttickets WHERE id = ?', array($note['ticketid']));
 }
 elseif(isset($_POST['note']))
 {
 	$note = $_POST['note'];
-	$ticket = $DB->GetRow('SELECT id AS ticketid, state, cause, queueid, owner, address_id FROM rttickets WHERE id = ?', array($note['ticketid']));
 
 	if($note['body'] == '')
 		$error['body'] = trans('Note body not specified!');
@@ -57,49 +49,25 @@ elseif(isset($_POST['note']))
 		$SESSION->redirect('?m=rtqueuelist');
 	}
 
-	$result = handle_file_uploads('files', $error);
-	extract($result);
-	$SMARTY->assign('fileupload', $fileupload);
-
 	if(!$error)
 	{
-		$messageid = '<msg.' . $ticket['queueid'] . '.' . $note['ticketid'] . '.'  . time() . '@rtsystem.' . gethostname() . '>';
+		$DB->Execute('INSERT INTO rtnotes (userid, ticketid, body, createtime)
+			    VALUES(?, ?, ?, ?NOW?)',
+			    array($AUTH->id, $note['ticketid'], $note['body']));
 
-		if (!empty($files)) {
-			foreach ($files as &$file)
-				$file['name'] = $tmppath . DIRECTORY_SEPARATOR . $file['name'];
-			unset($file);
-		}
-		$msgid = $LMS->TicketMessageAdd(array(
-				'ticketid' => $note['ticketid'],
-				'messageid' => $messageid,
-				'body' => $note['body'],
-				'type' => RTMESSAGE_NOTE,
-			), $files);
+		$LMS->SetTicketState($note['ticketid'], $note['state']);
 
-		// deletes uploaded files
-		if (!empty($files))
-			rrmdir($tmppath);
-
-		// setting status and the ticket owner
-		$props = array(
-			'queueid' => $note['queueid'],
-			'owner' => empty($note['owner']) ? null : $note['owner'],
-			'cause' => $note['cause'],
-			'state' => $note['state']
-		);
-		$LMS->TicketChange($note['ticketid'], $props);
+		$DB->Execute('UPDATE rttickets SET cause = ? WHERE id = ?', array($note['cause'], $note['ticketid']));
 
 		if(isset($note['notify']))
 		{
-			$user = $LMS->GetUserInfo(Auth::GetCurrentUser());
+			$user = $LMS->GetUserInfo($AUTH->id);
 			$queue = $LMS->GetQueueByTicketId($note['ticketid']);
 			$mailfname = '';
 
-			$helpdesk_sender_name = ConfigHelper::getConfig('phpui.helpdesk_sender_name');
-			if(!empty($helpdesk_sender_name))
+			if(!empty($CONFIG['phpui']['helpdesk_sender_name']))
 			{
-				$mailfname = $helpdesk_sender_name;
+				$mailfname = $CONFIG['phpui']['helpdesk_sender_name'];
 
 				if($mailfname == 'queue')
 					$mailfname = $queue['name'];
@@ -111,69 +79,69 @@ elseif(isset($_POST['note']))
 
 			$mailfrom = $user['email'] ? $user['email'] : $queue['email'];
 
-			$ticketdata = $LMS->GetTicketContents($note['ticketid']);
-
-			$headers['From'] = $mailfname.' <'.$mailfrom.'>';
+	        $headers['From'] = $mailfname.' <'.$mailfrom.'>';
+			$headers['Subject'] = sprintf("[RT#%06d] %s", $note['ticketid'], $DB->GetOne('SELECT subject FROM rttickets WHERE id = ?', array($note['ticketid'])));
 			$headers['Reply-To'] = $headers['From'];
-			if ($note['references']) {
-				$headers['References'] = explode(' ', $note['references']);
-				$headers['In-Reply-To'] = array_pop(explode(' ', $note['references']));
+
+            $sms_body = $headers['Subject']."\n".$note['body'];
+			$body = $note['body']."\n\nhttp"
+				.(isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on' ? 's' : '').'://'
+				.$_SERVER['HTTP_HOST']
+				.substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], '/') + 1)
+				.'?m=rtticketview&id='.$note['ticketid'];
+
+			if(chkconfig($CONFIG['phpui']['helpdesk_customerinfo']) 
+				&& ($cid = $DB->GetOne('SELECT customerid FROM rttickets WHERE id = ?', array($note['ticketid']))))
+			{
+				$info = $DB->GetRow('SELECT id, '.$DB->Concat('UPPER(lastname)',"' '",'name').' AS customername,
+						email, address, zip, city, (SELECT phone FROM customercontacts 
+							WHERE customerid = customers.id ORDER BY id LIMIT 1) AS phone
+						FROM customers WHERE id = ?', array($cid));
+
+				$body .= "\n\n-- \n";
+				$body .= trans('Customer:').' '.$info['customername']."\n";
+				$body .= trans('Address:').' '.$info['address'].', '.$info['zip'].' '.$info['city']."\n";
+				$body .= trans('Phone:').' '.$info['phone']."\n";
+				$body .= trans('E-mail:').' '.$info['email'];
+
+				$sms_body .= "\n";
+                $sms_body .= trans('Customer:').' '.$info['customername'];
+                $sms_body .= ' '.sprintf('(%04d)', $ticket['customerid']).'. ';
+                $sms_body .= $info['address'].', '.$info['zip'].' '.$info['city'];
+                if ($info['phone'])
+                    $sms_body .= '. '.trans('Phone:').' '.$info['phone'];
 			}
 
-			if (ConfigHelper::checkConfig('phpui.helpdesk_customerinfo')) {
-				if ($ticketdata['customerid']) {
-					$info = $LMS->GetCustomer($ticketdata['customerid'], true);
+            // send email
+			if($recipients = $DB->GetCol('SELECT DISTINCT email
+			        FROM users, rtrights
+					WHERE users.id=userid AND queueid = ? AND email != \'\'
+						AND (rtrights.rights & 8) = 8 AND users.id != ?
+						AND deleted = 0 AND (ntype & ?) = ?',
+					array($queue['id'], $AUTH->id, MSG_MAIL, MSG_MAIL))
+			) {
+				foreach ($recipients as $email) {
+					$headers['To'] = '<'.$email.'>';
 
-					$emails = array_map(function($contact) {
-							return $contact['fullname'];
-						}, $LMS->GetCustomerContacts($ticketdata['customerid'], CONTACT_EMAIL));
-					$phones = array_map(function($contact) {
-							return $contact['fullname'];
-						}, $LMS->GetCustomerContacts($ticketdata['customerid'], CONTACT_LANDLINE | CONTACT_MOBILE));
-
-					$params = array(
-						'id' => $note['ticketid'],
-						'customerid' => $ticketdata['customerid'],
-						'customer' => $info,
-						'emails' => $emails,
-						'phones' => $phones,
-					);
-					$mail_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_mail_body'), $params);
-					$sms_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_sms_body'), $params);
-				} else {
-					$mail_customerinfo = "\n\n-- \n" . trans('Customer:') . ' ' . $ticketdata['requestor'];
-					$sms_customerinfo = "\n" . trans('Customer:') . ' ' . $ticketdata['requestor'];
+					$LMS->SendMail($email, $headers, $body);
 				}
 			}
 
-			$params = array(
-				'id' => $note['ticketid'],
-				'messageid' => isset($msgid) ? $msgid : null,
-				'customerid' => $ticketdata['customerid'],
-				'status' => $ticketdata['status'],
-				'categories' => $ticketdata['categorynames'],
-				'subject' => $ticketdata['subject'],
-				'body' => $note['body'],
-			);
-
-			if(ConfigHelper::checkConfig('rt.note_send_re_in_subject'))
-				$params['subject'] = 'Re: '.$ticketdata['subject'];
-
-			$headers['Subject'] = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_subject'), $params);
-			$params['customerinfo'] = isset($mail_customerinfo) ? $mail_customerinfo : null;
-			$body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_body'), $params);
-			$params['customerinfo'] = isset($sms_customerinfo) ? $sms_customerinfo : null;
-			$sms_body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_sms_body'), $params);
-
-			$LMS->NotifyUsers(array(
-				'queue' => $queue['id'],
-				'mail_headers' => $headers,
-				'mail_body' => $body,
-				'sms_body' => $sms_body,
-			));
+            // send sms
+			if (!empty($CONFIG['sms']['service']) && ($recipients = $DB->GetCol('SELECT DISTINCT phone
+			        FROM users, rtrights
+					WHERE users.id=userid AND queueid = ? AND phone != \'\'
+						AND (rtrights.rights & 8) = 8 AND users.id != ?
+						AND deleted = 0 AND (ntype & ?) = ?',
+					array($queue['id'], $AUTH->id, MSG_SMS, MSG_SMS)))
+			) {
+				foreach ($recipients as $phone) {
+					$LMS->SendSMS($phone, $sms_body);
+				}
+			}
 		}
 
-		$SESSION->redirect('?m=rtticketview&id=' . $note['ticketid'] . (isset($msgid) ? '#rtmessage-' . $msgid : ''));
+		$SESSION->redirect('?m=rtticketview&id='.$note['ticketid']);
 	}
 }
 else
@@ -187,10 +155,7 @@ $layout['pagetitle'] = trans('New Note');
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('note', $note);
-$SMARTY->assign('ticket', $LMS->GetTicketContents($note['ticketid']));
-$SMARTY->assign('userlist', $LMS->GetUserNames());
-$SMARTY->assign('queuelist', $LMS->GetQueueNames());
 $SMARTY->assign('error', $error);
-$SMARTY->display('rt/rtnoteadd.html');
+$SMARTY->display('rtnoteadd.html');
 
 ?>

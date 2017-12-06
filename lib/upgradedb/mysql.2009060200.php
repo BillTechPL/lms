@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,28 +21,28 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2009060200.php,v 1.3 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->Execute("DROP VIEW nas");
-$this->Execute("CREATE VIEW nas AS SELECT n.id, inet_ntoa(n.ipaddr) AS nasname, d.shortname, d.nastype AS type,
+$DB->Execute("DROP VIEW nas");
+$DB->Execute("CREATE VIEW nas AS SELECT n.id, inet_ntoa(n.ipaddr) AS nasname, d.shortname, d.nastype AS type,
         d.clients AS ports, d.secret, d.community, d.description
         FROM nodes n
         JOIN netdevices d ON (n.netdev = d.id)
         WHERE n.nas = 1");
-$this->Execute("CREATE TABLE cashsources (
+$DB->Execute("CREATE TABLE cashsources (
 	id          int(11)         NOT NULL auto_increment,
 	name        varchar(32)     DEFAULT '' NOT NULL,
 	description text	    DEFAULT NULL,
         PRIMARY KEY (id),
         UNIQUE KEY name (name)
-) ENGINE=MyISAM");
-$this->Execute("ALTER TABLE cash ADD importid int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE cash ADD sourceid int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE cashimport ADD sourceid int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE cash ADD INDEX importid (importid)");
-$this->Execute("ALTER TABLE cash ADD INDEX sourceid (sourceid)");
+) TYPE=MyISAM");
+$DB->Execute("ALTER TABLE cash ADD importid int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE cash ADD sourceid int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE cashimport ADD sourceid int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE cash ADD INDEX importid (importid)");
+$DB->Execute("ALTER TABLE cash ADD INDEX sourceid (sourceid)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009060200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009060200', 'dbversion'));
 
 ?>

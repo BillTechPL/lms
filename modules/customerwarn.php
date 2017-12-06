@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,63 +21,27 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customerwarn.php,v 1.17 2011/01/18 08:12:21 alec Exp $
  */
-
-function getMessageTemplate($tmplid) {
-	global $DB;
-
-	$result = new xajaxResponse();
-	$message = $DB->GetOne('SELECT message FROM templates WHERE id = ?', array($tmplid));
-	$result->call('messageTemplateReceived', $message);
-
-	return $result;
-}
-
-$LMS->InitXajax();
-$LMS->RegisterXajaxFunction(array('getMessageTemplate'));
-$SMARTY->assign('xajax', $LMS->RunXajax());
 
 $setwarnings = isset($_POST['setwarnings']) ? $_POST['setwarnings'] : array();
 
-if (isset($setwarnings['mcustomerid']))
+if(isset($setwarnings['mcustomerid']))
 {
 	$warnon = isset($setwarnings['warnon']) ? $setwarnings['warnon'] : FALSE;
 	$warnoff = isset($setwarnings['warnoff']) ? $setwarnings['warnoff'] : FALSE;
 	$message = isset($setwarnings['message']) ? $setwarnings['message'] : NULL;
 
-	$msgtmplid = intval($setwarnings['tmplid']);
-	$msgtmploper = intval($setwarnings['tmploper']);
-	$msgtmplname = $setwarnings['tmplname'];
-	if ($msgtmploper > 1)
-		switch ($msgtmploper) {
-			case 2:
-				if (empty($msgtmplid))
-					break;
-				$LMS->UpdateMessageTemplate($msgtmplid, TMPL_WARNING, null, '', $setwarnings['message']);
-				break;
-			case 3:
-				if (!strlen($msgtmplname))
-					break;
-				$LMS->AddMessageTemplate(TMPL_WARNING, $msgtmplname, '', $setwarnings['message']);
-				break;
-		}
+	foreach($setwarnings['mcustomerid'] as $uid)
+	{
+		if($warnon)
+			$LMS->NodeSetWarnU($uid, TRUE);
 
-	$cids = array_filter($setwarnings['mcustomerid'], 'is_natural');
-	if (!empty($cids)) {
-		$LMS->NodeSetWarnU($cids, $warnon ? 1 : 0);
-		if (isset($message)) {
-			$DB->Execute('UPDATE customers SET message = ? WHERE id IN (' . implode(',', $cids) . ')',
-				array($message));
-			if ($SYSLOG)
-				foreach ($cids as $cid) {
-					$args = array(
-						SYSLOG::RES_CUST => $cid,
-						'message' => $message
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_CUST, SYSLOG::OPER_UPDATE, $args);
-				}
-		}
+		if($warnoff) 
+			$LMS->NodeSetWarnU($uid, FALSE);
+
+		if(isset($message))
+			$DB->Execute('UPDATE customers SET message=? WHERE id=?', array($message, $uid));
 	}
 
 	$SESSION->save('warnmessage', $message);
@@ -89,14 +53,14 @@ if (isset($setwarnings['mcustomerid']))
 
 if(isset($_GET['search']))
 {
-	$SESSION->restore('customersearch', $search);
-	$SESSION->restore('cslo', $order);
-	$SESSION->restore('csls', $state);
-	$SESSION->restore('csln', $network);
-	$SESSION->restore('cslg', $customergroup);
-	$SESSION->restore('cslk', $sqlskey);
+	$SESSION->restore('customersearch', $customersearch);
+	$SESSION->restore('cslo', $o);
+	$SESSION->restore('csls', $s);
+	$SESSION->restore('csln', $n);
+	$SESSION->restore('cslg', $g);
+	$SESSION->restore('cslk', $k);
 
-        $customerlist = $LMS->GetCustomerList(compact("order", "state", "network", "customergroup", "search", "time", "sqlskey"));
+	$customerlist = $LMS->GetCustomerList($o, $s, $n, $g, $customersearch, NULL, $k);
 	
 	unset($customerlist['total']);
 	unset($customerlist['state']);
@@ -119,17 +83,16 @@ $layout['pagetitle'] = trans('Notices');
 
 $customerlist = $DB->GetAllByKey('SELECT c.id AS id, MAX(warning) AS warning, '.
 		    $DB->Concat('UPPER(lastname)',"' '",'c.name').' AS customername 
-		    FROM customerview c 
+		    FROM customersview c 
 		    LEFT JOIN nodes ON c.id = ownerid 
 		    WHERE deleted = 0 
 		    GROUP BY c.id, lastname, c.name 
 		    ORDER BY customername ASC', 'id');
 
-$SMARTY->assign('messagetemplates', $LMS->GetMessageTemplates(TMPL_WARNING));
 $SMARTY->assign('warnmessage', $SESSION->get('warnmessage'));
 $SMARTY->assign('warnon', $SESSION->get('warnon'));
 $SMARTY->assign('warnoff', $SESSION->get('warnoff'));
 $SMARTY->assign('customerlist',$customerlist);
-$SMARTY->display('customer/customerwarnings.html');
+$SMARTY->display('customerwarnings.html');
 
 ?>

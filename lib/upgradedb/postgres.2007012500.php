@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,24 +21,24 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2007012500.php,v 1.7 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("ALTER TABLE nodes ADD halfduplex smallint");
-$this->Execute("ALTER TABLE tariffs ADD dlimit integer");
+$DB->Execute("ALTER TABLE nodes ADD halfduplex smallint");
+$DB->Execute("ALTER TABLE tariffs ADD dlimit integer");
 
-$this->Execute("UPDATE nodes SET halfduplex = 0");
-$this->Execute("UPDATE tariffs SET dlimit = 0");
+$DB->Execute("UPDATE nodes SET halfduplex = 0");
+$DB->Execute("UPDATE tariffs SET dlimit = 0");
 
-$this->Execute("ALTER TABLE nodes ALTER halfduplex SET NOT NULL");
-$this->Execute("ALTER TABLE nodes ALTER halfduplex SET DEFAULT 0");
-$this->Execute("ALTER TABLE tariffs ALTER dlimit SET NOT NULL");
-$this->Execute("ALTER TABLE tariffs ALTER dlimit SET DEFAULT 0");
+$DB->Execute("ALTER TABLE nodes ALTER halfduplex SET NOT NULL");
+$DB->Execute("ALTER TABLE nodes ALTER halfduplex SET DEFAULT 0");
+$DB->Execute("ALTER TABLE tariffs ALTER dlimit SET NOT NULL");
+$DB->Execute("ALTER TABLE tariffs ALTER dlimit SET DEFAULT 0");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007012500', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007012500', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,25 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotionschemaset.php,v 1.1 2011/03/02 10:31:05 alec Exp $
  */
 
-$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$id = isset($_GET['id']) ? $_GET['id'] : 0;
 
-if ($id) {
-	$args = array(
-		'disabled' => !empty($_GET['access']) ? 0 : 1,
-		SYSLOG::RES_PROMOSCHEMA => $id
-	);
+if($id)
+{
 	$DB->Execute('UPDATE promotionschemas SET disabled = ? WHERE id = ?',
-		array_values($args));
-	if ($SYSLOG) {
-		$schema = $DB->GetRow('SELECT promotionid, ctariffid
-			FROM promotionschemas WHERE id = ?', array($id));
-		$args[SYSLOG::RES_PROMO] = $schema['promotionid'];
-		$args[SYSLOG::RES_TARIFF] = $schema['ctariffid'];
-		$SYSLOG->AddMessage(SYSLOG::RES_PROMOSCHEMA, SYSLOG::OPER_UPDATE, $args);
-	}
+	    array(!empty($_GET['access']) ? 0 : 1, $id));
 }
 
 header('Location: ?'.$SESSION->get('backto'));

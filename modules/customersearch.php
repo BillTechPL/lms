@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,102 +21,88 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customersearch.php,v 1.20 2011/01/18 08:12:21 alec Exp $
  */
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 if(isset($_POST['search']))
 {
-	$search = $_POST['search'];
+	$customersearch = $_POST['search'];
 
-	if(!empty($search['tariffs']))
-		$search['tariffs'] = implode(",", $search['tariffs']);
-	
-	if($search['createdfrom'])
-	{
-		list($year, $month, $day) = explode('/', $search['createdfrom']);
-		$search['createdfrom'] = mktime(0, 0, 0, $month, $day, $year);
+	if ($customersearch['createdfrom']) {
+		list($year, $month, $day) = explode('/', $customersearch['createdfrom']);
+		$customersearch['createdfrom'] = mktime(0, 0, 0, $month, $day, $year);
 	}
-	if($search['createdto'])
-	{
-		list($year, $month, $day) = explode('/', $search['createdto']);
-		$search['createdto'] = mktime(23, 59, 59, $month, $day, $year);
+	if ($customersearch['createdto']) {
+		list($year, $month, $day) = explode('/', $customersearch['createdto']);
+		$customersearch['createdto'] = mktime(23, 59, 59, $month, $day, $year);
 	}
-	if($search['deletedfrom'])
-	{
-		list($year, $month, $day) = explode('/', $search['deletedfrom']);
-		$search['deletedfrom'] = mktime(0, 0, 0, $month, $day, $year);
+	if ($customersearch['deletedfrom']) {
+		list($year, $month, $day) = explode('/', $customersearch['deletedfrom']);
+		$customersearch['deletedfrom'] = mktime(0, 0, 0, $month, $day, $year);
 	}
-	if($search['deletedto'])
-	{
-		list($year, $month, $day) = explode('/', $search['deletedto']);
-		$search['deletedto'] = mktime(23, 59, 59, $month, $day, $year);
+	if ($customersearch['deletedto']) {
+		list($year, $month, $day) = explode('/', $customersearch['deletedto']);
+		$customersearch['deletedto'] = mktime(23, 59, 59, $month, $day, $year);
 	}
 }
 
-if(!isset($search))
-	$SESSION->restore('customersearch', $search);
+if (!isset($customersearch))
+	$SESSION->restore('customersearch', $customersearch);
 else
-	$SESSION->save('customersearch', $search);
+	$SESSION->save('customersearch', $customersearch);
 
 if(!isset($_GET['o']))
-	$SESSION->restore('cslo', $order);
+	$SESSION->restore('cslo', $o);
 else
-	$order = $_GET['o'];
-$SESSION->save('cslo', $order);
+	$o = $_GET['o'];
+$SESSION->save('cslo', $o);
 
 if(!isset($_POST['s']))
-	$SESSION->restore('csls', $state);
+	$SESSION->restore('csls', $s);
 else
-	$state = $_POST['s'];
-$SESSION->save('csls', $state);
+	$s = $_POST['s'];
+$SESSION->save('csls', $s);
 
 if(!isset($_POST['n']))
-	$SESSION->restore('csln', $network);
+	$SESSION->restore('csln', $n);
 else
-	$network = $_POST['n'];
-$SESSION->save('csln', $network);
+	$n = $_POST['n'];
+$SESSION->save('csln', $n);
 
 if(!isset($_POST['g']))
-	$SESSION->restore('cslg', $customergroup);
+	$SESSION->restore('cslg', $g);
 else
-	$customergroup = $_POST['g'];
-$SESSION->save('cslg', $customergroup);
+	$g = $_POST['g'];
+$SESSION->save('cslg', $g);
 
 if(!isset($_POST['k']))
-	$SESSION->restore('cslk', $sqlskey);
+	$SESSION->restore('cslk', $k);
 else
-	$sqlskey = $_POST['k'];
-$SESSION->save('cslk', $sqlskey);
+	$k = $_POST['k'];
+$SESSION->save('cslk', $k);
 
 if(!isset($_POST['ng']))
-	$SESSION->restore('cslng', $nodegroup);
+	$SESSION->restore('cslng', $ng);
 else
-	$nodegroup = $_POST['ng'];
-$SESSION->save('cslng', $nodegroup);
-
-if(!isset($_POST['d']))
-	$SESSION->restore('csld', $division);
-else
-	$division = $_POST['d'];
-$SESSION->save('csld', $division);
+	$ng = $_POST['ng'];
+$SESSION->save('cslng', $ng);
 
 if(isset($_GET['search']))
 {
 	$layout['pagetitle'] = trans('Customer Search Results');
-	$customerlist = $LMS->GetCustomerList(compact("order", "state", "network", "customergroup", "search", "time", "sqlskey", "nodegroup", "division"));
+	$customerlist = $LMS->GetCustomerList($o, $s, $n, $g, $customersearch, NULL, $k, $ng);
 	
 	$listdata['total'] = $customerlist['total'];
 	$listdata['direction'] = $customerlist['direction'];
 	$listdata['order'] = $customerlist['order'];
 	$listdata['below'] = $customerlist['below'];
 	$listdata['over'] = $customerlist['over'];
-	$listdata['state'] = $state;
-	$listdata['network'] = $network;
-	$listdata['customergroup'] = $customergroup;
-	$listdata['nodegroup'] = $nodegroup;
-	$listdata['division'] = $division;
+	$listdata['state'] = $s;
+	$listdata['network'] = $n;
+	$listdata['customergroup'] = $g;
+	$listdata['nodegroup'] = $ng;
 
 	unset($customerlist['total']);
 	unset($customerlist['state']);
@@ -128,8 +114,8 @@ if(isset($_GET['search']))
 	if (! isset($_GET['page']))
 		$SESSION->restore('cslp', $_GET['page']);
 
-	$page = (! $_GET['page'] ? 1 : $_GET['page']); 
-	$pagelimit = ConfigHelper::getConfig('phpui.customerlist_pagelimit', $listdata['total']);
+	$page = (! $_GET['page'] ? 1 : $_GET['page']);
+	$pagelimit = (!isset($CONFIG['phpui']['customerlist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['customerlist_pagelimit']);
 	$start = ($page - 1) * $pagelimit;
 
 	$SESSION->save('cslp', $page);
@@ -140,23 +126,13 @@ if(isset($_GET['search']))
 	$SMARTY->assign('page',$page);
 	$SMARTY->assign('start',$start);
 
-	if (isset($_GET['print']))
-		$SMARTY->display('print/printcustomerlist.html');
-	elseif (isset($_GET['export'])) {
-		$SMARTY->assign('contactlist', $DB->GetAllByKey('SELECT customerid, (' . $DB->GroupConcat('contact') . ') AS phone
-			FROM customercontacts WHERE contact <> \'\' AND type & ? > 0 GROUP BY customerid',
-				'customerid', array(CONTACT_MOBILE | CONTACT_LANDLINE | CONTACT_LINE)));
-
-		$filename = 'customers-' . date('YmdHis') . '.csv';
-		header('Content-Type: text/plain; charset=utf-8');
-		header('Content-Disposition: attachment; filename=' . $filename);
-		header('Pragma: public');
-		$SMARTY->display('print/printcustomerlist-csv.html');
-	} elseif ($listdata['total'] == 1)
+	if (isset($_GET['print'])) {
+		$SMARTY->display('printcustomerlist.html');
+	} elseif ($listdata['total'] == 1) {
 		$SESSION->redirect('?m=customerinfo&id=' . $customerlist[0]['id']);
-	else {
+	} else {
 		$SMARTY->assign('customergroups', $LMS->CustomergroupGetAll());
-		$SMARTY->display('customer/customersearchresults.html');
+		$SMARTY->display('customersearchresults.html');
 	}
 }
 else
@@ -169,10 +145,8 @@ else
 	$SMARTY->assign('customergroups', $LMS->CustomergroupGetAll());
 	$SMARTY->assign('nodegroups', $LMS->GetNodeGroupNames());
 	$SMARTY->assign('cstateslist', $LMS->GetCountryStates());
-	$SMARTY->assign('tariffs', $LMS->GetTariffs());
-	$SMARTY->assign('divisions', $LMS->GetDivisions());
-	$SMARTY->assign('k', $sqlskey);
-	$SMARTY->display('customer/customersearch.html');
+	$SMARTY->assign('k', $k);
+	$SMARTY->display('customersearch.html');
 }
 
 ?>

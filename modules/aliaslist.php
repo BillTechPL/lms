@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: aliaslist.php,v 1.35 2011/01/18 08:12:20 alec Exp $
  */
 
 function GetAliasList($order='login,asc', $customer=NULL, $domain='')
@@ -109,7 +109,7 @@ unset($aliaslist['domain']);
 unset($aliaslist['direction']);
 	    
 $page = (empty($_GET['page']) ? 1 : $_GET['page']); 
-$pagelimit = ConfigHelper::getConfig('phpui.aliaslist_pagelimit', $listdata['total']);
+$pagelimit = (empty($CONFIG['phpui']['aliaslist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['aliaslist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('allp', $page);
@@ -123,6 +123,6 @@ $SMARTY->assign('aliaslist', $aliaslist);
 $SMARTY->assign('listdata', $listdata);
 $SMARTY->assign('customerlist', $LMS->GetCustomerNames());
 $SMARTY->assign('domainlist', $DB->GetAll('SELECT id, name FROM domains ORDER BY name'));
-$SMARTY->display('alias/aliaslist.html');
+$SMARTY->display('aliaslist.html');
 
 ?>

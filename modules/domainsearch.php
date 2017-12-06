@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: domainsearch.php,v 1.5 2011/01/18 08:12:22 alec Exp $
  */
 
 function GetDomainList($order='name,asc', $search, $customer='')
@@ -116,7 +116,7 @@ if(sizeof($search) || isset($_GET['s']))
 		unset($domainlist['direction']);
     
 		$page = (! isset($_GET['page']) ? 1 : $_GET['page']); 
-		$pagelimit = ConfigHelper::getConfig('phpui.domainlist_pagelimit', $queuedata['total']);
+		$pagelimit = (! $CONFIG['phpui']['domainlist_pagelimit'] ? $queuedata['total'] : $CONFIG['phpui']['domainlist_pagelimit']);
 		$start = ($page - 1) * $pagelimit;
 
 		$SESSION->save('dsp', $page);
@@ -131,7 +131,7 @@ if(sizeof($search) || isset($_GET['s']))
 		$SMARTY->assign('start',$start);
 		$SMARTY->assign('search', $search);
 		$SMARTY->assign('domainlist',$domainlist);
-		$SMARTY->display('domain/domainlist.html');
+		$SMARTY->display('domainlist.html');
 		$SESSION->close();
 		die;
 	}
@@ -141,6 +141,6 @@ $layout['pagetitle'] = trans('Account, Alias, Domain Search');
 
 $SMARTY->assign('customerlist',$LMS->GetAllCustomerNames());
 $SMARTY->assign('search', isset($search) ? $search : $SESSION->get('domainsearch'));
-$SMARTY->display('account/accountsearch.html');
+$SMARTY->display('accountsearch.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: tariffadd.php,v 1.69 2011/03/02 10:31:05 alec Exp $
  */
 
 if(isset($_POST['tariff']))
@@ -30,8 +30,7 @@ if(isset($_POST['tariff']))
 	$limit = isset($_POST['limit']) ? $_POST['limit'] : array();
 
 	foreach($tariff as $key => $value)
-		if ($key != 'authtype')
-			$tariff[$key] = trim($value);
+		$tariff[$key] = trim($value);
 
 	if($tariff['name']=='' && $tariff['description']=='' && $tariff['value']=='')
 	{
@@ -47,30 +46,11 @@ if(isset($_POST['tariff']))
 		$error['name'] = trans('Subscription name required!');
 	else if (!$error) {
 		if ($DB->GetOne('SELECT id FROM tariffs WHERE name = ? AND value = ? AND period = ?',
-            array($tariff['name'], str_replace(',', '.', $tariff['value']), $tariff['period'] == '' ? NULL : $tariff['period']))
+            array($tariff['name'], str_replace(',', '.', $tariff['value']), $tariff['period']))
         ) {
 			$error['name'] = trans('Subscription with specified name and value already exists!');
         }
     }
-
-        if (empty($tariff['datefrom']))
-                $tariff['from'] = 0;
-        else {
-			$tariff['from'] = date_to_timestamp($tariff['datefrom']);
-			if (empty($tariff['from']))
-				$error['datefrom'] = trans('Incorrect effective start time!');
-		}
-
-        if (empty($tariff['dateto']))
-                $tariff['to'] = 0;
-        else {
-			$tariff['to'] = date_to_timestamp($tariff['dateto']);
-			if (empty($tariff['to']))
-				$error['dateto'] = trans('Incorrect effective start time!');
-		}
-
-	if ($tariff['to'] != 0 && $tariff['from'] != 0 && $tariff['to'] < $tariff['from'])
-		$error['dateto'] = trans('Incorrect date range!');
 
 	$items = array('uprate', 'downrate', 'upceil', 'downceil', 'climit', 'plimit', 'dlimit');
 
@@ -82,13 +62,13 @@ if(isset($_POST['tariff']))
 			$error[$item] = trans('Integer value expected!');
 	}
 
-	if ($tariff['uprate'] < 8 && $tariff['uprate'] != 0)
-		$error['uprate'] = trans('This field must be greater than 8');
-	if ($tariff['downrate'] < 8 && $tariff['downrate'] != 0)
-		$error['downrate'] = trans('This field must be greater than 8');
-	if (($tariff['upceil'] < 8 || $tariff['upceil'] < $tariff['uprate']) && $tariff['upceil'] != 0)
+	if(($tariff['uprate'] < 8 || $tariff['uprate'] > 100000) && $tariff['uprate'] != 0)
+		$error['uprate'] = trans('This field must be within range 8 - 100000');
+	if(($tariff['downrate'] < 8 || $tariff['downrate'] > 100000) && $tariff['downrate'] != 0)
+		$error['downrate'] = trans('This field must be within range 8 - 100000');
+	if(($tariff['upceil'] < 8 || $tariff['upceil'] < $tariff['uprate']) && $tariff['upceil'] != 0)
 		$error['upceil'] = trans('This field must contain number greater than 8 and greater than upload rate');
-	if (($tariff['downceil'] < 8 || $tariff['downceil'] < $tariff['downrate']) && $tariff['downceil'] != 0)
+	if(($tariff['downceil'] < 8 || $tariff['downceil'] < $tariff['downrate']) && $tariff['downceil'] != 0)
 		$error['downceil'] = trans('This field must contain number greater than 8 and greater than download rate');
 
 	$items = array('uprate_n', 'downrate_n', 'upceil_n', 'downceil_n', 'climit_n', 'plimit_n');
@@ -101,29 +81,23 @@ if(isset($_POST['tariff']))
 			$error[$item] = trans('Integer value expected!');
 	}
 
-	if ($tariff['uprate_n'] < 8 && $tariff['uprate_n'])
-		$error['uprate_n'] = trans('This field must be greater than 8');
-	if ($tariff['downrate_n'] < 8 && $tariff['downrate_n'])
-		$error['downrate_n'] = trans('This field must be greater than 8');
-	if (($tariff['upceil_n'] < 8 || $tariff['upceil_n'] < $tariff['uprate']) && $tariff['upceil_n'])
+	if(($tariff['uprate_n'] < 8 || $tariff['uprate_n'] > 100000) && $tariff['uprate_n'])
+		$error['uprate_n'] = trans('This field must be within range 8 - 100000');
+	if(($tariff['downrate_n'] < 8 || $tariff['downrate_n'] > 100000) && $tariff['downrate_n'])
+		$error['downrate_n'] = trans('This field must be within range 8 - 100000');
+	if(($tariff['upceil_n'] < 8 || $tariff['upceil_n'] < $tariff['uprate']) && $tariff['upceil_n'])
 		$error['upceil_n'] = trans('This field must contain number greater than 8 and greater than upload rate');
-	if (($tariff['downceil_n'] < 8 || $tariff['downceil_n'] < $tariff['downrate']) && $tariff['downceil_n'])
+	if(($tariff['downceil_n'] < 8 || $tariff['downceil_n'] < $tariff['downrate']) && $tariff['downceil_n'])
 		$error['downceil_n'] = trans('This field must contain number greater than 8 and greater than download rate');
 
 	if(!isset($tariff['taxid']))
 		$tariff['taxid'] = 0;
 
-	$authtype = 0;
-	if (isset($tariff['authtype']))
-		foreach ($tariff['authtype'] as $val)
-			$authtype |= intval($val);
-	$tariff['authtype'] = $authtype;
-
-	$items = array('domain_limit', 'alias_limit');
-	foreach ($ACCOUNTTYPES as $typeidx => $type) {
-		$items[] = $type['alias'] . '_limit';
-		$items[] = 'quota_' . $type['alias'] . '_limit';
-	}
+	$items = array('domain_limit', 'alias_limit', 
+			'sh_limit', 'mail_limit', 'www_limit', 'ftp_limit', 'sql_limit', 
+			'quota_sh_limit', 'quota_mail_limit', 'quota_www_limit', 
+			'quota_ftp_limit', 'quota_sql_limit', 
+	);
 
 	foreach($items as $item)
 	{
@@ -135,7 +109,7 @@ if(isset($_POST['tariff']))
 
 	if(!$error)
 	{
-		$SESSION->redirect('?m=tariffinfo&id='.$LMS->TariffAdd($tariff));
+		$SESSION->redirect('?m=tarifflist&id='.$LMS->TariffAdd($tariff));
 	}
 
 	$SMARTY->assign('error',$error);
@@ -149,25 +123,25 @@ else
 {
 	$tariff['domain_limit'] = 0;
 	$tariff['alias_limit'] = 0;
-	foreach ($ACCOUNTTYPES as $typeidx => $type) {
-		$tariff[$type['alias'] . '_limit'] = 0;
-		$tariff['quota_' . $type['alias'] . '_limit'] = 0;
-	}
+	$tariff['sh_limit'] = 0;
+	$tariff['www_limit'] = 0;
+	$tariff['mail_limit'] = 0;
+	$tariff['ftp_limit'] = 0;
+	$tariff['sql_limit'] = 0;
+	$tariff['quota_sh_limit'] = 0;
+	$tariff['quota_www_limit'] = 0;
+	$tariff['quota_mail_limit'] = 0;
+	$tariff['quota_ftp_limit'] = 0;
+	$tariff['quota_sql_limit'] = 0;
 
-	$default_assignment_period = ConfigHelper::getConfig('phpui.default_assignment_period');
-	if (!empty($default_assignment_period))
-		$tariff['period'] = $default_assignment_period;
+    if (!empty($CONFIG['phpui']['default_assignment_period']))
+        $tariff['period'] = $CONFIG['phpui']['default_assignment_period'];
 }
 
 $layout['pagetitle'] = trans('New Subscription');
 
 $SMARTY->assign('taxeslist',$LMS->GetTaxes());
 $SMARTY->assign('tariff', $tariff);
-$SMARTY->assign('voip_tariffs', $LMS->getVoipTariffs());
-$SMARTY->assign('voip_tariffrules', $LMS->getVoipTariffRuleGroups());
-$SMARTY->assign('numberplanlist', $LMS->GetNumberPlans(array(
-	'doctype' => DOC_INVOICE,
-)));
-$SMARTY->display('tariff/tariffadd.html');
+$SMARTY->display('tariffadd.html');
 
 ?>

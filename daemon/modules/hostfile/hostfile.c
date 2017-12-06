@@ -1,7 +1,7 @@
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: hostfile.c,v 1.68 2011/03/17 13:12:14 alec Exp $
  */
 
 #include <stdio.h>
@@ -77,7 +77,7 @@ void addrule(GLOBAL *g, FILE *fh, char *rule, struct host h)
 	g->str_replace(&s, "%i16", h.i16);
 	g->str_replace(&s, "%i", h.ip);
 	g->str_replace(&s, "%ms", h.macs);
-	g->str_replace(&s, "%m", h.mac ? h.mac : "00:00:00:00:00:00");
+	g->str_replace(&s, "%m", h.mac);
 	g->str_replace(&s, "%n", h.name);
 	g->str_replace(&s, "%l", h.location);
 	g->str_replace(&s, "%devl", h.devlocation);
@@ -280,27 +280,27 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 		g->str_replace(&engroups, "%groups", engroupsql);
 
 	// all networks data
-	res = g->db->query(g->db->conn, "SELECT name, domain, address, inet_aton(mask) AS mask, "
+	res = g->db_query(g->conn, "SELECT name, domain, address, inet_aton(mask) AS mask, "
 				"mask2prefix(inet_aton(mask)) AS prefix, dhcpstart, dhcpend, "
 				"interface, gateway, dns, dns2, wins FROM networks");
 
-	for(nc=0; nc<g->db->nrows(res); nc++)
+	for(nc=0; nc<g->db_nrows(res); nc++)
 	{
 		networks = (struct net*) realloc(networks, (sizeof(struct net) * (nc+1)));
-		networks[nc].name = strdup(g->db->get_data(res,nc,"name"));
-		networks[nc].domain = strdup(g->db->get_data(res,nc,"domain"));
-		networks[nc].interface = strdup(g->db->get_data(res,nc,"interface"));
-		networks[nc].gateway = strdup(g->db->get_data(res,nc,"gateway"));
-		networks[nc].dns = strdup(g->db->get_data(res,nc,"dns"));
-		networks[nc].dns2 = strdup(g->db->get_data(res,nc,"dns2"));
-		networks[nc].wins = strdup(g->db->get_data(res,nc,"wins"));
-		networks[nc].prefix = strdup(g->db->get_data(res,nc,"prefix"));
-		networks[nc].dhcpstart = strdup(g->db->get_data(res,nc,"dhcpstart"));
-		networks[nc].dhcpend = strdup(g->db->get_data(res,nc,"dhcpend"));
-		networks[nc].address = inet_addr(g->db->get_data(res,nc,"address"));
-		networks[nc].mask = inet_addr(g->db->get_data(res,nc,"mask"));
+		networks[nc].name = strdup(g->db_get_data(res,nc,"name"));
+		networks[nc].domain = strdup(g->db_get_data(res,nc,"domain"));
+		networks[nc].interface = strdup(g->db_get_data(res,nc,"interface"));
+		networks[nc].gateway = strdup(g->db_get_data(res,nc,"gateway"));
+		networks[nc].dns = strdup(g->db_get_data(res,nc,"dns"));
+		networks[nc].dns2 = strdup(g->db_get_data(res,nc,"dns2"));
+		networks[nc].wins = strdup(g->db_get_data(res,nc,"wins"));
+		networks[nc].prefix = strdup(g->db_get_data(res,nc,"prefix"));
+		networks[nc].dhcpstart = strdup(g->db_get_data(res,nc,"dhcpstart"));
+		networks[nc].dhcpend = strdup(g->db_get_data(res,nc,"dhcpend"));
+		networks[nc].address = inet_addr(g->db_get_data(res,nc,"address"));
+		networks[nc].mask = inet_addr(g->db_get_data(res,nc,"mask"));
 	}
-	g->db->free(&res);
+	g->db_free(&res);
 
 	fh = fopen(hm->file, "w");
 	if(fh)
@@ -312,14 +312,14 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 				"SELECT n.id, LOWER(n.name) AS name, n.mac, INET_NTOA(n.ipaddr) AS ip, "
 				"(CASE WHEN n.ipaddr_pub != 0 THEN INET_NTOA(n.ipaddr_pub) "
 					"ELSE INET_NTOA(COALESCE(s.ipaddr_pub, 0)) END) AS ip_pub, " 
-				"n.port, n.passwd, n.access, n.info, n.warning, n.location, "
+				"n.port, n.passwd, n.access, n.info, n.warning, n.location_address, "
 				"%devloc AS devlocation %custcols"
 				"FROM %nodes n "
 				"LEFT JOIN (SELECT netdev, MIN(ipaddr_pub) AS ipaddr_pub "
 					"FROM nodes "
-					"WHERE ownerid IS NULL AND ipaddr_pub != 0 AND netdev IS NOT NULL "
+					"WHERE ownerid = 0 AND ipaddr_pub != 0 AND netdev != 0 "
 					"GROUP BY netdev "
-				") s ON (s.netdev = n.netdev AND n.ownerid IS NULL) "
+				") s ON (s.netdev = n.netdev AND n.ownerid = 0) "
 				"%custjoin"
 				"%devjoin"
 				"WHERE %where "
@@ -329,7 +329,7 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 			query = strdup(
 				"SELECT n.id, LOWER(n.name) AS name, n.mac, INET_NTOA(n.ipaddr) AS ip, "
 				"INET_NTOA(n.ipaddr_pub) AS ip_pub, n.passwd, n.access, n.info, n.warning, "
-				"n.port, n.location, %devloc AS devlocation %custcols"
+				"n.port, n.location_address, %devloc AS devlocation %custcols"
 				"FROM %nodes n "
 				"%custjoin"
 				"%devjoin"
@@ -338,9 +338,9 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 				"ORDER BY ipaddr");
 
 		if(hm->skip_dev_ips)
-			g->str_replace(&query, "%where", "n.ownerid IS NOT NULL");
+			g->str_replace(&query, "%where", "n.ownerid > 0");
 		else if(hm->skip_host_ips)
-			g->str_replace(&query, "%where", "n.ownerid IS NULL");
+			g->str_replace(&query, "%where", "n.ownerid = 0");
 		else
 			g->str_replace(&query, "%where", "1 = 1");
 
@@ -354,29 +354,29 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 		g->str_replace(&query, "%custjoin", hm->join_customers ?
 			"LEFT JOIN customers c ON (c.id = n.ownerid) " : "");
 		g->str_replace(&query, "%devjoin", hm->join_devices ? 
-			"LEFT JOIN netdevices d ON (d.id = n.netdev) LEFT JOIN vaddresses va ON va.id = d.address_id " : "");
-		g->str_replace(&query, "%devloc", hm->join_devices ? "va.location" : "''");
+			"LEFT JOIN netdevices d ON (d.id = n.netdev) " : "");
+		g->str_replace(&query, "%devloc", hm->join_devices ? "d.location" : "''");
+#ifdef USE_PGSQL
 		g->str_replace(&query, "%custcols", hm->join_customers ?
-			", c.id AS cid, TRIM(%cfullname) AS customer " : "");
-
-		char * cfullname = g->db->concat(3, "UPPER(c.lastname)", "' '", "c.name");
-		g->str_replace(&query, "%cfullname", cfullname);
-		free(cfullname);
-
+			", c.id AS cid, TRIM(UPPER(c.lastname) || ' ' || c.name) AS customer " : "");
+#else
+		g->str_replace(&query, "%custcols", hm->join_customers ?
+			", c.id AS cid, TRIM(CONCAT(UPPER(c.lastname), ' ', c.name)) AS customer " : "");
+#endif
 		g->str_replace(&query, "%pubip", hm->share_netdev_pubip && !hm->skip_dev_ips ? 
 			"(CASE WHEN n.ipaddr_pub != 0 THEN n.ipaddr_pub "
 				"ELSE COALESCE(s.ipaddr_pub, 0) END)" : "n.ipaddr_pub");
 
-		res = g->db->query(g->db->conn, query);
+		res = g->db_query(g->conn, query);
 
-		for(i=0; i<g->db->nrows(res); i++)
+		for(i=0; i<g->db_nrows(res); i++)
 		{
 			unsigned long inet, inet_pub;
 			struct host h;
 			char *pattern, *mac;
 
-			h.ip 		= g->db->get_data(res,i,"ip");
-			h.ip_pub 	= g->db->get_data(res,i,"ip_pub");
+			h.ip 		= g->db_get_data(res,i,"ip");
+			h.ip_pub 	= g->db_get_data(res,i,"ip_pub");
 			inet 		= inet_addr(h.ip);
 			inet_pub 	= inet_addr(h.ip_pub);
 
@@ -399,18 +399,18 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 					}
 			}
 
-			h.access 	= g->db->get_data(res,i,"access");
-	    	h.warning	= g->db->get_data(res,i,"warning");
-			h.name 		= g->db->get_data(res,i,"name");
-			h.info 		= g->db->get_data(res,i,"info");
-			h.passwd 	= g->db->get_data(res,i,"passwd");
-			h.id  		= g->db->get_data(res,i,"id");
-			h.macs 		= g->db->get_data(res,i,"mac");
-			h.port 		= g->db->get_data(res,i,"port");
-			h.location 	= g->db->get_data(res,i,"location");
-			h.devlocation 	= g->db->get_data(res,i,"devlocation");
-			h.customer	= hm->join_customers ? g->db->get_data(res,i,"customer") : "";
-			h.cid  		= hm->join_customers ? g->db->get_data(res,i,"cid") : "0";
+			h.access 	= g->db_get_data(res,i,"access");
+	    	h.warning	= g->db_get_data(res,i,"warning");
+			h.name 		= g->db_get_data(res,i,"name");
+			h.info 		= g->db_get_data(res,i,"info");
+			h.passwd 	= g->db_get_data(res,i,"passwd");
+			h.id  		= g->db_get_data(res,i,"id");
+			h.macs 		= g->db_get_data(res,i,"mac");
+			h.port 		= g->db_get_data(res,i,"port");
+			h.location 	= g->db_get_data(res,i,"location_address");
+			h.devlocation 	= g->db_get_data(res,i,"devlocation");
+			h.customer	= hm->join_customers ? g->db_get_data(res,i,"customer") : "";
+			h.cid  		= hm->join_customers ? g->db_get_data(res,i,"cid") : "0";
 			// IP's last octet in hex
        		h.i16 		= strdup(itoha((ntohl(inet) & 0xff)));
 			h.i16_pub 	= strdup(inet_pub ? itoha((ntohl(inet_pub) & 0xff)) : "");
@@ -463,7 +463,7 @@ void reload(GLOBAL *g, struct hostfile_module *hm)
 
 		fprintf(fh, "%s", hm->append);
 
-		g->db->free(&res);
+		g->db_free(&res);
 		free(query);
 		fclose(fh);
 

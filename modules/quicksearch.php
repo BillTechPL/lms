@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: quicksearch.php,v 1.74 2011/04/01 10:35:12 alec Exp $
  */
 
 function macformat($mac, $escape=false)
 {
-	global $DB;
+    global $DB;
 
 	$res = str_replace('-', ':', $mac);
 
@@ -50,22 +50,27 @@ function macformat($mac, $escape=false)
 		if(strlen($tmp) == 12) // we've the whole address
 			if(check_mac($tmp))
 				$res = $tmp;
-	}
 
-	if ($escape)
-		$res = $DB->Escape("%$res%");
+        if ($escape)
+            $res = $DB->Escape("%$res%");
+	}
 	return $res;
 }
 
 $mode = '';
 
-if (!empty($_POST['qs'])) {
-        foreach($_POST['qs'] as $key => $value)
-                if(!empty($value)){
-                        $mode = $key;
-                        $search = $value;
-                }
-	$search = urldecode(trim($search));
+if(!empty($_POST['qscustomer'])) {
+	$mode = 'customer'; 
+	$search = urldecode(trim($_POST['qscustomer']));
+} elseif(!empty($_POST['qsnode'])) {
+	$mode = 'node'; 
+	$search = urldecode(trim($_POST['qsnode']));
+} elseif(!empty($_POST['qsticket'])) {
+	$mode = 'ticket'; 
+	$search = urldecode(trim($_POST['qsticket']));
+} elseif(!empty($_POST['qsaccount'])) {
+	$mode = 'account'; 
+	$search = urldecode(trim($_POST['qsaccount']));
 } elseif(!empty($_GET['what'])) {
 	$search = urldecode(trim($_GET['what']));
 	$mode = $_GET['mode'];
@@ -73,72 +78,55 @@ if (!empty($_POST['qs'])) {
 
 $sql_search = $DB->Escape("%$search%");
 
-switch ($mode) {
+switch($mode)
+{
 	case 'customer':
 		if(isset($_GET['ajax'])) // support for AutoSuggest
 		{
-			$candidates = $DB->GetAll("SELECT c.id, cc.contact AS email, full_address AS address, post_name, post_full_address AS post_address, deleted,
-			    ".$DB->Concat('UPPER(lastname)',"' '",'c.name')." AS username, va.address AS location_address
-				FROM customerview c
-				LEFT JOIN customer_addresses ca ON ca.customer_id = c.id AND ca.type = ?
-				LEFT JOIN vaddresses va ON va.id = ca.address_id
-				LEFT JOIN customercontacts cc ON cc.customerid = c.id AND (cc.type & ?) > 0
-				WHERE ".(preg_match('/^[0-9]+$/', $search) ? 'c.id = '.intval($search).' OR ' : '')."
-					LOWER(".$DB->Concat('lastname',"' '",'c.name').") ?LIKE? LOWER($sql_search)
-					OR LOWER(full_address) ?LIKE? LOWER($sql_search)
+			$candidates = $DB->GetAll("SELECT id, email, address, post_name, post_address, deleted,
+			    ".$DB->Concat('UPPER(lastname)',"' '",'name')." AS username
+				FROM customersview
+				WHERE ".(preg_match('/^[0-9]+$/', $search) ? 'id = '.intval($search).' OR ' : '')."
+					LOWER(".$DB->Concat('lastname',"' '",'name').") ?LIKE? LOWER($sql_search)
+					OR LOWER(address) ?LIKE? LOWER($sql_search)
 					OR LOWER(post_name) ?LIKE? LOWER($sql_search)
-					OR LOWER(post_full_address) ?LIKE? LOWER($sql_search)
-					OR LOWER(va.address) ?LIKE? LOWER($sql_search)
-					OR LOWER(cc.contact) ?LIKE? LOWER($sql_search)
-				ORDER by deleted, username, cc.contact, full_address
-				LIMIT ?", array(LOCATION_ADDRESS, CONTACT_EMAIL, intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
+					OR LOWER(post_address) ?LIKE? LOWER($sql_search)
+					OR LOWER(email) ?LIKE? LOWER($sql_search)
+				ORDER by deleted, username, email, address
+				LIMIT 15");
 
 			$eglible=array(); $actions=array(); $descriptions=array();
-			if ($candidates) {
-				$customer_count = array();
-				foreach ($candidates as $idx => $row) {
-					$customername = $row['username'];
-					if (!isset($customer_count[$customername]))
-						$customer_count[$customername] = 0;
-					$customer_count[$customername]++;
-				}
-				foreach ($candidates as $idx => $row) {
-					$actions[$row['id']] = '?m=customerinfo&id=' . $row['id'];
-					$eglible[$row['id']] = escape_js(($row['deleted'] ? '<font class="blend">' : '')
-						. truncate_str($row['username'], 50) . ($row['deleted'] ? '</font>' : ''));
+			if ($candidates)
+			foreach($candidates as $idx => $row) {
+				$actions[$row['id']] = '?m=customerinfo&id='.$row['id'];
+				$eglible[$row['id']] = escape_js(($row['deleted'] ? '<font class="blend">' : '')
+				    .truncate_str($row['username'], 50).($row['deleted'] ? '</font>' : ''));
 
-					if ($customer_count[$row['username']] > 1) {
-						$descriptions[$row['id']] = escape_js(trans('Address:') . ' ' . $row['address']);
-						continue;
-					}
-
-					if (preg_match("~^$search\$~i", $row['id'])) {
-						$descriptions[$row['id']] = escape_js(trans('Id:') . ' ' . $row['id']);
-						continue;
-					}
-					if (preg_match("~$search~i", $row['username'])) {
-						$descriptions[$row['id']] = '';
-						continue;
-					}
-					if (preg_match("~$search~i", $row['address'])) {
-						$descriptions[$row['id']] = escape_js(trans('Address:') . ' ' . $row['address']);
-						continue;
-					} else if (preg_match("~$search~i", $row['post_name'])) {
-						$descriptions[$row['id']] = escape_js(trans('Name:') . ' ' . $row['post_name']);
-						continue;
-					} else if (preg_match("~$search~i", $row['post_address'])) {
-						$descriptions[$row['id']] = escape_js(trans('Address:') . ' ' . $row['post_address']);
-						continue;
-					} else if (preg_match("~$search~i", $row['location_address'])) {
-						$descriptions[$row['id']] = escape_js(trans('Address:') . ' ' . $row['location_address']);
-						continue;
-					}
-					if (preg_match("~$search~i", $row['email'])) {
-						$descriptions[$row['id']] = escape_js(trans('E-mail:') . ' ' . $row['email']);
-						continue;
-					}
-					$descriptions[$row['id']] = '';
+				if (preg_match("~^$search\$~i",$row['id'])) {
+				    $descriptions[$row['id']] = escape_js(trans('Id:').' '.$row['id']);
+				    continue;
 				}
+				if (preg_match("~$search~i",$row['username'])) {
+				    $descriptions[$row['id']] = '';
+				    continue;
+				}
+				if (preg_match("~$search~i",$row['address'])) {
+				    $descriptions[$row['id']] = escape_js(trans('Address:').' '.$row['address']);
+				    continue;
+				}
+				else if (preg_match("~$search~i",$row['post_name'])) {
+				    $descriptions[$row['id']] = escape_js(trans('Name:').' '.$row['post_name']);
+				    continue;
+				}
+				else if (preg_match("~$search~i",$row['post_address'])) {
+				    $descriptions[$row['id']] = escape_js(trans('Address:').' '.$row['post_address']);
+				    continue;
+				}
+				if (preg_match("~$search~i",$row['email'])) {
+				    $descriptions[$row['id']] = escape_js(trans('E-mail:').' '.$row['email']);
+				    continue;
+				}
+				$descriptions[$row['id']] = '';
 			}
 			header('Content-type: text/plain');
 			if ($eglible) {
@@ -148,14 +136,12 @@ switch ($mode) {
 			} else {
 				print "false;\n";
 			}
-			$SESSION->close();
-			$DB->Destroy();
 			exit;
 		}
 
 		if(is_numeric($search)) // maybe it's customer ID
 		{
-			if($customerid = $DB->GetOne('SELECT id FROM customerview WHERE id = '.$search))
+			if($customerid = $DB->GetOne('SELECT id FROM customersview WHERE id = '.$search))
 			{
 				$target = '?m=customerinfo&id='.$customerid;
 				break;
@@ -180,107 +166,17 @@ switch ($mode) {
 		$target = '?m=customersearch&search=1';
 	break;
 
-	case 'customerext':
-		if(isset($_GET['ajax'])) // support for AutoSuggest
-		{
-			$candidates = $DB->GetAll("SELECT c.id, cc.contact AS email, full_address AS address, post_name, post_full_address AS post_address, deleted,
-			    ".$DB->Concat('UPPER(lastname)',"' '",'c.name')." AS username
-				FROM customerview c
-				LEFT JOIN customercontacts cc ON cc.customerid = c.id AND (cc.type & ?) > 0
-				WHERE LOWER(c.extid) ?LIKE? LOWER($sql_search)
-				ORDER by deleted, username, cc.contact, full_address
-				LIMIT ?", array(CONTACT_EMAIL, intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
-
-			$eglible=array(); $actions=array(); $descriptions=array();
-			if ($candidates)
-			foreach($candidates as $idx => $row) {
-				$actions[$row['id']] = '?m=customerinfo&id='.$row['id'];
-				$eglible[$row['id']] = escape_js(($row['deleted'] ? '<font class="blend">' : '')
-				 . truncate_str($row['username'], 50).($row['deleted'] ? '</font>' : ''));
-
-				if (preg_match("~^$search\$~i",$row['id'])) {
-					$descriptions[$row['id']] = escape_js(trans('Id:').' '.$row['id']);
-					continue;
-				}
-				$descriptions[$row['id']] = '';
-			}
-			header('Content-type: text/plain');
-			if ($eglible) {
-				print "this.eligible = [\"".implode('","',$eglible)."\"];\n";
-				print "this.descriptions = [\"".implode('","',$descriptions)."\"];\n";
-				print "this.actions = [\"".implode('","',$actions)."\"];\n";
-			} else {
-				print "false;\n";
-			}
-			$SESSION->close();
-			$DB->Destroy();
-			exit;
-		}
-
-		if (($customerids = $DB->GetCol("SELECT id FROM customerview WHERE LOWER(extid) ?LIKE? LOWER($sql_search)"))
-			&& count($customerids) == 1)
-			$target = '?m=customerinfo&id=' . $customerids[0];
-		break;
-
-	case 'phone':
-		if(isset($_GET['ajax'])) // support for AutoSuggest
-		{
-			$candidates = $DB->GetAll("SELECT c.id, cc.contact AS phone, full_address AS address, post_name, post_full_address AS post_address, deleted,
-			    ".$DB->Concat('UPPER(lastname)',"' '",'c.name')." AS username
-				FROM customerview c
-				LEFT JOIN customercontacts cc ON cc.customerid = c.id AND (cc.type & " . (CONTACT_LANDLINE | CONTACT_MOBILE | CONTACT_FAX) . " > 0)
-				WHERE REPLACE(REPLACE(cc.contact, '-', ''), ' ', '') ?LIKE? $sql_search
-				ORDER by deleted, username, cc.contact, full_address
-				LIMIT ?", array(intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
-
-			$eglible=array(); $actions=array(); $descriptions=array();
-			if ($candidates)
-			foreach($candidates as $idx => $row) {
-				$actions[$row['id']] = '?m=customerinfo&id='.$row['id'];
-				$eglible[$row['id']] = escape_js(($row['deleted'] ? '<font class="blend">' : '')
-				    .truncate_str($row['username'], 50).($row['deleted'] ? '</font>' : ''));
-
-				$descriptions[$row['id']] = escape_js(trans('Phone:').' '.$row['phone']);
-			}
-			header('Content-type: text/plain');
-			if ($eglible) {
-				print "this.eligible = [\"".implode('","',$eglible)."\"];\n";
-				print "this.descriptions = [\"".implode('","',$descriptions)."\"];\n";
-				print "this.actions = [\"".implode('","',$actions)."\"];\n";
-			} else {
-				print "false;\n";
-			}
-			$SESSION->close();
-			$DB->Destroy();
-			exit;
-		}
-
-		// use customersearch module to find all customers
-		$s['phone'] = $search;
-
-		$SESSION->save('customersearch', $s);
-		$SESSION->save('cslk', 'OR');
-
-		$SESSION->remove('cslp');
-		$SESSION->remove('csln');
-		$SESSION->remove('cslg');
-		$SESSION->remove('csls');
-
-		$target = '?m=customersearch&search=1';
-	break;
-
-
 	case 'node':
 		if(isset($_GET['ajax'])) // support for AutoSuggest
 		{
 		    // Build different query for each database engine,
 		    // MySQL is slow here when vnodes view is used
-		    if (ConfigHelper::getConfig('database.type') == 'postgres')
+		    if ($CONFIG['database']['type'] == 'postgres')
 			    $sql_query = 'SELECT n.id, n.name, INET_NTOA(ipaddr) as ip,
 			        INET_NTOA(ipaddr_pub) AS ip_pub, mac
 				    FROM vnodes n
 				    WHERE %where
-    				ORDER BY n.name LIMIT ?';
+    				ORDER BY n.name LIMIT 15';
             else
 			    $sql_query = 'SELECT n.id, n.name, INET_NTOA(ipaddr) as ip,
 			        INET_NTOA(ipaddr_pub) AS ip_pub, mac
@@ -291,7 +187,7 @@ switch ($mode) {
                         GROUP BY nodeid
                     ) m ON (n.id = m.nodeid)
 				    WHERE %where
-    				ORDER BY n.name LIMIT ?';
+    				ORDER BY n.name LIMIT 15';
 
             $sql_where = '('.(preg_match('/^[0-9]+$/',$search) ? "n.id = $search OR " : '')."
 				LOWER(n.name) ?LIKE? LOWER($sql_search)
@@ -303,8 +199,7 @@ switch ($mode) {
                     JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
 			        WHERE e.userid = lms_current_user() AND a.customerid = n.ownerid)";
 
-			$candidates = $DB->GetAll(str_replace('%where', $sql_where,	$sql_query),
-				array(intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
+			$candidates = $DB->GetAll(str_replace('%where', $sql_where,	$sql_query));
 
 			$eglible=array(); $actions=array(); $descriptions=array();
 			if ($candidates)
@@ -350,14 +245,12 @@ switch ($mode) {
 			} else {
 				print "false;\n";
 			}
-                        $SESSION->close();
-                        $DB->Destroy();
 			exit;
 		}
 
 		if(is_numeric($search) && !strstr($search, '.')) // maybe it's node ID
 		{
-			if($nodeid = $DB->GetOne('SELECT id FROM vnodes WHERE id = '.$search))
+			if($nodeid = $DB->GetOne('SELECT id FROM nodes WHERE id = '.$search))
 			{
 				$target = '?m=nodeinfo&id='.$nodeid;
 				break;
@@ -380,21 +273,16 @@ switch ($mode) {
 	case 'ticket':
 		if(isset($_GET['ajax'])) // support for AutoSuggest
 		{
-			$categories = $LMS->GetCategoryListByUser(Auth::GetCurrentUser());
-			foreach($categories as $category)
-				$catids[] = $category['id'];
 			$candidates = $DB->GetAll("SELECT t.id, t.subject, t.requestor, c.name, c.lastname 
 				FROM rttickets t
-				LEFT JOIN rtticketcategories tc ON t.id = tc.ticketid
-				LEFT JOIN customerview c on (t.customerid = c.id)
-				WHERE ".(is_array($catids) ? "tc.categoryid IN (".implode(',', $catids).")" : "tc.categoryid IS NULL")
-					." AND (".(preg_match('/^[0-9]+$/',$search) ? 't.id = '.intval($search).' OR ' : '')."
+				LEFT JOIN customersview c on (t.customerid = c.id)
+				WHERE ".(preg_match('/^[0-9]+$/',$search) ? 't.id = '.intval($search).' OR ' : '')."
 					LOWER(t.subject) ?LIKE? LOWER($sql_search)
 					OR LOWER(t.requestor) ?LIKE? LOWER($sql_search)
 					OR LOWER(c.name) ?LIKE? LOWER($sql_search)
-					OR LOWER(c.lastname) ?LIKE? LOWER($sql_search))
+					OR LOWER(c.lastname) ?LIKE? LOWER($sql_search)
 					ORDER BY t.subject, t.id, c.lastname, c.name, t.requestor
-					LIMIT ?", array(intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
+					LIMIT 15");
 
 			$eglible=array(); $actions=array(); $descriptions=array();
 			if ($candidates)
@@ -416,8 +304,6 @@ switch ($mode) {
 			} else {
 				print "false;\n";
 			}
-                        $SESSION->close();
-                        $DB->Destroy();
 			exit;
 		}
 
@@ -453,7 +339,7 @@ switch ($mode) {
 					WHERE a.login ?LIKE? LOWER($username)
 					".($domain ? "AND d.name ?LIKE? LOWER($domain)" : '').")
 					ORDER BY login, domain
-					LIMIT ?", array(intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
+					LIMIT 15");
 
 			$eglible=array(); $actions=array(); $descriptions=array();
 
@@ -475,8 +361,6 @@ switch ($mode) {
 			} else {
 				print "false;\n";
 			}
-                        $SESSION->close();
-                        $DB->Destroy();
 			exit;
 		}
 
@@ -487,93 +371,7 @@ switch ($mode) {
 		$SESSION->save('accountsearch', $search);
 		$target = '?m=accountsearch&s=1';
 	break;
-
-	case 'document':
-		if (isset($_GET['ajax'])) {
-			$candidates = $DB->GetAll("SELECT d.id, d.type, d.fullnumber,
-					d.customerid AS cid, d.name AS customername
-				FROM documents d
-				JOIN customerview c on d.customerid = c.id
-				WHERE (LOWER(d.fullnumber) ?LIKE? LOWER($sql_search)
-					OR 1 = 0)
-					ORDER BY d.fullnumber
-					LIMIT ?", array(intval(ConfigHelper::getConfig('phpui.quicksearch_limit', 15))));
-
-			$eglible = array(); $actions = array(); $descriptions = array();
-			if ($candidates)
-				foreach ($candidates as $idx => $row) {
-/*
-					switch ($row['type']) {
-						case DOC_INVOICE:
-							$actions[$row['id']] = '?m=invoice&id=' . $row['id'];
-							break;
-						case DOC_RECEIPT:
-							$actions[$row['id']] = '?m=receipt&id=' . $row['id'];
-							break;
-						case DOC_CNOTE:
-							$actions[$row['id']] = '?m=note&id=' . $row['id'];
-							break;
-						default:
-							$actions[$row['id']] = '?m=documentview&id=' . $row['id'];
-					}
-*/
-					$actions[$row['id']] = '?m=customerinfo&id=' . $row['cid'];
-					$eglible[$row['id']] = escape_js($row['fullnumber']);
-					$descriptions[$row['id']] = escape_js(truncate_str($row['customername'], 35));
-					//$descriptions[$row['id']] = trans('Document id:') . ' ' . $row['id'];
-				}
-			header('Content-type: text/plain');
-			if ($eglible) {
-				print "this.eligible = [\"".implode('","',$eglible)."\"];\n";
-				print "this.descriptions = [\"".implode('","',$descriptions)."\"];\n";
-				print "this.actions = [\"".implode('","',$actions)."\"];\n";
-			} else {
-				print "false;\n";
-			}
-                        $SESSION->close();
-                        $DB->Destroy();
-			exit;
-		}
-
-		$docs = $DB->GetAll("SELECT d.id, d.type, d.customerid AS cid, d.name AS customername
-			FROM documents d
-			JOIN customerview c ON c.id = d.customerid
-			WHERE LOWER(fullnumber) ?LIKE? LOWER($sql_search)");
-		if (count($docs) == 1) {
-			$cid = $docs[0]['cid'];
-/*
-			$docid = $docs[0]['id'];
-			$type = $docs[0]['type'];
-			switch ($type) {
-				case DOC_INVOICE:
-					$target = '?m=invoice&id=' . $docid;
-					break;
-				case DOC_RECEIPT:
-					$target = '?m=receipt&id=' . $docid;
-					break;
-				case DOC_CNOTE:
-					$target = '?m=note&id=' . $docid;
-					break;
-				default:
-					$target = '?m=documentview&id=' . $docid;
-			}
-*/
-			$target = '?m=customerinfo&id=' . $cid;
-		}
-	break;
 }
-
-$quicksearch = $LMS->executeHook('quicksearch_after_submit',
-	array(
-		'mode' => $mode,
-		'search' => $search,
-		'sql_search' => $sql_search,
-		'session' => $SESSION,
-		'target' => '',
-	)
-);
-if (!empty($quicksearch['target']))
-	$target = $quicksearch['target'];
 
 $SESSION->redirect(!empty($target) ? $target : '?'.$SESSION->get('backto'));
 

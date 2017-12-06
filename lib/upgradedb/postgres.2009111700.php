@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,9 +22,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	ALTER TABLE divisions ADD inv_paytime smallint DEFAULT NULL;
 	ALTER TABLE divisions ADD inv_paytype varchar(255) DEFAULT NULL;
 	ALTER TABLE invoicecontents ALTER description TYPE text;
@@ -32,8 +32,8 @@ $this->Execute("
 	ALTER TABLE cash ALTER comment TYPE text;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111700', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: advanced.sgml,v 1.122 2011/03/10 11:36:38 alec Exp $ -->
 <chapter id="devel">
      <title>For curious</title>
      <sect1 id="devel-catalogs">
@@ -92,9 +92,6 @@
                     <member>failedlogindate - date of last failed login attempt</member>
                     <member>failedloginip - IP of last failed login attempt</member>
                     <member>deleted - if is deleted boolean (0/1)</member>
-                    <member>access - whether the account is active (0/1)</member>
-                    <member>accessfrom - date from which the account is active</member>
-                    <member>accessto - date to which the account is active</member>
                </simplelist>
           </sect2>
           <sect2 id="customers">
@@ -112,7 +109,6 @@
                     <member>zip - zip code</member>
                     <member>city - location (city)</member>
                     <member>countryid - country identifier</member>
-                    <member>post_name - correspondence address - name</member>
                     <member>post_address - correspondence address - street, apartment, flat, etc</member>
                     <member>post_zip - correspondence address - zip code</member>
                     <member>post_city - correspondence address - location (city)</member>
@@ -186,11 +182,7 @@
                <simplelist>
                     <member>id - serial number</member>
                     <member>name - name</member>
-                    <member>location - physical location text</member>
-                    <member>location_city - city identifier</member>
-                    <member>location_street - street identifier</member>
-                    <member>location_house - house number</member>
-                    <member>location_flat - flat number</member>
+                    <member>location - physical location</member>
                     <member>description - device summary</member>
                     <member>producer - manufacturer's name</member>
                     <member>model - model number</member>
@@ -204,8 +196,6 @@
 		    <member>secret - password (radius)</member>
 		    <member>community - SNMP community</member>
 		    <member>channelid - STM channel identifier (ewx_channels table)</member>
-		    <member>longitude - geog. longitude</member>
-		    <member>latitude - geog latitude</member>
                </simplelist>
           </sect2>
           <sect2 id="netlinks">
@@ -240,14 +230,10 @@
                     <member>halfduplex - half/full duplex mode (0/1)</member>
                     <member>lastonline - last network activity timestamp</member>
                     <member>info - additional information</member>
-                    <member>location_address - address string</member>
-                    <member>location_city - city identifier</member>
-                    <member>location_street - street identifier</member>
-                    <member>location_house - house number</member>
-                    <member>location_flat - flat number</member>
+                    <member>location_address - address - street, apartment, flat, etc</member>
+                    <member>location_zip - address - zip code</member>
+                    <member>location_city - address - location (city)</member>
                     <member>nas - NAS flag (1/0)</member>
-                    <member>longitude - geog. longitude</member>
-		    <member>latitude - geog latitude</member>
                </simplelist>
           </sect2>
           <sect2 id="macs">
@@ -368,7 +354,6 @@
                     <member>quota_ftp_limit - quota limit of ftp account</member>
                     <member>quota_sql_limit - quota limit of sql account</member>
                     <member>description - description for subscription</member>
-                    <member>disabled - disabled/enabled flag (1/0)</member>
                </simplelist>
           </sect2>
           <sect2 id="promotions">
@@ -436,8 +421,7 @@
                     <member>datefrom - start date for assignment</member>
                     <member>dateto - end date for assignment</member>
                     <member>invoice - invoice writeout? (1 - yes, 0 - no)</member>
-                    <member>pdiscount - discount percentage</member>
-                    <member>vdiscount - discount value</member>
+                    <member>discount - discount percentage</member>
                     <member>suspended - is this payment suspended? (1 - yes, 0 - no)</member>
 		            <member>settlement - do deficient period settlement? (1 - yes, 0 - no)</member>
 		            <member>paytype - invoice payment type identifier</member>
@@ -522,7 +506,6 @@
 		    <member>numberplanid - numbering plan identifier</member>
 		    <member>type - document type (1 - invoice, 2 - cash receipt)</member>
                     <member>cdate - date of write out</member>
-                    <member>sdate - sale date (for invoices)</member>
                     <member>paytime - deadline in days</member>
                     <member>paytype - payment type (1-cash, 2-transfer, 3-transfer/cash, 4-card, 5-compensation, 6-barter, 7-contract)</member>
                     <member>customerid - customer (buyer) serial number</member>
@@ -559,8 +542,7 @@
                     <member>docid - invoice serial number</member>
                     <member>itemid - invoice item identifier</member>
                     <member>value - amount</member>
-		    <member>pdiscount - discount percentage</member>
-		    <member>vdiscount - discount value</member>
+		    <member>discount - discount percentage</member>
                     <member>taxid - tax rate identifier</member>
                     <member>prodid - product/service classification number</member>
                     <member>content - used unit (usually 'pc.')</member>
@@ -691,7 +673,6 @@
                     <member>login - login</member>
                     <member>passwd - password</member>
                     <member>phone - phone number</member>
-                    <member>access - enabled/disabled (1/0)</member>
                     <member>creationdate - date of account creation</member>
                     <member>moddate - date of last account modification</member>
                     <member>creatorid - creator (user) identifier</member>
@@ -800,8 +781,6 @@
                     <member>customerid - customer ID</member>
                     <member>private - status (private/public)</member>
                     <member>closed - is event closed? (1-yes/0-no)</member>
-		    <member>moduserid - id of last user that modified the event</member>
-		    <member>moddate - date of last event modification</member>
                </simplelist>
           </sect2>
           <sect2 id="eventassignments">

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customerlist.php,v 1.14 2011/01/18 08:12:21 alec Exp $
  */
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
@@ -29,74 +29,60 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 $layout['pagetitle'] = trans('Customers List');
 
 if(!isset($_GET['o']))
-	$SESSION->restore('clo', $order);
+	$SESSION->restore('clo', $o);
 else
-	$order = $_GET['o'];
-$SESSION->save('clo', $order);
+	$o = $_GET['o'];
+$SESSION->save('clo', $o);
 
 if(!isset($_GET['s']))
-	$SESSION->restore('cls', $state);
+	$SESSION->restore('cls', $s);
 else
-	$state = $_GET['s'];
-$SESSION->save('cls', $state);
+	$s = $_GET['s'];
+$SESSION->save('cls', $s);
 
 if(!isset($_GET['n']))
-	$SESSION->restore('cln', $network);
+	$SESSION->restore('cln', $n);
 else
-	$network = $_GET['n'];
-$SESSION->save('cln', $network);
+	$n = $_GET['n'];
+$SESSION->save('cln', $n);
 
-if (!isset($_GET['g']))
-	$SESSION->restore('clg', $customergroup);
+if(!isset($_GET['g']))
+	$SESSION->restore('clg', $g);
 else
-	$customergroup = array_filter($_GET['g'], 'intval');
-$SESSION->save('clg', $customergroup);
+	$g = $_GET['g'];
+$SESSION->save('clg', $g);
 
 if(!isset($_GET['ng']))
-        $SESSION->restore('clng', $nodegroup);
+        $SESSION->restore('clng', $ng);
 else
-        $nodegroup = $_GET['ng'];
-$SESSION->save('clng', $nodegroup);
+        $ng = $_GET['ng'];
+$SESSION->save('clng', $ng);
 
 if(!isset($_GET['d']))
-        $SESSION->restore('cld', $division);
+        $SESSION->restore('cld', $d);
 else
-        $division = $_GET['d'];
-$SESSION->save('cld', $division);
+        $d = $_GET['d'];
+$SESSION->save('cld', $d);
 		
 if (! isset($_GET['page']))
 	$SESSION->restore('clp', $_GET['page']);
-
-if(!isset($_GET['assigments']))
-        $SESSION->restore('clas', $as);
-else
-        $as = $_GET['assigments'];
-$SESSION->save('clas', $as);
 	    
-$page = !$_GET['page'] ? 1 : intval($_GET['page']);
-$sqlskey = 'AND';
-$offset = NULL;
-$count = TRUE;
-$summary = $LMS->GetCustomerList(compact("order", "state", "network", "customergroup", "search", "time", "sqlskey", "nodegroup", "division", "limit", "offset", "count", "as"));
-$total = intval($summary['total']);
-$limit = intval(ConfigHelper::getConfig('phpui.customerlist_pagelimit', 100));
-$offset = ($page - 1) * $limit;
-$count = FALSE;
-$customerlist = $LMS->GetCustomerList(compact("order", "state", "network", "customergroup", "search", "time", "sqlskey", "nodegroup", "division", "limit", "offset", "count", "as"));
+$customerlist = $LMS->GetCustomerList($o, $s, $n, $g, NULL, NULL, 'AND', $ng, $d);
 
-$pagination = LMSPaginationFactory::getPagination($page, $total, $limit, ConfigHelper::checkConfig('phpui.short_pagescroller'));
-
-$listdata['below'] = $summary['below'];
-$listdata['over'] = $summary['over'];
 $listdata['total'] = $customerlist['total'];
 $listdata['order'] = $customerlist['order'];
+$listdata['below'] = $customerlist['below'];
+$listdata['over'] = $customerlist['over'];
 $listdata['direction'] = $customerlist['direction'];
-$listdata['network'] = $network;
-$listdata['nodegroup'] = $nodegroup;
-$listdata['customergroup'] = $customergroup;
-$listdata['division'] = $division;
-$listdata['state'] = $state;
-$listdata['assigments'] = $as;
+$listdata['network'] = $n;
+$listdata['nodegroup'] = $ng;
+$listdata['customergroup'] = $g;
+$listdata['division'] = $d;
+$listdata['state'] = $s;
+
+$page = (! $_GET['page'] ? 1 : $_GET['page']); 
+$pagelimit = (!$CONFIG['phpui']['customerlist_pagelimit'] ? $listdata['total'] : $CONFIG['phpui']['customerlist_pagelimit']);
+$start = ($page - 1) * $pagelimit;
 
 $SESSION->save('clp', $page);
 
@@ -112,7 +98,11 @@ $SMARTY->assign('listdata',$listdata);
 $SMARTY->assign('networks', $LMS->GetNetworks());
 $SMARTY->assign('customergroups', $LMS->CustomergroupGetAll());
 $SMARTY->assign('nodegroups', $LMS->GetNodeGroupNames());
-$SMARTY->assign('divisions', $LMS->GetDivisions());
-$SMARTY->assign('pagination', $pagination);
+$SMARTY->assign('divisions', $DB->GetAll('SELECT id, shortname FROM divisions ORDER BY shortname'));
+$SMARTY->assign('pagelimit',$pagelimit);
+$SMARTY->assign('page',$page);
+$SMARTY->assign('start',$start);
 
-$SMARTY->display('customer/customerlist.html');
+$SMARTY->display('customerlist.html');
+
+?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,24 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdevedit.php,v 1.72 2011/01/18 08:12:23 alec Exp $
  */
 
 if (!$LMS->NetDevExists($_GET['id'])) {
 	$SESSION->redirect('?m=netdevlist');
-}
+}		
 
 $action = !empty($_GET['action']) ? $_GET['action'] : '';
 $edit = '';
 $subtitle = '';
 
 switch ($action) {
-	case 'updatenodefield':
-		$LMS->updateNodeField($_POST['nodeid'], $_POST['field'], $_POST['val']);
-		die();
-	break;
-
 	case 'replace':
+
 		$dev1 = $LMS->GetNetDev($_GET['id']);
 		$dev2 = $LMS->GetNetDev($_GET['netdev']);
 
@@ -50,132 +46,78 @@ switch ($action) {
 
 		if (!$error) {
 			$links1 = $DB->GetAll('(SELECT type, 
-				(CASE src WHEN ? THEN dst ELSE src END) AS id,
-				speed, technology,
-				(CASE src WHEN ? THEN srcport ELSE dstport END) AS srcport,
-				(CASE src WHEN ? THEN dstport ELSE srcport END) AS dstport,
-				(CASE src WHEN ? THEN srcradiosector ELSE dstradiosector END) AS srcradiosector,
-				(CASE src WHEN ? THEN dstradiosector ELSE srcradiosector END) AS dstradiosector
-				FROM netlinks WHERE src = ? OR dst = ?)
+                        (CASE src WHEN ? THEN dst ELSE src END) AS id,
+			(CASE src WHEN ? THEN srcport ELSE dstport END) AS srcport,
+			(CASE src WHEN ? THEN dstport ELSE srcport END) AS dstport
+			FROM netlinks WHERE src = ? OR dst = ?)
 			UNION
-				(SELECT linktype AS type, linkradiosector AS srcradiosector, NULL AS dstradiosector,
-				linktechnology AS technology, linkspeed AS speed, id, port AS srcport, NULL AS dstport
-				FROM nodes WHERE netdev = ? AND ownerid IS NOT NULL)
-			ORDER BY srcport', array($dev1['id'], $dev1['id'], $dev1['id'], $dev1['id'], $dev1['id'],
+			(SELECT linktype AS type, id, port AS srcport, NULL AS dstport
+			FROM nodes WHERE netdev = ? AND ownerid > 0)
+			ORDER BY srcport',
+				array($dev1['id'], $dev1['id'], $dev1['id'],
 					$dev1['id'], $dev1['id'], $dev1['id']));
-
-			$links2 = $DB->GetAll('(SELECT type,
-				(CASE src WHEN ? THEN dst ELSE src END) AS id,
-				speed, technology,
-				(CASE src WHEN ? THEN srcport ELSE dstport END) AS srcport,
-				(CASE src WHEN ? THEN dstport ELSE srcport END) AS dstport,
-				(CASE src WHEN ? THEN srcradiosector ELSE dstradiosector END) AS srcradiosector,
-				(CASE src WHEN ? THEN dstradiosector ELSE srcradiosector END) AS dstradiosector
-				FROM netlinks WHERE src = ? OR dst = ?)
+			$links2 = $DB->GetAll('(SELECT type, 
+                        (CASE src WHEN ? THEN dst ELSE src END) AS id,
+			(CASE src WHEN ? THEN srcport ELSE dstport END) AS srcport,
+			(CASE src WHEN ? THEN dstport ELSE srcport END) AS dstport
+			FROM netlinks WHERE src = ? OR dst = ?)
 			UNION
-				(SELECT linktype AS type, linkradiosector AS srcradiosector, NULL AS dstradiosector,
-					linktechnology AS technology, linkspeed AS speed, id, port AS srcport, NULL AS dstport
-					FROM nodes WHERE netdev = ? AND ownerid IS NOT NULL)
-			ORDER BY srcport', array($dev2['id'], $dev2['id'], $dev2['id'], $dev2['id'], $dev2['id'],
+			(SELECT linktype AS type, id, port AS srcport, NULL AS dstport
+			FROM nodes WHERE netdev = ? AND ownerid > 0)
+			ORDER BY srcport',
+				array($dev2['id'], $dev2['id'], $dev2['id'],
 					$dev2['id'], $dev2['id'], $dev2['id']));
 
 			$DB->BeginTrans();
 
-			$DB->Execute('UPDATE netdevices SET location = ?, latitude = ?, longitude = ?
-				WHERE id = ?', array($dev1['location'], $dev1['latitude'], $dev1['longitude'], $dev2['id']));
-			$DB->Execute('UPDATE netdevices SET location = ?, latitude = ?, longitude = ?
-				WHERE id = ?', array($dev2['location'], $dev2['latitude'], $dev2['longitude'], $dev1['id']));
-
-			if ($SYSLOG) {
-				$args = array(
-					SYSLOG::RES_NETDEV => $dev2['id'],
-					'location' => $dev1['location'],
-					'latitude' => $dev1['latitude'],
-					'longitude' => $dev1['longitude'],
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_NETDEV, SYSLOG::OPER_UPDATE, $args);
-				$args = array(
-					SYSLOG::RES_NETDEV => $dev1['id'],
-					'location' => $dev2['location'],
-					'latitude' => $dev2['latitude'],
-					'longitude' => $dev2['longitude'],
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_NETDEV, SYSLOG::OPER_UPDATE, $args);
-			}
+			$DB->Execute('UPDATE netdevices SET location = ? WHERE id = ?',
+				array($dev1['location'], $dev2['id']));
+			$DB->Execute('UPDATE netdevices SET location = ? WHERE id = ?',
+				array($dev2['location'], $dev1['id']));
 
 			$LMS->NetDevDelLinks($dev1['id']);
 			$LMS->NetDevDelLinks($dev2['id']);
 
 			$ports = array();
 			// przypisujemy urzadzenia/komputer, probujac zachowac numeracje portow
-			if ($links1)
-				foreach ($links1 as $row) {
-					$sport = $row['srcport'];
-					if ($sport) {
-						if ($sport > $dev2['ports'])
-							for ($i = 1; $i <= $dev2['ports']; $i++)
-								if (!isset($ports[$sport])) {
-									$sport = $i;
-									break;
-								}
+			if ($links1) foreach ($links1 as $row) {
+				$sport = $row['srcport'];
+				if ($sport) {
+					if ($sport > $dev2['ports'])
+						for ($i = 1; $i <= $dev2['ports']; $i++)
+							if (!isset($ports[$sport])) {
+								$sport = $i;
+								break;
+							}
 
-						$ports[$sport] = $sport;
-					}
-
-					if (isset($row['dstport'])) // device
-						$LMS->NetDevLink($dev2['id'], $row['id'], array(
-							'type' => $row['type'],
-							'srcradiosector' => $row['srcradiosector'],
-							'dstradiosector' => $row['dstradiosector'],
-							'technology' => $row['technology'],
-							'speed' => $row['speed'],
-							'srcport' => $sport,
-							'dstport' => $row['dstport'],
-						));
-					else // node
-						$LMS->NetDevLinkNode($row['id'], $dev2['id'], array(
-							'type' => $row['type'],
-							'radiosector' => $row['srcradiosector'],
-							'technology' => $row['technology'],
-							'speed' => $row['speed'],
-							'port' => $sport,
-						));
+					$ports[$sport] = $sport;
 				}
+
+				if (isset($row['dstport'])) // device
+					$LMS->NetDevLink($dev2['id'], $row['id'], $row['type'], $sport, $row['dstport']);
+				else // node
+					$LMS->NetDevLinkNode($row['id'], $dev2['id'], $row['type'], $sport);
+			}
 
 			$ports = array();
-			if ($links2)
-				foreach ($links2 as $row) {
-					$sport = $row['srcport'];
-					if ($sport) {
-						if ($sport > $dev1['ports'])
-							for ($i = 1; $i <= $dev1['ports']; $i++)
-								if (!isset($ports[$sport])) {
-									$sport = $i;
-									break;
-								}
+			if ($links2) foreach ($links2 as $row) {
+				$sport = $row['srcport'];
+				if ($sport) {
+					if ($sport > $dev1['ports'])
+						for ($i = 1; $i <= $dev1['ports']; $i++)
+							if (!isset($ports[$sport])) {
+								$sport = $i;
+								break;
+							}
 
-						$ports[$sport] = $sport;
-					}
-
-					if (isset($row['dstport'])) // device
-						$LMS->NetDevLink($dev1['id'], $row['id'], array(
-							'type' => $row['type'],
-							'srcradiosector' => $row['srcradiosector'],
-							'dstradiosector' => $row['dstradiosector'],
-							'technology' => $row['technology'],
-							'speed' => $row['speed'],
-							'srcport' => $sport,
-							'dstport' => $row['dstport']
-						));
-					else // node
-						$LMS->NetDevLinkNode($row['id'], $dev1['id'], array(
-							'type' => $row['type'],
-							'radiosector' => $row['srcradiosector'],
-							'technology' => $row['technology'],
-							'speed' => $row['speed'],
-							'port' => $sport,
-						));
+					$ports[$sport] = $sport;
 				}
+
+				if (isset($row['dstport'])) // device
+					$LMS->NetDevLink($dev1['id'], $row['id'], $row['type'], $sport, $row['dstport']);
+				else // node
+					$LMS->NetDevLinkNode($row['id'], $dev1['id'], $row['type'], $sport);
+			}
 
 			$DB->CommitTrans();
 
@@ -185,19 +127,32 @@ switch ($action) {
 		break;
 
 	case 'disconnect':
+
 		$LMS->NetDevUnLink($_GET['id'], $_GET['devid']);
 		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 
 	case 'disconnectnode':
+
 		$LMS->NetDevLinkNode($_GET['nodeid'], 0);
 		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 
+	case 'chkmac':
+
+		$DB->Execute('UPDATE nodes SET chkmac=? WHERE id=?', array($_GET['chkmac'], $_GET['ip']));
+		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id'] . '&ip=' . $_GET['ip']);
+
+	case 'duplex':
+
+		$DB->Execute('UPDATE nodes SET halfduplex=? WHERE id=?', array($_GET['duplex'], $_GET['ip']));
+		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id'] . '&ip=' . $_GET['ip']);
+
+	case 'nas':
+		$DB->Execute('UPDATE nodes SET nas=? WHERE id=?', array($_GET['nas'], $_GET['ip']));
+		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id'] . '&ip=' . $_GET['ip']);
+
 	case 'connect':
+
 		$linktype = !empty($_GET['linktype']) ? intval($_GET['linktype']) : '0';
-		$srcradiosector = ($linktype == 1 ? intval($_GET['srcradiosector']) : null);
-		$dstradiosector = ($linktype == 1 ? intval($_GET['dstradiosector']) : null);
-		$linktechnology = !empty($_GET['linktechnology']) ? intval($_GET['linktechnology']) : '0';
-		$linkspeed = !empty($_GET['linkspeed']) ? intval($_GET['linkspeed']) : '100000';
 		$dev['srcport'] = !empty($_GET['srcport']) ? intval($_GET['srcport']) : '0';
 		$dev['dstport'] = !empty($_GET['dstport']) ? intval($_GET['dstport']) : '0';
 		$dev['id'] = !empty($_GET['netdev']) ? intval($_GET['netdev']) : '0';
@@ -214,9 +169,11 @@ switch ($action) {
 			if ($dev['srcport']) {
 				if (!preg_match('/^[0-9]+$/', $dev['srcport']) || $dev['srcport'] > $ports2) {
 					$error['srcport'] = trans('Incorrect port number!');
-				} elseif ($DB->GetOne('SELECT id FROM vnodes WHERE netdev=? AND port=? AND ownerid IS NOT NULL', array($dev['id'], $dev['srcport']))
-						|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
-					AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?', array($dev['id'], $dev['id'], $dev['id'], $dev['srcport']))) {
+				} elseif ($DB->GetOne('SELECT id FROM nodes WHERE netdev=? AND port=? AND ownerid>0',
+						array($dev['id'], $dev['srcport']))
+					|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
+					AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?',
+						array($dev['id'], $dev['id'], $dev['id'], $dev['srcport']))) {
 					$error['srcport'] = trans('Selected port number is taken by other device or node!');
 				}
 			}
@@ -224,30 +181,20 @@ switch ($action) {
 			if ($dev['dstport']) {
 				if (!preg_match('/^[0-9]+$/', $dev['dstport']) || $dev['dstport'] > $ports1) {
 					$error['dstport'] = trans('Incorrect port number!');
-				} elseif ($DB->GetOne('SELECT id FROM vnodes WHERE netdev=? AND port=? AND ownerid IS NOT NULL', array($_GET['id'], $dev['dstport']))
-						|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
-					AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?', array($_GET['id'], $_GET['id'], $_GET['id'], $dev['dstport']))) {
+				} elseif ($DB->GetOne('SELECT id FROM nodes WHERE netdev=? AND port=? AND ownerid>0',
+						array($_GET['id'], $dev['dstport']))
+					|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
+					AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?',
+						array($_GET['id'], $_GET['id'], $_GET['id'], $dev['dstport']))) {
 					$error['dstport'] = trans('Selected port number is taken by other device or node!');
 				}
 			}
 		}
 
 		$SESSION->save('devlinktype', $linktype);
-		$SESSION->save('devlinksrcradiosector', $srcradiosector);
-		$SESSION->save('devlinkdstradiosector', $dstradiosector);
-		$SESSION->save('devlinktechnology', $linktechnology);
-		$SESSION->save('devlinkspeed', $linkspeed);
 
 		if (!$error) {
-			$LMS->NetDevLink($dev['id'], $_GET['id'], array(
-				'type' => $linktype,
-				'srcradiosector' => $srcradiosector,
-				'dstradiosector' => $dstradiosector,
-				'technology' => $linktechnology,
-				'speed' => $linkspeed,
-				'srcport' => $dev['srcport'],
-				'dstport' => $dev['dstport'],
-			));
+			$LMS->NetDevLink($dev['id'], $_GET['id'], $linktype, $dev['srcport'], $dev['dstport']);
 			$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 		}
 
@@ -258,9 +205,6 @@ switch ($action) {
 	case 'connectnode':
 
 		$linktype = !empty($_GET['linktype']) ? intval($_GET['linktype']) : '0';
-		$linkradiosector = ($linktype == 1 ? intval($_GET['radiosector']) : null);
-		$linktechnology = !empty($_GET['linktechnology']) ? intval($_GET['linktechnology']) : '0';
-		$linkspeed = !empty($_GET['linkspeed']) ? intval($_GET['linkspeed']) : '0';
 		$node['port'] = !empty($_GET['port']) ? intval($_GET['port']) : '0';
 		$node['id'] = !empty($_GET['nodeid']) ? intval($_GET['nodeid']) : '0';
 
@@ -272,26 +216,19 @@ switch ($action) {
 		elseif ($node['port']) {
 			if (!preg_match('/^[0-9]+$/', $node['port']) || $node['port'] > $ports) {
 				$error['port'] = trans('Incorrect port number!');
-			} elseif ($DB->GetOne('SELECT id FROM vnodes WHERE netdev=? AND port=? AND ownerid IS NOT NULL', array($_GET['id'], $node['port']))
-					|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
-				AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?', array($_GET['id'], $_GET['id'], $_GET['id'], $node['port']))) {
+			} elseif ($DB->GetOne('SELECT id FROM nodes WHERE netdev=? AND port=? AND ownerid>0',
+					array($_GET['id'], $node['port']))
+				|| $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
+				AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?',
+					array($_GET['id'], $_GET['id'], $_GET['id'], $node['port']))) {
 				$error['port'] = trans('Selected port number is taken by other device or node!');
 			}
 		}
 
 		$SESSION->save('nodelinktype', $linktype);
-		$SESSION->save('nodelinkradiosector', $linkradiosector);
-		$SESSION->save('nodelinktechnology', $linktechnology);
-		$SESSION->save('nodelinkspeed', $linkspeed);
 
 		if (!$error) {
-			$LMS->NetDevLinkNode($node['id'], $_GET['id'], array(
-				'type' => $linktype,
-				'radiosector' => $linkradiosector,
-				'technology' => $linktechnology,
-				'speed' => $linkspeed,
-				'port' => $node['port']
-			));
+			$LMS->NetDevLinkNode($node['id'], $_GET['id'], $linktype, $node['port']);
 			$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 		}
 
@@ -300,15 +237,16 @@ switch ($action) {
 		break;
 
 	case 'addip':
+
 		$subtitle = trans('New IP address');
 		$nodeipdata['access'] = 1;
 		$nodeipdata['macs'] = array(0 => '');
-		$SMARTY->assign('networks', $LMS->GetNetworks(true));
 		$SMARTY->assign('nodeipdata', $nodeipdata);
 		$edit = 'addip';
 		break;
 
 	case 'editip':
+
 		$nodeipdata = $LMS->GetNode($_GET['ip']);
 		$subtitle = trans('IP address edit');
 		$nodeipdata['ipaddr'] = $nodeipdata['ip'];
@@ -316,130 +254,115 @@ switch ($action) {
 		foreach ($nodeipdata['macs'] as $key => $value)
 			$macs[] = $nodeipdata['macs'][$key]['mac'];
 		$nodeipdata['macs'] = $macs;
-		$SMARTY->assign('networks', $LMS->GetNetworks(true));
 		$SMARTY->assign('nodeipdata', $nodeipdata);
 		$edit = 'ip';
 		break;
 
+	case 'switchlinktype':
+
+		$LMS->SetNetDevLinkType($_GET['devid'], $_GET['id'], $_GET['linktype']);
+		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+
+	case 'switchnodelinktype':
+
+		$LMS->SetNodeLinkType($_GET['nodeid'], $_GET['linktype']);
+		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+
 	case 'ipdel':
+
 		if ($_GET['is_sure'] == '1' && !empty($_GET['ip'])) {
-			if ($SYSLOG) {
-				$args = array(
-					SYSLOG::RES_NODE => $_GET['ip'],
-					SYSLOG::RES_NETDEV => $_GET['id'],
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_NODE, SYSLOG::OPER_UPDATE, $args);
-			}
-			$DB->Execute('DELETE FROM nodes WHERE id = ? AND ownerid IS NULL', array($_GET['ip']));
+			$DB->Execute('DELETE FROM nodes WHERE id = ? AND ownerid = 0', array($_GET['ip']));
 		}
 
 		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 
 	case 'ipset':
-		if (!empty($_GET['ip'])) {
-			if ($SYSLOG) {
-				$access = $DB->GetOne('SELECT access FROM vnodes WHERE id = ? AND ownerid IS NULL',
-					array($_GET['ip']));
-				$args = array(
-					SYSLOG::RES_NODE => $_GET['ip'],
-					SYSLOG::RES_NETDEV => $_GET['id'],
-					'access' => intval(!$access),
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_NODE, SYSLOG::OPER_UPDATE, $args);
-			}
+
+		if (!empty($_GET['ip']))
 			$DB->Execute('UPDATE nodes SET access = (CASE access WHEN 1 THEN 0 ELSE 1 END)
-				WHERE id = ? AND ownerid IS NULL', array($_GET['ip']));
-		} else
+			WHERE id = ? AND ownerid = 0', array($_GET['ip']));
+		else
 			$LMS->IPSetU($_GET['id'], $_GET['access']);
 
 		header('Location: ?' . $SESSION->get('backto'));
 		break;
 
 	case 'formaddip':
+
 		$subtitle = trans('New IP address');
 		$nodeipdata = $_POST['ipadd'];
-		$nodeipdata['ownerid'] = null;
+		$nodeipdata['ownerid'] = 0;
 		foreach ($nodeipdata['macs'] as $key => $value)
 			$nodeipdata['macs'][$key] = str_replace('-', ':', $value);
 
-		$nodeipdata = trim_rec($nodeipdata);
+		foreach ($nodeipdata as $key => $value)
+			if ($key != 'macs')
+				$nodeipdata[$key] = trim($value);
 
-		if ($nodeipdata['ipaddr'] == '' && empty($nodeipdata['macs']) && $nodeipdata['name'] == '' && $nodeipdata['passwd'] == '') {
-			$SESSION->redirect('?m=netdevedit&action=addip&id=' . $_GET['id']);
+		if (!isset($_GET['newmac'])) {
+			if ($nodeipdata['ipaddr'] == '' && empty($nodeipdata['macs']) && $nodeipdata['name'] == '' && $nodeipdata['passwd'] == '') {
+				$SESSION->redirect('?m=netdevedit&action=addip&id=' . $_GET['id']);
 		}
 
-		if ($nodeipdata['name'] == '')
+			if ($nodeipdata['name'] == '')
 			$error['ipname'] = trans('Address field is required!');
-		elseif (strlen($nodeipdata['name']) > 32)
-			$error['ipname'] = trans('Specified name is too long (max. $a characters)!', '32');
-		elseif ($LMS->GetNodeIDByName($nodeipdata['name']))
+			elseif (strlen($nodeipdata['name']) > 32)
+				$error['ipname'] = trans('Specified name is too long (max.$0 characters)!', '32');
+			elseif ($LMS->GetNodeIDByName($nodeipdata['name']))
 			$error['ipname'] = trans('Specified name is in use!');
-		elseif (!preg_match('/^[_a-z0-9-]+$/i', $nodeipdata['name']))
+			elseif (!preg_match('/^[_a-z0-9-]+$/i', $nodeipdata['name']))
 			$error['ipname'] = trans('Name contains forbidden characters!');
 
-		if ($nodeipdata['ipaddr'] == '')
+			if ($nodeipdata['ipaddr'] == '')
 			$error['ipaddr'] = trans('IP address is required!');
-		elseif (!check_ip($nodeipdata['ipaddr']))
+			elseif (!check_ip($nodeipdata['ipaddr']))
 			$error['ipaddr'] = trans('Incorrect IP address!');
-		elseif (!$LMS->IsIPValid($nodeipdata['ipaddr']))
+			elseif (!$LMS->IsIPValid($nodeipdata['ipaddr']))
 			$error['ipaddr'] = trans('Specified address does not belongs to any network!');
-		else {
-			if (empty($nodeipdata['netid']))
-				$nodeipdata['netid'] = $DB->GetOne('SELECT id FROM networks WHERE INET_ATON(?) & INET_ATON(mask) = address ORDER BY id LIMIT 1',
-					array($nodeipdata['ipaddr']));
-			if (!$LMS->IsIPFree($nodeipdata['ipaddr'], $nodeipdata['netid']))
+			elseif (!$LMS->IsIPFree($nodeipdata['ipaddr']))
 				$error['ipaddr'] = trans('Specified IP address is in use!');
-		}
 
-		if ($nodeipdata['ipaddr_pub'] != '0.0.0.0' && $nodeipdata['ipaddr_pub'] != '') {
-			if (!check_ip($nodeipdata['ipaddr_pub']))
+			if ($nodeipdata['ipaddr_pub'] != '0.0.0.0' && $nodeipdata['ipaddr_pub'] != '') {
+				if (!check_ip($nodeipdata['ipaddr_pub']))
 				$error['ipaddr_pub'] = trans('Incorrect IP address!');
-			elseif (!$LMS->IsIPValid($nodeipdata['ipaddr_pub']))
+				elseif (!$LMS->IsIPValid($nodeipdata['ipaddr_pub']))
 				$error['ipaddr_pub'] = trans('Specified address does not belongs to any network!');
-			elseif (!$LMS->IsIPFree($nodeipdata['ipaddr_pub']))
+				elseif (!$LMS->IsIPFree($nodeipdata['ipaddr_pub']))
 				$error['ipaddr_pub'] = trans('Specified IP address is in use!');
 		}
 		else
 			$nodeipdata['ipaddr_pub'] = '0.0.0.0';
 
 		$macs = array();
-		foreach ($nodeipdata['macs'] as $key => $value)
-			if (check_mac($value)) {
-				if ($value != '00:00:00:00:00:00' && !ConfigHelper::checkConfig('phpui.allow_mac_sharing'))
-					if ($LMS->GetNodeIDByMAC($value))
-						$error['mac' . $key] = trans('MAC address is in use!');
+			foreach ($nodeipdata['macs'] as $key => $value)
+				if (check_mac($value)) {
+					if ($value != '00:00:00:00:00:00' && !chkconfig($CONFIG['phpui']['allow_mac_sharing']))
+						if ($LMS->GetNodeIDByMAC($value))
+							$error['mac' . $key] = trans('MAC address is in use!');
 				$macs[] = $value;
-			}
-			elseif ($value != '')
-				$error['mac' . $key] = trans('Incorrect MAC address!');
-		if (empty($macs))
+			} elseif ($value != '')
+					$error['mac' . $key] = trans('Incorrect MAC address!');
+			if (empty($macs))
 			$error['mac0'] = trans('MAC address is required!');
-		else
 			$nodeipdata['macs'] = $macs;
 
-		if (strlen($nodeipdata['passwd']) > 32)
+			if (strlen($nodeipdata['passwd']) > 32)
 			$error['passwd'] = trans('Password is too long (max.32 characters)!');
 
-		if (!isset($nodeipdata['chkmac']))
-			$nodeipdata['chkmac'] = 0;
-		if (!isset($nodeipdata['halfduplex']))
-			$nodeipdata['halfduplex'] = 0;
-		if (!isset($nodeipdata['nas']))
-			$nodeipdata['nas'] = 0;
+			if (!isset($nodeipdata['chkmac'])) $nodeipdata['chkmac'] = 0;
+			if (!isset($nodeipdata['halfduplex'])) $nodeipdata['halfduplex'] = 0;
+			if (!isset($nodeipdata['nas'])) $nodeipdata['nas'] = 0;
 
-		$authtype = 0;
-		if (isset($nodeipdata['authtype']))
-			foreach ($nodeipdata['authtype'] as $value)
-				$authtype |= intval($value);
-		$nodeipdata['authtype'] = $authtype;
-
-		if (!$error) {
+			if (!$error) {
 			$nodeipdata['warning'] = 0;
 			$nodeipdata['location'] = '';
 			$nodeipdata['netdev'] = $_GET['id'];
 
 			$LMS->NodeAdd($nodeipdata);
-			$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+				$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+			}
+		} else {
+			$nodeipdata['macs'][] = '';
 		}
 
 		$SMARTY->assign('nodeipdata', $nodeipdata);
@@ -450,48 +373,46 @@ switch ($action) {
 
 		$subtitle = trans('IP address edit');
 		$nodeipdata = $_POST['ipadd'];
-		$nodeipdata['ownerid'] = null;
+		$nodeipdata['ownerid'] = 0;
 		foreach ($nodeipdata['macs'] as $key => $value)
 			$nodeipdata['macs'][$key] = str_replace('-', ':', $value);
 
 		foreach ($nodeipdata as $key => $value)
-			if (!is_array($value)) {
+			if ($key != 'macs')
 				$nodeipdata[$key] = trim($value);
+
+		if (!isset($_GET['newmac'])) {
+			if ($nodeipdata['ipaddr'] == '' && empty($nodeipdata['macs']) && $nodeipdata['name'] == '' && $nodeipdata['passwd'] == '') {
+				$SESSION->redirect('?m=netdevedit&action=editip&id=' . $_GET['id'] . '&ip=' . $_GET['ip']);
 			}
 
-		if ($nodeipdata['ipaddr'] == '' && empty($nodeipdata['macs']) && $nodeipdata['name'] == '' && $nodeipdata['passwd'] == '')
-			$SESSION->redirect('?m=netdevedit&action=editip&id=' . $_GET['id'] . '&ip=' . $_GET['ip']);
-
-		if ($nodeipdata['name'] == '')
+			if ($nodeipdata['name'] == '')
 			$error['ipname'] = trans('Address field is required!');
-		elseif (strlen($nodeipdata['name']) > 32)
-			$error['ipname'] = trans('Specified name is too long (max. $a characters)!', '32');
-		elseif ($LMS->GetNodeIDByName($nodeipdata['name']) &&
-				$LMS->GetNodeName($_GET['ip']) != $nodeipdata['name'])
+			elseif (strlen($nodeipdata['name']) > 32)
+				$error['ipname'] = trans('Specified name is too long (max.$0 characters)!', '32');
+			elseif (
+				$LMS->GetNodeIDByName($nodeipdata['name']) &&
+				$LMS->GetNodeName($_GET['ip']) != $nodeipdata['name']
+			)
 			$error['ipname'] = trans('Specified name is in use!');
-		elseif (!preg_match('/^[_a-z0-9-]+$/i', $nodeipdata['name']))
-			$error['ipname'] = trans('Name contains forbidden characters!');
+			elseif (!preg_match('/^[_a-z0-9-]+$/i', $nodeipdata['name']))
+				$error['ipname'] = trans('Name contains forbidden characters!');
 
-		if ($nodeipdata['ipaddr'] == '')
+			if ($nodeipdata['ipaddr'] == '')
 			$error['ipaddr'] = trans('IP address is required!');
-		elseif (!check_ip($nodeipdata['ipaddr']))
+			elseif (!check_ip($nodeipdata['ipaddr']))
 			$error['ipaddr'] = trans('Incorrect IP address!');
-		elseif (!$LMS->IsIPValid($nodeipdata['ipaddr']))
-			$error['ipaddr'] = trans('Specified address does not belongs to any network!');
-		else {
-			if (empty($nodeipdata['netid']))
-				$nodeipdata['netid'] = $DB->GetOne('SELECT id FROM networks WHERE INET_ATON(?) & INET_ATON(mask) = address ORDER BY id LIMIT 1',
-					array($nodeipdata['ipaddr']));
-			if (!$LMS->IsIPFree($nodeipdata['ipaddr'], $nodeipdata['netid']) &&
+			elseif (!$LMS->IsIPValid($nodeipdata['ipaddr']))
+				$error['ipaddr'] = trans('Specified address does not belongs to any network!');
+			elseif (!$LMS->IsIPFree($nodeipdata['ipaddr']) &&
 				$LMS->GetNodeIPByID($_GET['ip']) != $nodeipdata['ipaddr'])
 				$error['ipaddr'] = trans('IP address is in use!');
-		}
 
-		if ($nodeipdata['ipaddr_pub'] != '0.0.0.0' && $nodeipdata['ipaddr_pub'] != '') {
-			if (check_ip($nodeipdata['ipaddr_pub'])) {
-				if ($LMS->IsIPValid($nodeipdata['ipaddr_pub'])) {
+			if ($nodeipdata['ipaddr_pub'] != '0.0.0.0' && $nodeipdata['ipaddr_pub'] != '') {
+				if (check_ip($nodeipdata['ipaddr_pub'])) {
+					if ($LMS->IsIPValid($nodeipdata['ipaddr_pub'])) {
 					$ip = $LMS->GetNodePubIPByID($nodeipdata['id']);
-					if ($ip != $nodeipdata['ipaddr_pub'] && !$LMS->IsIPFree($nodeipdata['ipaddr_pub']))
+						if ($ip != $nodeipdata['ipaddr_pub'] && !$LMS->IsIPFree($nodeipdata['ipaddr_pub']))
 						$error['ipaddr_pub'] = trans('Specified IP address is in use!');
 				}
 				else
@@ -504,61 +425,42 @@ switch ($action) {
 			$nodeipdata['ipaddr_pub'] = '0.0.0.0';
 
 		$macs = array();
-		foreach ($nodeipdata['macs'] as $key => $value)
-			if (check_mac($value)) {
-				if ($value != '00:00:00:00:00:00' && !ConfigHelper::checkValue(ConfigHelper::getConfig('phpui.allow_mac_sharing', true)))
-					if (($nodeid = $LMS->GetNodeIDByMAC($value)) != NULL && $nodeid != $_GET['ip'])
-						$error['mac' . $key] = trans('MAC address is in use!');
+			foreach ($nodeipdata['macs'] as $key => $value)
+				if (check_mac($value)) {
+					if ($value != '00:00:00:00:00:00' && isset($CONFIG['phpui']['allow_mac_sharing']) && !chkconfig($CONFIG['phpui']['allow_mac_sharing']))
+						if (($nodeid = $LMS->GetNodeIDByMAC($value)) != NULL && $nodeid != $_GET['ip'])
+							$error['mac' . $key] = trans('MAC address is in use!');
 				$macs[] = $value;
-			}
-			elseif ($value != '')
-				$error['mac' . $key] = trans('Incorrect MAC address!');
-		if (empty($macs))
+			} elseif ($value != '')
+					$error['mac' . $key] = trans('Incorrect MAC address!');
+			if (empty($macs))
 			$error['mac0'] = trans('MAC address is required!');
-		else
 			$nodeipdata['macs'] = $macs;
 
-		if (strlen($nodeipdata['passwd']) > 32)
-			$error['passwd'] = trans('Password is too long (max.32 characters)!');
+			if (strlen($nodeipdata['passwd']) > 32)
+				$error['passwd'] = trans('Password is too long (max.32 characters)!');
 
-		if (!isset($nodeipdata['chkmac']))
-			$nodeipdata['chkmac'] = 0;
-		if (!isset($nodeipdata['halfduplex']))
-			$nodeipdata['halfduplex'] = 0;
-		if (!isset($nodeipdata['nas']))
-			$nodeipdata['nas'] = 0;
+			if (!isset($nodeipdata['chkmac'])) $nodeipdata['chkmac'] = 0;
+			if (!isset($nodeipdata['halfduplex'])) $nodeipdata['halfduplex'] = 0;
+			if (!isset($nodeipdata['nas'])) $nodeipdata['nas'] = 0;
 
-		$authtype = 0;
-		if (isset($nodeipdata['authtype']))
-			foreach ($nodeipdata['authtype'] as $value)
-				$authtype |= intval($value);
-		$nodeipdata['authtype'] = $authtype;
-
-		if (!$error) {
+			if (!$error) {
 			$nodeipdata['warning'] = 0;
 			$nodeipdata['location'] = '';
 			$nodeipdata['netdev'] = $_GET['id'];
 
 			$LMS->NodeUpdate($nodeipdata);
-			$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+				$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
+			}
+		} else {
+			$nodeipdata['macs'][] = '';
 		}
 
 		$nodeipdata['ip_pub'] = $nodeipdata['ipaddr_pub'];
 		$SMARTY->assign('nodeipdata', $nodeipdata);
 		$edit = 'ip';
 		break;
-	case 'authtype':
-		$DB->Execute('UPDATE nodes SET authtype=? WHERE id=?', array($_GET['authtype'], $_GET['ip']));
-		if ($SYSLOG) {
-			$args = array(
-				SYSLOG::RES_NODE => $_GET['ip'],
-				SYSLOG::RES_CUST => $customerid,
-				'authtype' => intval($_GET['authtype']),
-			);
-			$SYSLOG->AddMessage(SYSLOG::RES_NODE, SYSLOG::OPER_UPDATE, $args);
-		}
-		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id'].'&ip='.$_GET['ip']);
-		break;
+
 	default:
 		$edit = 'data';
 		break;
@@ -570,78 +472,51 @@ if (isset($_POST['netdev'])) {
 
 	if ($netdevdata['name'] == '')
 		$error['name'] = trans('Device name is required!');
-	elseif (strlen($netdevdata['name']) > 60)
-		$error['name'] = trans('Specified name is too long (max. $a characters)!', '60');
+	elseif (strlen($netdevdata['name']) > 32)
+		$error['name'] = trans('Specified name is too long (max.$0 characters)!', '32');
 
 	$netdevdata['ports'] = intval($netdevdata['ports']);
 
 	if ($netdevdata['ports'] < $LMS->CountNetDevLinks($_GET['id']))
 		$error['ports'] = trans('Connected devices number exceeds number of ports!');
 
-	$netdevdata['clients'] = (empty($netdevdata['clients'])) ? 0 : intval($netdevdata['clients']);
+	if (empty($netdevdata['clients']))
+		$netdevdata['clients'] = 0;
+	else
+		$netdevdata['clients'] = intval($netdevdata['clients']);
 
-	if (!empty($netdevdata['ownerid']) && !$LMS->CustomerExists($netdevdata['ownerid']))
-		$error['ownerid'] = trans('Customer doesn\'t exist!');
-
-
-        if ($netdevdata['purchasedate'] != '')
-        {
-                $netdevdata['purchasetime'] = date_to_timestamp($netdevdata['purchasedate']);
-                if(empty($netdevdata['purchasetime']))
-                        $error['purchasedate'] = trans('Invalid date format!');
-                else
-                        if (time() < $netdevdata['purchasetime'])
-                                $error['purchasedate'] = trans('Date from the future not allowed!');
-        }
-        else
-                $netdevdata['purchasetime'] = 0;
+	$netdevdata['purchasetime'] = 0;
+	if ($netdevdata['purchasedate'] != '') {
+		// date format 'yyyy/mm/dd'
+		if (!preg_match('/^[0-9]{4}\/[0-9]{2}\/[0-9]{2}$/', $netdevdata['purchasedate'])) {
+			$error['purchasedate'] = trans('Invalid date format!');
+		} else {
+			$date = explode('/', $netdevdata['purchasedate']);
+			if (checkdate($date[1], $date[2], (int)$date[0])) {
+				$tmpdate = mktime(0, 0, 0, $date[1], $date[2], $date[0]);
+				if (mktime(0, 0, 0) < $tmpdate)
+					$error['purchasedate'] = trans('Date from the future not allowed!');
+				else
+					$netdevdata['purchasetime'] = $tmpdate;
+			} else
+				$error['purchasedate'] = trans('Invalid date format!');
+		}
+	}
 
 	if ($netdevdata['guaranteeperiod'] != 0 && $netdevdata['purchasedate'] == '') {
 		$error['purchasedate'] = trans('Purchase date cannot be empty when guarantee period is set!');
-	}
-
-	if ($netdevdata['invprojectid'] == '-1') { // nowy projekt
-		if (!strlen(trim($netdevdata['projectname']))) {
-			$error['projectname'] = trans('Project name is required');
-		}
-		if ($LMS->ProjectByNameExists($netdevdata['projectname']))
-			$error['projectname'] = trans('Project with that name already exists');
 	}
 
 	if (!$error) {
 		if ($netdevdata['guaranteeperiod'] == -1)
 			$netdevdata['guaranteeperiod'] = NULL;
 
-		if (!isset($netdevdata['shortname']))
-			$netdevdata['shortname'] = '';
-		if (!isset($netdevdata['secret']))
-			$netdevdata['secret'] = '';
-		if (!isset($netdevdata['community']))
-			$netdevdata['community'] = '';
-		if (!isset($netdevdata['nastype']))
-			$netdevdata['nastype'] = 0;
-
-		$ipi = $netdevdata['invprojectid'];
-		if ($ipi == '-1')
-			$ipi = $LMS->AddProject($netdevdata);
-
-		if ($netdevdata['invprojectid'] == '-1' || intval($ipi)>0) {
-			$netdevdata['invprojectid'] = intval($ipi);
-		} else {
-			$netdevdata['invprojectid'] = NULL;
-		}
-
-		// no net node selected
-		if ($netdevdata['netnodeid'] == "-1") {
-			$netdevdata['netnodeid'] = null;
-		}
+		if (!isset($netdevdata['shortname'])) $netdevdata['shortname'] = '';
+		if (!isset($netdevdata['secret'])) $netdevdata['secret'] = '';
+		if (!isset($netdevdata['community'])) $netdevdata['community'] = '';
+		if (!isset($netdevdata['nastype'])) $netdevdata['nastype'] = 0;
 
 		$LMS->NetDevUpdate($netdevdata);
-		$LMS->CleanupProjects();
-		$hook_data = $LMS->executeHook('netdevedit_after_update',
-			array(
-				'smarty' => $SMARTY,
-			));
 		$SESSION->redirect('?m=netdevinfo&id=' . $_GET['id']);
 	}
 } else {
@@ -649,82 +524,59 @@ if (isset($_POST['netdev'])) {
 
 	if ($netdevdata['purchasetime'])
 		$netdevdata['purchasedate'] = date('Y/m/d', $netdevdata['purchasetime']);
-
-	if (($netdevdata['location_city'] || $netdevdata['location_street']) && !$netdevdata['ownerid'] ) {
-		$netdevdata['teryt'] = true;
-	}
 }
 
 $netdevdata['id'] = $_GET['id'];
 
-$netdevips       = $LMS->GetNetDevIPs($_GET['id']);
-$nodelist        = $LMS->GetUnlinkedNodes();
+$netdevips = $LMS->GetNetDevIPs($_GET['id']);
+$nodelist = $LMS->GetUnlinkedNodes();
 $netdevconnected = $LMS->GetNetDevConnectedNames($_GET['id']);
-$netcomplist     = $LMS->GetNetDevLinkedNodes($_GET['id']);
-$netdevlist      = $LMS->GetNotConnectedDevices($_GET['id']);
+$netcomplist = $LMS->GetNetDevLinkedNodes($_GET['id']);
+$netdevlist = $LMS->GetNotConnectedDevices($_GET['id']);
 
 unset($netdevlist['total']);
 unset($netdevlist['order']);
 unset($netdevlist['direction']);
 
-if ($netdevdata['producer']) {
-	$layout['pagetitle'] = trans('Device Edit: $a ($b)', $netdevdata['name'], $netdevdata['producer']);
-} else {
-	$layout['pagetitle'] = trans('Device Edit: $a', $netdevdata['name']);
-}
+$replacelist = $LMS->GetNetDevList();
 
-if ($subtitle)
-	$layout['pagetitle'] .= ' - ' . $subtitle;
+$replacelisttotal = $replacelist['total'];
+unset($replacelist['order']);
+unset($replacelist['total']);
+unset($replacelist['direction']);
 
-$SMARTY->assign('NNprojects', $LMS->GetProjects());
-$netnodes = $DB->GetAll("SELECT * FROM netnodes ORDER BY name");
-$SMARTY->assign('NNnodes',$netnodes);
+$layout['pagetitle'] = trans('Device Edit: $0 ($1)', $netdevdata['name'], $netdevdata['producer']);
 
-$SMARTY->assign('error'                , $error);
-$SMARTY->assign('netdevinfo'           , $netdevdata);
-$SMARTY->assign('objectid'             , $netdevdata['id']);
-$SMARTY->assign('netdevlist'           , $netdevconnected);
-$SMARTY->assign('netcomplist'          , $netcomplist);
-$SMARTY->assign('nodelist'             , $nodelist);
-$SMARTY->assign('netdevcontype'        , $netdevcontype);
-$SMARTY->assign('netdevauthtype'       , $netdevauthtype);
-$SMARTY->assign('netdevips'            , $netdevips);
-$SMARTY->assign('restnetdevlist'       , $netdevlist);
-$SMARTY->assign('devlinktype'          , $SESSION->get('devlinktype'));
-$SMARTY->assign('devlinksrcradiosector', $SESSION->get('devlinksrcradiosector'));
-$SMARTY->assign('devlinkdstradiosector', $SESSION->get('devlinkdstradiosector'));
-$SMARTY->assign('devlinktechnology'    , $SESSION->get('devlinktechnology'));
-$SMARTY->assign('devlinkspeed'         , $SESSION->get('devlinkspeed'));
-$SMARTY->assign('nodelinktype'         , $SESSION->get('nodelinktype'));
-$SMARTY->assign('nodelinkradiosector'  , $SESSION->get('nodelinkradiosector'));
-$SMARTY->assign('nodelinktechnology'   , $SESSION->get('nodelinktechnology'));
-$SMARTY->assign('nodelinkspeed'        , $SESSION->get('nodelinkspeed'));
-$SMARTY->assign('nastype'              , $LMS->GetNAStypes());
+if ($subtitle) $layout['pagetitle'] .= ' - ' . $subtitle;
 
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-    $SMARTY->assign('customers', $LMS->GetCustomerNames());
-
-$LMS->InitXajax();
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'netdevxajax.inc.php');
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'geocodexajax.inc.php');
-$SMARTY->assign('xajax', $LMS->RunXajax());
+$SMARTY->assign('error', $error);
+$SMARTY->assign('netdevinfo', $netdevdata);
+$SMARTY->assign('netdevlist', $netdevconnected);
+$SMARTY->assign('netcomplist', $netcomplist);
+$SMARTY->assign('nodelist', $nodelist);
+$SMARTY->assign('netdevips', $netdevips);
+$SMARTY->assign('restnetdevlist', $netdevlist);
+$SMARTY->assign('replacelist', $replacelist);
+$SMARTY->assign('replacelisttotal', $replacelisttotal);
+$SMARTY->assign('devlinktype', $SESSION->get('devlinktype'));
+$SMARTY->assign('nodelinktype', $SESSION->get('nodelinktype'));
+$SMARTY->assign('nastype', $LMS->GetNAStypes());
 
 switch ($edit) {
 	case 'data':
-		if (ConfigHelper::checkConfig('phpui.ewx_support'))
+		if (chkconfig($CONFIG['phpui']['ewx_support']))
 			$SMARTY->assign('channels', $DB->GetAll('SELECT id, name FROM ewx_channels ORDER BY name'));
 
-		$SMARTY->display('netdev/netdevedit.html');
+		$SMARTY->display('netdevedit.html');
 		break;
 	case 'ip':
-		$SMARTY->assign('nodesessions', $LMS->GetNodeSessions($_GET['ip']));
-		$SMARTY->display('netdev/netdevipedit.html');
+		$SMARTY->display('netdevipedit.html');
 		break;
 	case 'addip':
-		$SMARTY->display('netdev/netdevipadd.html');
+		$SMARTY->display('netdevipadd.html');
 		break;
 	default:
-		$SMARTY->display('netdev/netdevinfo.html');
+		$SMARTY->display('netdevinfo.html');
 		break;
 }
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,23 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: documentlist.php,v 1.27 2011/04/01 10:35:12 alec Exp $
  */
 
-function GetDocumentList($order='cdate,asc', $search) {
-	$type = isset($search['type']) ? $search['type'] : NULL;
-	$customer = isset($search['customer']) ? $search['customer'] : NULL;
-	$numberplan = isset($search['numberplan']) ? $search['numberplan'] : NULL;
-	$usertype = isset($search['usertype']) ? $search['usertype'] : 'creator';
-	$userid = isset($search['userid']) ? $search['userid'] : NULL;
-	$periodtype = isset($search['periodtype']) ? $search['periodtype'] : 'creationdate';
-	$from = isset($search['from']) ? $search['from'] : 0;
-	$to = isset($search['to']) ? $search['to'] : 0;
-	$status = isset($search['status']) ? $search['status'] : -1;
-
-	global $AUTH;
-
-	$DB = LMSDB::getInstance();
+function GetDocumentList($order='cdate,asc', $type=NULL, $customer=NULL, $from=0, $to=0)
+{
+	global $DB, $AUTH;
 
 	if($order=='')
 		$order='cdate,asc';
@@ -56,81 +45,28 @@ function GetDocumentList($order='cdate,asc', $search) {
 		case 'customer':
 			$sqlord = ' ORDER BY d.name '.$direction.', title';
 		break;
-		case 'user':
-			$sqlord = ' ORDER BY u.lastname '.$direction.', title';
-		break;
-		case 'cuser':
-			$sqlord = ' ORDER BY u2.lastname '.$direction.', title';
-		break;
-		case 'sdate':
-			$sqlord = ' ORDER BY d.sdate '.$direction.', d.name';
-		break;
 		default:
 			$sqlord = ' ORDER BY d.cdate '.$direction.', d.name';
 		break;
 	}
 
-	switch ($usertype) {
-		case 'creator':
-			$userfield = 'd.userid';
-			break;
-		case 'authorising':
-			$userfield = 'd.cuserid';
-			break;
-		default:
-			$userfield = 'd.userid';
-	}
-
-	switch ($periodtype) {
-		case 'creationdate':
-			$datefield = 'd.cdate';
-			break;
-		case 'confirmationdate':
-			$datefield = 'd.sdate';
-			break;
-		case 'fromdate':
-			$datefield = 'documentcontents.fromdate';
-			break;
-		case 'todate':
-			$datefield = 'documentcontents.todate';
-			break;
-		default:
-			$datefield = 'd.cdate';
-	}
-
-	$list = $DB->GetAll('SELECT docid, d.number, d.type, title, d.cdate, u.name AS username, u.lastname, fromdate, todate, description, 
-				numberplans.template, d.closed, d.name, d.customerid, d.sdate, d.cuserid, u2.name AS cusername, u2.lastname AS clastname,
-				d.reference
-			FROM documentcontents
+	$list = $DB->GetAll('SELECT docid, d.number, d.type, title, d.cdate, fromdate, todate, description, 
+				filename, md5sum, contenttype, template, d.closed, d.name, d.customerid
+                	FROM documentcontents
 			JOIN documents d ON (d.id = documentcontents.docid)
 			JOIN docrights r ON (d.type = r.doctype AND r.userid = ? AND (r.rights & 1) = 1)
-			JOIN vusers u ON u.id = d.userid
-			LEFT JOIN vusers u2 ON u2.id = d.cuserid
-			LEFT JOIN numberplans ON (d.numberplanid = numberplans.id)
+		        LEFT JOIN numberplans ON (d.numberplanid = numberplans.id)
 			LEFT JOIN (
-				SELECT DISTINCT a.customerid FROM customerassignments a
+			        SELECT DISTINCT a.customerid FROM customerassignments a
 				JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
 				WHERE e.userid = lms_current_user()
 			) e ON (e.customerid = d.customerid)
 			WHERE e.customerid IS NULL '
 			.($customer ? 'AND d.customerid = '.intval($customer) : '')
 			.($type ? ' AND d.type = '.intval($type) : '')
-			. ($userid ? ' AND ' . $userfield . ' = ' . intval($userid) : '')
-			. ($numberplan ? ' AND d.numberplanid = ' . intval($numberplan) : '')
-			.($from ? ' AND ' . $datefield . ' >= '.intval($from) : '')
-			.($to ? ' AND ' . $datefield . ' <= '.intval($to) : '')
-			.($status == -1 ? '' : ' AND d.closed = ' . intval($status))
-			.$sqlord, array(Auth::GetCurrentUser()));
-
-	if (!empty($list))
-		foreach ($list as &$document) {
-			$document['attachments'] = $DB->GetAll('SELECT id, filename, md5sum, contenttype, main
-				FROM documentattachments WHERE docid = ? ORDER BY main DESC, filename', array($document['docid']));
-			if (!empty($document['reference'])) {
-				$document['reference'] = $DB->GetRow('SELECT id, type, fullnumber, cdate FROM documents
-					WHERE id = ?', array($document['reference']));
-			}
-		}
+			.($from ? ' AND d.cdate >= '.intval($from) : '')
+			.($to ? ' AND d.cdate <= '.intval($to) : '')
+			.$sqlord, array($AUTH->id));
 
 	$list['total'] = sizeof($list);
 	$list['direction'] = $direction;
@@ -158,34 +94,6 @@ if (empty($_GET['init']))
     else
 	    $c = $_GET['c'];
     $SESSION->save('doclc', $c);
-
-	if(!isset($_GET['p']))
-		$SESSION->restore('doclp', $p);
-	else
-		$p = $_GET['p'];
-	$SESSION->save('doclp', $p);
-
-	if (!isset($_GET['usertype']))
-		$SESSION->restore('doclut', $usertype);
-	else
-		$usertype = $_GET['usertype'];
-	if (empty($usertype))
-		$usertype = 'creator';
-	$SESSION->save('doclut', $usertype);
-
-	if (!isset($_GET['u']))
-		$SESSION->restore('doclu', $u);
-	else
-		$u = $_GET['u'];
-	$SESSION->save('doclu', $u);
-
-	if (!isset($_GET['periodtype']))
-		$SESSION->restore('doclpt', $periodtype);
-	else
-		$periodtype = $_GET['periodtype'];
-	if (empty($periodtype))
-		$periodtype = 'creationdate';
-	$SESSION->save('doclpt', $periodtype);
 
     if(isset($_GET['from']))
     {
@@ -218,44 +126,23 @@ if (empty($_GET['init']))
     else
         $to = 0;
     $SESSION->save('doclto', $to);
-
-	if(!isset($_GET['s']))
-		$SESSION->restore('docls', $s);
-	else
-		$s = $_GET['s'];
-	$SESSION->save('docls', $s);
 }
 
-$documentlist = GetDocumentList($o, array(
-	'type' => $t,
-	'customer' => $c,
-	'numberplan' => $p,
-	'usertype' => $usertype,
-	'userid' => $u,
-	'periodtype' => $periodtype,
-	'from' => $from,
-	'to' => $to,
-	'status' => $s,
-));
+$documentlist = GetDocumentList($o, $t, $c, $from, $to);
 
 $listdata['total'] = $documentlist['total'];
 $listdata['order'] = $documentlist['order'];
 $listdata['direction'] = $documentlist['direction'];
 $listdata['type'] = $t;
 $listdata['customer'] = $c;
-$listdata['numberplan'] = $p;
-$listdata['usertype'] = $usertype;
-$listdata['userid'] = $u;
-$listdata['periodtype'] = $periodtype;
 $listdata['from'] = $from;
 $listdata['to'] = $to;
-$listdata['status'] = $s;
 
 unset($documentlist['total']);
 unset($documentlist['order']);
 unset($documentlist['direction']);
 
-$pagelimit = ConfigHelper::getConfig('phpui.documentlist_pagelimit');
+$pagelimit = $CONFIG['phpui']['documentlist_pagelimit'];
 $page = !isset($_GET['page']) ? ceil($listdata['total']/$pagelimit) : intval($_GET['page']);
 $start = ($page - 1) * $pagelimit;
 
@@ -272,21 +159,19 @@ if($docid = $SESSION->get('documentprint'))
 if($listdata['total'])
 {
 	$SMARTY->assign('docrights', $DB->GetAllByKey('SELECT doctype, rights
-			FROM docrights WHERE userid = ? AND rights > 1', 'doctype', array(Auth::GetCurrentUser())));
+			FROM docrights WHERE userid = ? AND rights > 1', 'doctype', array($AUTH->id)));
 }
 
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customers', $LMS->GetCustomerNames());
+if(!isset($CONFIG['phpui']['big_networks']) || !chkconfig($CONFIG['phpui']['big_networks']))
+{
+    $SMARTY->assign('customers', $LMS->GetCustomerNames());
+}
 
-$SMARTY->assign('users', $LMS->GetUserNames());
-$SMARTY->assign('numberplans', $LMS->GetNumberPlans(array(
-	'doctype' => array(DOC_CONTRACT, DOC_ANNEX, DOC_PROTOCOL, DOC_ORDER, DOC_SHEET, -6, -7, -8, -9, -99, DOC_PRICELIST, DOC_PROMOTION, DOC_WARRANTY, DOC_REGULATIONS, DOC_OTHER),
-)));
 $SMARTY->assign('documentlist', $documentlist);
 $SMARTY->assign('pagelimit', $pagelimit);
 $SMARTY->assign('page', $page);
 $SMARTY->assign('start', $start);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('document/documentlist.html');
+$SMARTY->display('documentlist.html');
 
 ?>

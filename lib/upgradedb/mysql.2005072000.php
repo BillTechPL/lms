@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005072000.php,v 1.9 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
 	CREATE TABLE documentcontents (
 	    docid int(11) DEFAULT '0' NOT NULL,
 	    title text DEFAULT '' NOT NULL,
@@ -38,6 +38,6 @@ $this->Execute("
 	    UNIQUE KEY docid (docid))
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005072000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005072000', 'dbversion'));
 
 ?>

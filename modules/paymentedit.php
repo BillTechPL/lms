@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: paymentedit.php,v 1.26 2011/01/18 08:12:24 alec Exp $
  */
 
 if(!$LMS->PaymentExists($_GET['id']))
@@ -143,10 +143,10 @@ else
                 $payment['at'] = sprintf('%02d/%02d', $payment['at']%100, $payment['at']/100+1);
 }
 	
-$layout['pagetitle'] = trans('Payment Edit: $a',$payment['name']);
+$layout['pagetitle'] = trans('Payment Edit: $0',$payment['name']);
 
 $SMARTY->assign('payment', $payment);
 $SMARTY->assign('error', $error);
-$SMARTY->display('payment/paymentedit.html');
+$SMARTY->display('paymentedit.html');
 
 ?>

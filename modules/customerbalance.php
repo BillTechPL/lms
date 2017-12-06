@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customerbalance.php,v 1.13 2011/01/18 08:12:21 alec Exp $
  */
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
@@ -32,12 +32,12 @@ if(!$LMS->CustomerExists($_GET['id']))
 $customername = $LMS->GetCustomerName($_GET['id']);
 $id = $_GET['id'];
 
-$layout['pagetitle'] = trans('Customer Balance: $a', '<A HREF="?m=customerinfo&id='.$_GET['id'].'">'.$customername.'</A>');
+$layout['pagetitle'] = trans('Customer Balance: $0', '<A HREF="?m=customerinfo&id='.$_GET['id'].'">'.$customername.'</A>');
 
 $SMARTY->assign('balancelist', $LMS->GetCustomerBalanceList($_GET['id']));
 $SMARTY->assign('taxeslist', $LMS->GetTaxes());
 $SMARTY->assign('customername',$customername);
 $SMARTY->assign('id',$id);
-$SMARTY->display('customer/customerbalance.html');
+$SMARTY->display('customerbalance.html');
 
 ?>

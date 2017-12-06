@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,9 +21,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     DROP VIEW customersview;
 
     ALTER TABLE customers ADD einvoice smallint DEFAULT NULL;
@@ -62,8 +62,8 @@ $this->Execute("
     CREATE INDEX excludedgroups_customergroupid_idx ON excludedgroups (customergroupid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121000', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

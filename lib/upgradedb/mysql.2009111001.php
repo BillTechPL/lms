@@ -1,7 +1,7 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
  *  (C) Copyright 2009 Webvisor Sp. z o.o.
  *
@@ -22,9 +22,9 @@
  *
  */
 
-$this->Execute("ALTER TABLE records ADD CONSTRAINT records_ibfk_1
-	FOREIGN KEY (domain_id) REFERENCES domains (id) ON DELETE CASCADE ON UPDATE CASCADE");
+$DB->Execute("ALTER TABLE records ADD CONSTRAINT `records_ibfk_1`
+	FOREIGN KEY (`domain_id`) REFERENCES `domains` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
   
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111001', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111001', 'dbversion'));
 
 ?>

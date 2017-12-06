@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: notepaid.php,v 1.3 2011/01/18 08:12:24 alec Exp $
  */
 
 $SESSION->restore('ilm', $ilm);
@@ -39,31 +39,24 @@ if(sizeof($ids))
 {
 	foreach($ids as $noteid)
 	{
-		list ($cid, $value, $closed) = array_values($DB->GetRow('SELECT customerid, 
-			(SELECT SUM(value) FROM debitnotecontents
-				WHERE docid = d.id) AS value, closed
-			FROM documents d
-			WHERE id = ?', array($noteid)));
 		// add payment
-		if (ConfigHelper::checkConfig('phpui.note_check_payment') && !$closed) {
-			if ($value != 0)
+		if(chkconfig($CONFIG['phpui']['note_check_payment'])
+			&& ($row = $DB->GetRow('SELECT customerid,
+				(SELECT SUM(value) FROM debitnotecontents
+					WHERE docid = d.id) AS value
+				FROM documents d
+				WHERE d.id = ? AND d.closed = 0', array($noteid))))
+		{
+			if ($row['value'] != 0)
 				$LMS->AddBalance(array(
 					'type' => 1,
-					'time' => time(),
-					'value' => $value,
-					'customerid' => $cid,
+				        'time' => time(),
+					'value' => $row['value'],
+					'customerid' => $row['customerid'],
 					'comment' => trans('Accounted'),
 				));
 		}
 
-		if ($SYSLOG) {
-			$args = array(
-				SYSLOG::RES_DOC => $noteid,
-				SYSLOG::RES_CUST => $cid,
-				'closed' => intval(!$closed),
-			);
-			$SYSLOG->AddMessage(SYSLOG::RES_DOC, SYSLOG::OPER_UPDATE, $args);
-		}
 		$DB->Execute('UPDATE documents SET closed = 
 			(CASE closed WHEN 0 THEN 1 ELSE 0 END)
 			WHERE id = ?', array($noteid));

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005082900.php,v 1.10 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     CREATE SEQUENCE hosts_id_seq;
     CREATE TABLE hosts (
 	id integer DEFAULT nextval('hosts_id_seq'::text) NOT NULL,
@@ -42,8 +42,8 @@ $this->Execute("
     SELECT setval('hosts_id_seq', MAX(id)) FROM hosts;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005082900', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005082900', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

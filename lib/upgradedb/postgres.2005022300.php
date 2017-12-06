@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005022300.php,v 1.10 2011/01/18 08:12:13 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("
+$DB->BeginTrans();
+$DB->Execute("
     CREATE SEQUENCE cashimport_id_seq;
     CREATE TABLE cashimport (
 	id integer DEFAULT nextval('cashimport_id_seq'::text) NOT NULL,
@@ -39,7 +39,7 @@ $this->Execute("
 	PRIMARY KEY (id))
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005022300', 'dbversion'));
-$this->CommitTrans();
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005022300', 'dbversion'));
+$DB->CommitTrans();
 
 ?>

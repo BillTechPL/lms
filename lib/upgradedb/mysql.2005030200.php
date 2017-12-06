@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,20 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005030200.php,v 1.10 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("CREATE INDEX netdev ON nodes(netdev)");
-$this->Execute("CREATE INDEX queueid ON rttickets(queueid)");
-$this->Execute("CREATE INDEX time ON cash(time)");
-$this->Execute("CREATE INDEX cdate ON invoices(cdate)");
-$this->Execute("CREATE INDEX invoiceid ON invoicecontents(invoiceid)");
-$this->Execute("CREATE INDEX hash ON cashimport(hash)");
+$DB->Execute("CREATE INDEX netdev ON nodes(netdev)");
+$DB->Execute("CREATE INDEX queueid ON rttickets(queueid)");
+$DB->Execute("CREATE INDEX time ON cash(time)");
+$DB->Execute("CREATE INDEX cdate ON invoices(cdate)");
+$DB->Execute("CREATE INDEX invoiceid ON invoicecontents(invoiceid)");
+$DB->Execute("CREATE INDEX hash ON cashimport(hash)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = '2005030200' WHERE keytype = 'dbversion'");
+$DB->Execute("UPDATE dbinfo SET keyvalue = '2005030200' WHERE keytype = 'dbversion'");
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

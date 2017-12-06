@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2007030800.php,v 1.6 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE ewx_stm_nodes (
 	id int(11)              NOT NULL auto_increment,
 	nodeid int(11)          DEFAULT '0' NOT NULL,
@@ -40,10 +40,10 @@ $this->Execute("
 	halfduplex tinyint(1)   DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY nodeid (nodeid)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE ewx_stm_channels (
 	id int(11)              NOT NULL auto_increment,
 	customerid int(11)      DEFAULT '0' NOT NULL,
@@ -51,10 +51,10 @@ $this->Execute("
 	downceil int(11)        DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY customerid (customerid)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE ewx_pt_config (
         id int(11)              NOT NULL auto_increment,
 	nodeid int(11)          DEFAULT '0' NOT NULL,
@@ -64,11 +64,11 @@ $this->Execute("
 	passwd varchar(32)      DEFAULT '' NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY nodeid (nodeid)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007030800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007030800', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

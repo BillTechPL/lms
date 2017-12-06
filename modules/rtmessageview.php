@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,23 +21,22 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtmessageview.php,v 1.30 2011/01/18 08:12:25 alec Exp $
  */
 
 if(isset($_GET['file']))
 {
-	$filename = urldecode($_GET['file']);
+	$filename = $_GET['file'];
 	if($attach = $DB->GetRow('SELECT * FROM rtattachments WHERE messageid = ? AND filename = ?', array(intval($_GET['mid']), $filename)))
 	{
-		$file = ConfigHelper::getConfig('rt.mail_dir') . DIRECTORY_SEPARATOR . sprintf('%06d' . DIRECTORY_SEPARATOR . '%06d' . DIRECTORY_SEPARATOR . '%s',
-			$_GET['tid'], $_GET['mid'], $filename);
+		$file = $CONFIG['rt']['mail_dir'].sprintf("/%06d/%06d/%s",$_GET['tid'],$_GET['mid'],$filename);
 		if(file_exists($file))
 		{
 			$size = @filesize($file);
 			header('Content-Length: '.$size.' bytes');
 			header('Content-Type: '.$attach['contenttype']);
 			header('Cache-Control: private');
-			header('Content-Disposition: ' . ($attach['contenttype'] == 'application/pdf' ? 'inline' : 'attachment') . '; filename='.$filename);
+			header('Content-Disposition: attachment; filename='.$filename);
 			@readfile($file);
 		}
 		$SESSION->close();
@@ -54,17 +53,13 @@ $message = $LMS->GetMessage($_GET['id']);
 if($message['userid'])
 	$message['username'] = $LMS->GetUserName($message['userid']);
 
-if($message['deluserid'])
-	$message['delusername'] = $LMS->GetUserName($message['deluserid']);
-
 if($message['customerid'])
 	$message['customername'] = $LMS->GetCustomerName($message['customerid']);
 	
 if(sizeof($message['attachments']))
 	foreach($message['attachments'] as $key => $val) 
 	{
-		list($size, $unit) = setunits(@filesize(ConfigHelper::getConfig('rt.mail_dir') . DIRECTORY_SEPARATOR
-			. sprintf('%06d' . DIRECTORY_SEPARATOR . '%06d' . DIRECTORY_SEPARATOR . '%s', $message['ticketid'], $message['id'], $val['filename'])));
+		list($size, $unit) = setunits(@filesize($CONFIG['rt']['mail_dir'].sprintf("/%06d/%06d/%s",$message['ticketid'],$message['id'],$val['filename'])));
 		$message['attachments'][$key]['size'] = $size;
 		$message['attachments'][$key]['unit'] = $unit;
 	}
@@ -74,7 +69,7 @@ if($message['inreplyto'])
 	$message['inreplytoid'] = $reply['subject'];
 }
 
-if(!$message['customerid'] && !$message['userid'] && !$message['mailfrom'] && !$message['phonefrom'])
+if(!$message['customerid'] && !$message['userid'] && !$message['mailfrom'])
 {
 	$message['requestor'] = $DB->GetOne('SELECT requestor FROM rttickets WHERE id=?', array($message['ticketid']));
 }
@@ -84,6 +79,6 @@ $layout['pagetitle'] = trans('Ticket Review');
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('message', $message);
-$SMARTY->display('rt/rtmessageview.html');
+$SMARTY->display('rtmessageview.html');
 
 ?>

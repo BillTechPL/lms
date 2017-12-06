@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashimport.php,v 1.29 2011/02/02 12:43:17 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Cash Operations Import');
@@ -93,72 +93,51 @@ elseif(isset($_GET['action']) && $_GET['action'] == 'txt')
 		}
 	}
 	die;
-} elseif (isset($_GET['action']) && $_GET['action'] == 'delete') {
+}
+elseif(isset($_GET['action']) && $_GET['action'] == 'delete')
+{
 	if($marks = $_POST['marks'])
-		foreach ($marks as $id) {
+		foreach($marks as $id)
 			$DB->Execute('UPDATE cashimport SET closed = 1 WHERE id = ?',
 				array($id));
-			if ($SYSLOG) {
-				list ($customerid, $sourceid, $sourcefileid) = array_values(
-					$DB->GetRow('SELECT customerid, sourceid, sourcefileid
-						FROM cashimport WHERE id = ?', array($id)));
-				$args = array(
-					SYSLOG::RES_CASHIMPORT => $id,
-					SYSLOG::RES_CUST => $customerid,
-					SYSLOG::RES_CASHSOURCE => $sourceid,
-					SYSLOG::RES_SOURCEFILE => $sourcefileid,
-					'closed' => 1,
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_CASHIMPORT, SYSLOG::OPER_UPDATE, $args);
-			}
-		}
-} elseif (isset($_GET['action']) && $_GET['action'] == 'save') {
+}
+elseif(isset($_GET['action']) && $_GET['action'] == 'save')
+{
 	if(!empty($_POST['customer']))
-		foreach ($_POST['customer'] as $idx => $id)
-			if ($id) {
-				$DB->Execute('UPDATE cashimport SET customerid = ? WHERE id = ?',
-					array($id, $idx));
-				if ($SYSLOG) {
-					list ($sourceid, $sourcefileid) = array_values(
-					$DB->GetRow('SELECT sourceid, sourcefileid
-						FROM cashimport WHERE id = ?', array($idx)));
-					$args = array(
-						SYSLOG::RES_CASHIMPORT => $idx,
-						SYSLOG::RES_CUST => $id,
-						SYSLOG::RES_CASHSOURCE => $sourceid,
-						SYSLOG::RES_SOURCEFILE => $sourcefileid,
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_CASHIMPORT, SYSLOG::OPER_UPDATE, $args);
-				}
-			}
-} elseif (isset($_POST['marks'])) {
+		foreach($_POST['customer'] as $idx => $id) if($id)
+			$DB->Execute('UPDATE cashimport SET customerid = ? WHERE id = ?',
+				array($id, $idx));
+}
+elseif(isset($_POST['marks']))
+{
 	$marks = (array) $_POST['marks'];
 	$customers = $_POST['customer'];
 
-	foreach ($marks as $idx => $id) {
+	foreach ($marks as $idx => $id)
+	{
 		if (empty($customers[$id])) {
 			$error[$id] = trans('Customer not selected!');
 			unset($marks[$idx]);
-		} else
-			$marks[$idx] = intval($id);
-	}
+        }
+        else {
+            $marks[$idx] = intval($id);
+        }
+    }
 
-	if (!empty($marks)) {
-		$imports = $DB->GetAll('SELECT i.*, f.idate
-			FROM cashimport i
-			LEFT JOIN sourcefiles f ON (f.id = i.sourcefileid)
-			WHERE i.id IN ('.implode(',', $marks).')');
-	}
+    if (!empty($marks)) {
+        $imports = $DB->GetAll('SELECT i.*, f.idate
+            FROM cashimport i
+            LEFT JOIN sourcefiles f ON (f.id = i.sourcefileid)
+            WHERE i.id IN ('.implode(',', $marks).')');
+    }
 
-	if (!empty($imports)) {
+    if (!empty($imports)) {
+        $idate  = isset($CONFIG['finances']['cashimport_use_idate'])
+	    	&& chkconfig($CONFIG['finances']['cashimport_use_idate']);
+        $icheck = isset($CONFIG['finances']['cashimport_checkinvoices'])
+	    	&& chkconfig($CONFIG['finances']['cashimport_checkinvoices']);
 
-		$idate = ConfigHelper::checkConfig('finances.cashimport_use_idate');
-		$icheck = ConfigHelper::checkConfig('finances.cashimport_checkinvoices');
-
-		foreach ($imports as $import) {
-			// do not insert if the record is already closed (prevent multiple inserts of the same record)
-			if ($import['closed'] == 1)
-				continue;
+        foreach ($imports as $import) {
 
 			$DB->BeginTrans();
 
@@ -192,45 +171,23 @@ elseif(isset($_GET['action']) && $_GET['action'] == 'txt')
 					$value = f_round($bval + $import['value'] + $sum);
 
 					foreach($invoices as $inv) {
-						$inv['value'] = f_round($inv['value']);
-						if ($inv['value'] > $value)
+					    $inv['value'] = f_round($inv['value']);
+						if($inv['value'] > $value)
 							break;
-						else {
+						else
+						{
 							// close invoice and assigned credit notes
 							$DB->Execute('UPDATE documents SET closed = 1
 								WHERE id = ? OR reference = ?',
 								array($inv['id'], $inv['id']));
 
-							if ($SYSLOG) {
-								$docid = $DB->GetOne('SELECT id FROM documents
-									WHERE id = ? OR reference = ?',
-										array($inv['id'], $inv['id']));
-								$args = array(
-									SYSLOG::RES_DOC => $docid,
-									SYSLOG::RES_CUST => $balance['customerid'],
-									'closed' => 1,
-								);
-								$SYSLOG->AddMessage(SYSLOG::RES_DOC, SYSLOG::OPER_UPDATE, $args);
-							}
-
 							$value -= $inv['value'];
 						}
-					}
+				    }
 				}
 			}
 
 			$DB->Execute('UPDATE cashimport SET closed = 1 WHERE id = ?', array($import['id']));
-			if ($SYSLOG) {
-				$args = array(
-					SYSLOG::RES_CASHIMPORT => $import['id'],
-					SYSLOG::RES_CUST => $balance['customerid'],
-					SYSLOG::RES_CASHSOURCE => $import['sourceid'],
-					SYSLOG::RES_SOURCEFILE => $import['sourcefileid'],
-					'closed' => 1,
-				);
-				$SYSLOG->AddMessage(SYSLOG::RES_CASHIMPORT, SYSLOG::OPER_UPDATE, $args);
-			}
-
 			$LMS->AddBalance($balance);
 
 			$DB->CommitTrans();
@@ -238,13 +195,13 @@ elseif(isset($_GET['action']) && $_GET['action'] == 'txt')
 	}
 }
 
-$divisions = $LMS->GetDivisions(array('order' => 'name'));
+$divisions = $DB->GetAllByKey('SELECT id, name FROM divisions ORDER BY name', 'id');
 
 $divisions[0] = array('id' => 0, 'name' => '');
 
 if($importlist = $DB->GetAll('SELECT i.*, c.divisionid
 	FROM cashimport i
-	LEFT JOIN customerview c ON (i.customerid = c.id)
+	LEFT JOIN customersview c ON (i.customerid = c.id)
 	WHERE i.closed = 0 AND i.value > 0
 	ORDER BY i.id'))
 {
@@ -266,16 +223,15 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 $sourcefiles = $DB->GetAll('SELECT s.*, u.name AS username,
     (SELECT COUNT(*) FROM cashimport WHERE sourcefileid = s.id) AS count
     FROM sourcefiles s
-    LEFT JOIN vusers u ON (u.id = s.userid)
-    ORDER BY s.idate DESC');
+    LEFT JOIN users u ON (u.id = s.userid)
+    ORDER BY s.idate DESC LIMIT 10');
 
 $SMARTY->assign('divisions', $divisions);
 $SMARTY->assign('listdata', isset($listdata) ? $listdata : NULL);
 $SMARTY->assign('error', $error);
 $SMARTY->assign('sourcefiles', $sourcefiles);
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
-$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources WHERE deleted = 0 ORDER BY name'));
-$SMARTY->display('cash/cashimport.html');
+$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
+$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources ORDER BY name'));
+$SMARTY->display('cashimport.html');
 
 ?>

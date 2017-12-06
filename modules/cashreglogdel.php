@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,31 +21,26 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashreglogdel.php,v 1.10 2011/04/01 10:35:12 alec Exp $
  */
 
-if (isset($_GET['is_sure'])) {
-	$id = intval($_GET['id']);
-	list ($regid, $userid) = array_values($DB->GetRow('SELECT regid, userid FROM cashreglog WHERE id = ?', array($id)));
+if(isset($_GET['is_sure']))
+{
+	$regid = $DB->GetOne('SELECT regid FROM cashreglog WHERE id = ?', array(intval($_GET['id'])));
 
-	if (!$regid)
-		$SESSION->redirect('?m=cashreglist');
+	if(!$regid)
+	{
+    		$SESSION->redirect('?m=cashreglist');
+	}
 
-	if ($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array(Auth::GetCurrentUser(), $regid)) < 256) {
-		$SMARTY->display('noaccess.html');
+	if($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($AUTH->id, $regid))<256)
+	{
+	        $SMARTY->display('noaccess.html');
 		$SESSION->close();
 		die;
 	}
 
-	if ($SYSLOG) {
-		$args = array(
-			SYSLOG::RES_CASHREGHIST => $id,
-			SYSLOG::RES_CASHREG => $regid,
-			SYSLOG::RES_USER => $userid,
-		);
-		$SYSLOG->AddMessage(SYSLOG::RES_CASHREGHIST, SYSLOG::OPER_DELETE, $args);
-	}
-	$DB->Execute('DELETE FROM cashreglog WHERE id = ?', array($id));
+	$DB->Execute('DELETE FROM cashreglog WHERE id = ?', array(intval($_GET['id'])));
 }
 
 $SESSION->redirect('?'.$SESSION->get('backto'));

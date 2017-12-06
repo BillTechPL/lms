@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodegroupadd.php,v 1.8 2011/01/18 08:12:24 alec Exp $
  */
 
 if(isset($_POST['nodegroupadd']))
@@ -38,37 +38,32 @@ if(isset($_POST['nodegroupadd']))
 	
 	if($nodegroupadd['name'] == '')
 		$error['name'] = trans('Group name required!');
-	elseif(strlen($nodegroupadd['name']) > 255)
+	elseif(strlen($nodegroupadd['name']) > 32)
 		$error['name'] = trans('Group name is too long!');
 	elseif(!preg_match('/^[._a-z0-9-]+$/i', $nodegroupadd['name']))
 		$error['name'] = trans('Invalid chars in group name!');
 	elseif($DB->GetOne('SELECT 1 FROM nodegroups WHERE name = ?', array($nodegroupadd['name'])))
-		$error['name'] = trans('Group with name $a already exists!',$nodegroupadd['name']);
+		$error['name'] = trans('Group with name $0 already exists!',$nodegroupadd['name']);
 
 	if(!$error)
 	{
 		$prio = $DB->GetOne('SELECT MAX(prio)+1 FROM nodegroups');
-		$args = array(
-			'name' => $nodegroupadd['name'],
-			'description' => $nodegroupadd['description'],
-			'prio' => ($prio != NULL ? $prio : 1)
-		);
 		$DB->Execute('INSERT INTO nodegroups (name, description, prio)
-				VALUES (?, ?, ?)', array_values($args));
-		$id = $DB->GetLastInsertID('nodegroups');
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_NODEGROUP] = $id;
-			$SYSLOG->AddMessage(SYSLOG::RES_NODEGROUP, SYSLOG::OPER_ADD, $args);
-		}
-
+				VALUES (?, ?, ?)', 
+				array($nodegroupadd['name'],
+					$nodegroupadd['description'],
+					($prio != NULL ? $prio : 1)
+				));
+	
 		if (isset($nodegroupadd['reuse'])) 
 		{
 			unset($nodegroupadd);
 			$nodegroupadd['reuse'] = 1;
 			$SMARTY->assign('nodegroupadd',$nodegroupadd);
-			$SMARTY->display('node/nodegroupadd.html');
-		}
+			$SMARTY->display('nodegroupadd.html');
+		} 
 
+		$id = $DB->GetLastInsertID('nodegroups');
 		$SESSION->redirect('?m=nodegrouplist&id='.$id);
 	}
 	
@@ -78,6 +73,6 @@ if(isset($_POST['nodegroupadd']))
 
 $layout['pagetitle'] = trans('New Group');
 
-$SMARTY->display('node/nodegroupadd.html');
+$SMARTY->display('nodegroupadd.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,31 +21,23 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: balancedel.php,v 1.18 2011/01/18 08:12:20 alec Exp $
  */
 
-if (!empty($_GET['id']))
+if(!empty($_GET['id']))
+{
 	$LMS->DelBalance($_GET['id']);
-elseif (sizeof($_POST['marks'])) {
-	$ids = array();
-	$docitems = array();
-	foreach ($_POST['marks'] as $markid => $mark)
-		if ($markid == 'proforma')
-			foreach ($mark as $docid => $items) {
-				$docid = intval($docid);
-				if (!isset($docitems[$docid]))
-					$docitems[$docid] = array();
-				foreach ($items as $item)
-					$docitems[$docid][] = $item;
-			}
-		elseif ($mark)
+}
+elseif(sizeof($_POST['marks']))
+{
+	foreach($_POST['marks'] as $markid => $junk)
+		if ($junk)
 			$ids[] = $markid;
 	sort($ids);
-	foreach ($ids as $cashid)
+	foreach($ids as $idx => $cashid)
+	{
 		$LMS->DelBalance($cashid);
-	foreach ($docitems as $docid => $items)
-		foreach ($items as $itemid)
-			$LMS->InvoiceContentDelete($docid, $itemid);
+	}
 }
 
 header('Location: ?'.$SESSION->get('backto'));

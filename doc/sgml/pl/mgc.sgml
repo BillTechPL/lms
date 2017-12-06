@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: mgc.sgml,v 1.15 2010/04/15 09:24:42 alec Exp $ -->
 <chapter id="mgc">
  <title>Generator plików konfiguracyjnych (lms-mgc)</title>
   <para>LMS-MGC to "magiczny" generator plików konfiguracyjnych. Przy odrobinie wysi³ku mo¿na stworzyæ przy jego pomocy dowolnego rodzaju plik konfiguracyjny (np. generuj±cy odpowiednie strefy dla DNS)</para>

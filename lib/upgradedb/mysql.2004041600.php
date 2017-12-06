@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004041600.php,v 1.13 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE usergroups (
 	id int(11) NOT NULL auto_increment, 
 	name varchar(255) NOT NULL default '', 
@@ -33,7 +33,7 @@ $this->Execute("
 	UNIQUE KEY name (name)
     )
 ");
-$this->Execute("
+$DB->Execute("
     CREATE TABLE userassignments (
 	id int(11) NOT NULL auto_increment, 
 	usergroupid int(11) NOT NULL default '0', 
@@ -42,6 +42,6 @@ $this->Execute("
 	UNIQUE KEY userassignment (usergroupid, userid)
     )
 ");
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004041600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004041600', 'dbversion'));
 
 ?>

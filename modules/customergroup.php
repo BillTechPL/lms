@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,35 +21,32 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customergroup.php,v 1.8 2011/01/18 08:12:21 alec Exp $
  */
 
 $action = isset($_GET['action']) ? $_GET['action'] : '';
 
-if ($action == 'delete') {
-	if (isset($_GET['customergroupid']))
-		$customergroupids = array($_GET['customergroupid']);
-	elseif (isset($_POST['markedcustomergroupid']))
-		$customergroupids = $_POST['markedcustomergroupid'];
-	if (isset($customergroupids) && !empty($customergroupids))
-		foreach ($customergroupids as $customergroupid)
-			$LMS->CustomerAssignmentDelete(
-				array('customerid' => intval($_GET['id']),
-					'customergroupid' => $customergroupid));
-} elseif ($action == 'add') {
-	$groupids = $_POST['customergroupid'];
-	if (!is_array($groupids))
-		$groupids = array($groupids);
+if($action == 'delete')
+{
+        $LMS->CustomerAssignmentDelete(
+		array('customerid' => intval($_GET['id']),
+			'customergroupid' => $_GET['customergroupid']));
+}
+elseif($action == 'add')
+{
+	$groupid = intval($_POST['customergroupid']);
 	$uid = intval($_GET['id']);
-
-	if (!empty($groupids))
-		foreach ($groupids as $groupid)
-			if ($LMS->CustomerGroupExists($groupid)
-				&& !$LMS->CustomerassignmentExist($groupid, $uid)
-				&& $LMS->CustomerExists($uid))
-				$LMS->CustomerAssignmentAdd(
-					array('customerid' => $uid, 'customergroupid' => $groupid));
-} elseif(!empty($_POST['setwarnings'])) {
+	
+        if ($LMS->CustomerGroupExists($groupid)
+		&& !$LMS->CustomerassignmentExist($groupid, $uid)
+		 && $LMS->CustomerExists($uid))
+        {
+	        $LMS->CustomerAssignmentAdd(
+			array('customerid' => $uid, 'customergroupid' => $groupid));
+	}
+}
+elseif(!empty($_POST['setwarnings']))
+{
 	$setwarnings = $_POST['setwarnings'];
 	$oper = isset($_GET['oper']) ? $_GET['oper'] : '';
 	$groupid = isset($setwarnings['customergroup']) ? $setwarnings['customergroup'] : 0;

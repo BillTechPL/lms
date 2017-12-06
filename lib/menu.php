@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- * (C) Copyright 2001-2015 LMS Developers
+ * (C) Copyright 2001-2011 LMS Developers
  *
  * Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  * USA.
  *
- * $Id$
+ * $Id: menu.php,v 1.62 2011/03/02 10:31:04 alec Exp $
  */
 
 $menu = array(
 		'admin' => array(
 			'name' => trans('Administration'),
-			'css' => 'lms-ui-icon-administration',
+			'img' =>'users.gif',
 			'link' =>'?m=welcome',
 			'tip' => trans('System information and management'),
 			'accesskey' =>'i',
@@ -63,25 +63,12 @@ $menu = array(
 					'tip' => trans('Copyrights, authors, etc.'),
 					'prio' => 50,
 				),
-				array(
-					'name' => trans('User groups'),
-					'link' =>'?m=usergrouplist',
-					'tip' => trans('User groups'),
-					'prio' => 60,
-				),
-				array(
-					'name' => trans('New Group'),
-					'link' =>'?m=usergroupadd',
-					'tip' => trans('Allows you to add new group'),
-					'prio' => 70,
-				),
 			),
 		),
 
-
 		'customers' => array(
 			'name' => trans('Customers'),
-			'css' => 'lms-ui-icon-customer',
+			'img' =>'customer.gif',
 			'link' =>'?m=customerlist',
 			'tip' => trans('Customers Management'),
 			'accesskey' =>'u',
@@ -129,12 +116,12 @@ $menu = array(
 					'tip' => trans('Lists and reports printing'),
 					'prio' => 70,
 				),
-			),
+			),		 
 		),
 
 		'nodes' => array(
 			'name' => trans('Nodes'),
-			'css' => 'lms-ui-icon-node',
+			'img' =>'node.gif',
 			'link' =>'?m=nodelist',
 			'tip' => trans('Nodes Management'),
 			'accesskey' =>'k',
@@ -171,87 +158,51 @@ $menu = array(
 					'prio' => 50,
 				),
 				array(
-					'name' => trans('Node Sessions'),
-					'link' => '?m=nodesessionlist',
-					'tip' => trans('Allows you to view node sessions'),
-					'prio' => 60,
-				),
-				array(
 					'name' => trans('Notices'),
 					'link' => '?m=nodewarn',
 					'tip' => trans('Allows you to send notices to customers'),
-					'prio' => 70,
+					'prio' => 60,
 				),
 				array(
 					'name' => trans('Reports'),
 					'link' => '?m=nodeprint',
 					'tip' => trans('Lists and reports printing'),
-					'prio' => 80,
+					'prio' => 70,
 				),
 			),
 		),
 
 		'VoIP' => array(
 			'name' => trans('VoIP'),
-			'css' => 'lms-ui-icon-voip',
+			'img' =>'voip.gif',
 			'tip' => trans('VoIP Management'),
 			'accesskey' =>'v',
 			'prio' => 11,
 			'submenu' => array(
 				array(
-					'name' => trans('New Account'),
-					'link' => '?m=voipaccountadd',
-					'tip' => trans('Allows you to add the new VoIP account'),
+					'name' => trans('List'),
+					'link' => '?m=voipaccountlist',
+					'tip' => trans('List of Accounts'),
 					'prio' => 10,
 				),
 				array(
-					'name' => trans('Accounts List'),
-					'link' => '?m=voipaccountlist',
-					'tip' => trans('List of Accounts'),
+					'name' => trans('New Account'),
+					'link' => '?m=voipaccountadd',
+					'tip' => trans('Allows you to add the new VoIP account'),
 					'prio' => 20,
-				),
-				array(
-					'name' => trans('Billing list'),
-					'link' => '?m=voipaccountbillinglist',
-					'tip' => trans('Allows you to view billing list'),
-					'prio' => 30,
-				),
-				array(
-					'name' => trans('Subscription List'),
-					'link' => '?m=tarifflist&t=' . TARIFF_PHONE,
-					'tip' => trans('Phone tariff list'),
-					'prio' => 40,
-				),
-				array(
-					'name' => trans('Tariff rules'),
-					'link' => '?m=voiptariffrules',
-					'tip' => trans('Promotions/special rules for tariffs'),
-					'prio' => 50,
-				),
-				array(
-					'name' => trans('Price lists'),
-					'link' => '?m=voippricelist',
-					'tip' => trans('Edit price lists assigned to VoIP tariffs'),
-					'prio' => 60,
-				),
-				array(
-					'name' => trans('Pool numbers'),
-					'link' => '?m=voippoolnumberlist',
-					'tip' => trans('Number pools management'),
-					'prio' => 70,
 				),
 				array(
 					'name' => trans('Search'),
 					'link' => '?m=voipaccountsearch',
 					'tip' => trans('Allows you to search VoIP account'),
-					'prio' => 80,
+					'prio' => 30,
 				),
 			),
 		),
 
 		'netdevices' => array(
 			'name' => trans('Net Devices'),
-			'css' => 'lms-ui-icon-netdevice',
+			'img' =>'netdev.gif',
 			'link' =>'?m=netdevlist',
 			'tip' => trans('Network Devices Management'),
 			'accesskey' =>'o',
@@ -276,41 +227,17 @@ $menu = array(
 					'prio' => 30,
 				),
 				array(
-					'name' => trans('Nodes list'),
-					'link' => '?m=netnodelist',
-					'tip' => trans('Network device nodes list'),
-					'prio' => 40,
-				),
-				array(
-					'name' => trans('New node'),
-					'link' => '?m=netnodeadd',
-					'tip' => trans('Add new network device node'),
-					'prio' => 50,
-				),
-				array(
-					'name' => trans('Producers and models'),
-					'link' => '?m=netdevmodels',
-					'tip' => trans('Network device producers and models management'),
-					'prio' => 60,
-				),
-				array(
 					'name' => trans('Map'),
 					'link' => '?m=netdevmap',
 					'tip' => trans('Network map display'),
-					'prio' => 70,
-				),
-				array(
-					'name' => trans('Reports'),
-					'link' => '?m=netdevprint',
-					'tip' => trans('Lists and reports printing'),
-					'prio' => 80,
-				),
+					'prio' => 40,
 				),
 			),
+		),
 
 		'networks' => array(
 			'name' => trans('IP Networks'),
-			'css' => 'lms-ui-icon-network',
+			'img' =>'network.gif',
 			'link' =>'?m=netlist',
 			'tip' => trans('IP Address Pools Management'),
 			'accesskey' =>'t',
@@ -328,24 +255,12 @@ $menu = array(
 					'tip' => trans('Add new address pool'),
 					'prio' => 20,
 				),
-				array(
-					'name' => trans('Search'),
-					'link' => '?m=netsearch',
-					'tip' => trans('Allows you to search for IP address pools'),
-					'prio' => 30,
-				),
-                array(
-                    'name' => trans('Network usage'),
-                    'link' => '?m=netusage',
-                    'tip' => trans('Allows you to display IP address usage from whole network.'),
-                    'prio' => 40,
-                ),
 			),
 		),
 
 		'finances' => array(
 			'name' => trans('Finances'),
-			'css' => 'lms-ui-icon-finances',
+			'img' =>'money.gif',
 			'link' =>'?m=tarifflist',
 			'tip' => trans('Subscriptions and Network Finances Management'),
 			'accesskey' =>'f',
@@ -397,80 +312,56 @@ $menu = array(
 					'name' => trans('New Invoice'),
 					'link' => '?m=invoicenew&action=init',
 					'tip' => trans('Generate invoice'),
-					'prio' => 80,
-				),
-				array(
-					'name' => trans('Pro Forma Invoice List'),
-					'link' => '?m=invoicelist&proforma=1',
-					'tip' => trans('List of pro forma invoices'),
-					'prio' => 90,
-				),
-				array(
-					'name' => trans('New Pro Forma Invoice'),
-					'link' => '?m=invoicenew&action=init&proforma=1',
-					'tip' => trans('Generate pro forma invoice'),
-					'prio' => 100,
+					'prio' => 75,
 				),
 				array(
 					'name' => trans('Debit Notes List'),
 					'link' => '?m=notelist',
 					'tip' => trans('List of debit notes'),
-					'prio' => 110,
+					'prio' => 80,
 				),
 				array(
 					'name' => trans('New Debit Note'),
 					'link' => '?m=noteadd&action=init',
 					'tip' => trans('Generate debit note'),
-					'prio' => 120,
-				),
+					'prio' => 85,
+				), 
 				array(
 					'name' => trans('Cash Registry'),
 					'link' => '?m=cashreglist',
 					'tip' => trans('List of cash registries'),
-					'prio' => 130,
+					'prio' => 90,
 				),
 				array(
 					'name' => trans('New Cash Receipt'),
 					'link' => '?m=receiptadd&action=init',
 					'tip' => trans('Generate cash receipt'),
-					'prio' => 140,
+					'prio' => 100,
 				),
 				array(
 					'name' => trans('Import'),
 					'link' => '?m=cashimport',
 					'tip' => trans('Import cash operations'),
-					'prio' => 150,
+					'prio' => 110,
 				),
 				array(
 					'name' => trans('Export'),
 					'link' => '?m=export',
 					'tip' => trans('Financial data export to external systems'),
-					'prio' => 160,
+					'prio' => 120,
 				),
 				array(
 					'name' => trans('Reports'),
 					'link' => '?m=print',
 					'tip' => trans('Lists and reports printing'),
-					'prio' => 170,
-				),
-				array(
-					'name' => trans('New tag'),
-					'link' => '?m=tarifftagadd',
-					'tip' => trans('Allows you to add new tag'),
-					'prio' => 140,
-				),
-				array(
-					'name' => trans('Tags list'),
-					'link' => '?m=tarifftaglist',
-					'tip' => trans('Tags list'),
-					'prio' => 150,
+					'prio' => 130,
 				),
 			),
 		),
 
 		'documents' => array(
 			'name' => trans('Documents'),
-			'css' => 'lms-ui-icon-document',
+			'img' =>'docum.gif',
 			'link' =>'?m=documentlist',
 			'tip' => trans('Documents Management'),
 			'accesskey' => '',
@@ -511,7 +402,7 @@ $menu = array(
 
 		'hosting' => array(
 			'name' => trans('Hosting'),
-			'css' => 'lms-ui-icon-hosting',
+			'img' =>'account.gif',
 			'link' =>'?m=accountlist',
 			'tip' => trans('Hosting Services Management'),
 			'accesskey' =>'a',
@@ -564,7 +455,7 @@ $menu = array(
 
 		'messages' => array(
 			'name' => trans('Messages'),
-			'css' => 'lms-ui-icon-message',
+			'img' =>'mailsms.gif',
 			'link' =>'?m=messageadd',
 			'tip' => trans('Customers Messaging'),
 			'accesskey' =>'m',
@@ -587,7 +478,7 @@ $menu = array(
 
 		'reload' => array(
 			'name' => trans('Reload'),
-			'css' => 'lms-ui-icon-reload',
+			'img' =>'reload.gif',
 			'link' =>'?m=reload',
 			'tip' => trans(''),
 			'accesskey' =>'r',
@@ -596,7 +487,7 @@ $menu = array(
 
 		'stats' => array(
 			'name' => trans('Stats'),
-			'css' => 'lms-ui-icon-stats',
+			'img' =>'traffic.gif',
 			'link' =>'?m=traffic',
 			'tip' => trans('Statistics of Internet Link Usage'),
 			'accesskey' =>'x',
@@ -627,7 +518,7 @@ $menu = array(
 					'prio' => 40,
 				),
 				array(
-					'name' => trans('Last year'),
+					'name' => trans('Last Year'),
 					'link' => '?m=traffic&bar=year',
 					'tip' => trans('Last year stats for all networks'),
 					'prio' => 50,
@@ -649,7 +540,7 @@ $menu = array(
 
 		'helpdesk' => array(
 			'name' => trans('Helpdesk'),
-			'css' => 'lms-ui-icon-helpdesk',
+			'img' =>'ticket.gif',
 			'link' =>'?m=rtqueuelist',
 			'tip' => trans('Requests Tracking'),
 			'accesskey' =>'h',
@@ -668,41 +559,29 @@ $menu = array(
 					'prio' => 20,
 				),
 				array(
-					'name' => trans('Categories List'),
-					'link' => '?m=rtcategorylist',
-					'tip' => trans('List of categories'),
-					'prio' => 30,
-				),
-				array(
-					'name' => trans('New Category'),
-					'link' => '?m=rtcategoryadd',
-					'tip' => trans('Add new category'),
-					'prio' => 40,
-				),
-				array(
 					'name' => trans('Search'),
 					'link' => '?m=rtsearch',
 					'tip' => trans('Tickets searching'),
-					'prio' => 50,
+					'prio' => 30,
 				),
 				array(
 					'name' => trans('New Ticket'),
 					'link' => '?m=rtticketadd',
 					'tip' => trans('Add new ticket'),
-					'prio' => 60,
+					'prio' => 40,
 				),
 				array(
 					'name' => trans('Reports'),
 					'link' => '?m=rtprint',
 					'tip' => trans('Lists and reports printing'),
-					'prio' => 70,
+					'prio' => 50,
 				),
 			),
 		),
 
 		'timetable' => array(
 			'name' => trans('Timetable'),
-			'css' => 'lms-ui-icon-timetable',
+			'img' =>'calendar.gif',
 			'link' =>'?m=eventlist',
 			'tip' => trans('Events Tracking'),
 			'accesskey' =>'v',
@@ -731,7 +610,7 @@ $menu = array(
 
 		'password' => array(
 			'name' => trans('Password'),
-			'css' => 'lms-ui-icon-password',
+			'img' => 'pass.gif',
 			'link' => '?m=chpasswd',
 			'tip' => trans('Allows you to change your password'),
 			'accesskey' => 'p',
@@ -740,7 +619,7 @@ $menu = array(
 
 		'config' => array(
 			'name' => trans('Configuration'),
-			'css' => 'lms-ui-icon-configuration',
+			'img' =>'settings.gif',
 			'link' =>'?m=configlist',
 			'tip' => trans('System Configuration'),
 			'accesskey' =>'o',
@@ -800,27 +679,13 @@ $menu = array(
 					'tip' => trans('List of promotions'),
 					'prio' => 90,
 				),
-				array(
-					'name' => trans('Plugins'),
-					'link' => '?m=pluginlist',
-					'tip' => trans('Plugin Management'),
-					'prio' => 100,
-				),
-				array(
-					'name' => trans('Investment projects'),
-					'link' => '?m=invprojectlist',
-					'tip' => trans('Investment projects Management'),
-					'prio' => 110,
-				),
 			),
 		),
 
 		'documentation' => array(
 			'name' => trans('Documentation'),
-			'css' => 'lms-ui-icon-documentation',
-			'link' => (is_dir('doc' . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . $LMS->ui_lang)
-				? 'doc' . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . $LMS->ui_lang . DIRECTORY_SEPARATOR
-				: 'doc' . DIRECTORY_SEPARATOR . 'html' . DIRECTORY_SEPARATOR . 'en' . DIRECTORY_SEPARATOR),
+			'img' => 'doc.gif',
+			'link' => (is_dir('doc/html/'.$LMS->ui_lang) ? 'doc/html/'.$LMS->ui_lang.'/' : 'doc/html/en/'),
 			'tip' => trans('Documentation'),
 			'accesskey' => 'h',
 			'prio' => 70,
@@ -830,53 +695,32 @@ $menu = array(
 	);
 
 // menu item for EtherWerX STM channels management
-if (ConfigHelper::checkValue(ConfigHelper::getConfig('phpui.ewx_support', false))) {
+if (chkconfig($CONFIG['phpui']['ewx_support'])) {
 	$menu['netdevices']['submenu'][] = array(
 		'name' => trans('Channels List'),
 		'link' => '?m=ewxchlist',
 		'tip' => trans('List of STM channels'),
-		'prio' => 80,
+		'prio' => 50,
 	);
 	$menu['netdevices']['submenu'][] = array(
 		'name' => trans('New Channel'),
 		'link' => '?m=ewxchadd',
 		'tip' => trans('Add new STM channel'),
-		'prio' => 81,
-	);
-}
-
-if (ConfigHelper::checkValue(ConfigHelper::getConfig('phpui.logging', false))) {
-	$menu['log'] = array(
-		'name' => trans('Transaction Log'),
-		'css' => 'lms-ui-icon-log',
-		'link' => '?m=archiveview',
-		'tip' => trans('Transaction Log Management'),
-		'accesskey' => 't',
-		'prio' => 3,
-		'submenu' => array(
-			array(
-				'name' => trans('View'),
-				'link' =>'?m=archiveview',
-				'tip' => trans('Allows you to view transaction log'),
-				'prio' => 10,
-			),
-		),
+		'prio' => 51,
 	);
 }
 
 // Adding Userpanel menu items
-$userpanel_dir = ConfigHelper::getConfig('directories.userpanel_dir');
-if(!empty($userpanel_dir))
+if(!empty($CONFIG['directories']['userpanel_dir']))
         // be sure that Userpanel exists
-	if(file_exists($userpanel_dir . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'LMS.menu.php'))
-	        require_once($userpanel_dir . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'LMS.menu.php');
+	if(file_exists($CONFIG['directories']['userpanel_dir'].'/lib/LMS.menu.php'))
+	        require_once($CONFIG['directories']['userpanel_dir'].'/lib/LMS.menu.php');
 
 // Adding user-defined menu items
-$custom_menu = ConfigHelper::getConfig('phpui.custom_menu');
-if(!empty($custom_menu))
+if(!empty($CONFIG['phpui']['custom_menu']))
         // be sure that file exists
-	if(file_exists($custom_menu))
-	        require_once($custom_menu);
+	if(file_exists($CONFIG['phpui']['custom_menu']))
+	        require_once($CONFIG['phpui']['custom_menu']);
 
 /* Example for custom_menu file
 <?php
@@ -907,7 +751,5 @@ foreach($menu as $idx => $item)
 		uasort($menu[$idx]['submenu'],'menu_cmp');
 
 uasort($menu,'menu_cmp');
-
-
 
 ?>

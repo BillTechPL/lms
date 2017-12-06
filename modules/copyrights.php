@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: copyrights.php,v 1.44 2011/01/18 08:12:21 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Copyrights');
@@ -62,12 +62,6 @@ $authors = array(
 			'www' => 'www.lexx.w.pl',
 			'realname' => 'Marcin Król',
 		     ),
-    
-                'Lion' => array(
-			'realname' => 'Maciej Lew',
-			'info' => 'PHP, HTML, CSS, JavaScript',
-			'www' => 'www.lion.net.pl'
-			),
 	
 		);
 

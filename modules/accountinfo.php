@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: accountinfo.php,v 1.7 2011/01/18 08:12:19 alec Exp $
  */
 
 // LEFT join with domains for bckward compat.
@@ -44,9 +44,9 @@ $account['aliases'] = $DB->GetAll('SELECT a.id, a.login, d.name AS domain
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
     
-$layout['pagetitle'] = trans('Account Info: $a', $account['login'].'@'.$account['domain']);
+$layout['pagetitle'] = trans('Account Info: $0', $account['login'].'@'.$account['domain']);
 
 $SMARTY->assign('account', $account);
-$SMARTY->display('account/accountinfo.html');
+$SMARTY->display('accountinfo.html');
 
 ?>

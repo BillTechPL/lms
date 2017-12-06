@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,23 +21,23 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004031100.php,v 1.12 2011/01/18 08:12:12 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE rtmessages ADD createtime integer;
     ALTER TABLE rtmessages ALTER createtime SET DEFAULT 0;
     UPDATE rtmessages SET createtime = 0;
     ALTER TABLE rtmessages ALTER createtime SET NOT NULL
 ");
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE rtattachments (
 	messageid integer DEFAULT 0 NOT NULL, 
 	filename VARCHAR(255) NOT NULL, 
 	contenttype VARCHAR(255) NOT NULL)
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004031100', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004031100', 'dbversion'));
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: voipaccountdel.php,v 1.4 2011/01/18 08:12:26 alec Exp $
  */
 
 $voipaccountid = intval($_GET['id']);
 $voipaccountlogin = $LMS->GetVoipAccountLogin($voipaccountid);
 
-$layout['pagetitle'] = trans('Delete Voip Account $a', $voipaccountlogin);
+$layout['pagetitle'] = trans('Delete Voip Account $0', $voipaccountlogin);
 
 if (!$LMS->VoipAccountExists($voipaccountid))
 {
@@ -36,7 +36,7 @@ if (!$LMS->VoipAccountExists($voipaccountid))
 
 	if($_GET['is_sure']!=1)
 	{
-		$body = '<P>'.trans('Are you sure, you want to remove voip account \'$a\' from database?', $voipaccountlogin).'</P>'; 
+		$body = '<P>'.trans('Are you sure, you want to remove voip account \'$0\' from database?', $voipaccountlogin).'</P>'; 
 		$body .= '<P><A HREF="?m=voipaccountdel&id='.$voipaccountid.'&is_sure=1">'.trans('Yes, I am sure.').'</A></P>';
 	}else{
 		$owner = $LMS->GetVoipAccountOwner($voipaccountid);
@@ -46,7 +46,7 @@ if (!$LMS->VoipAccountExists($voipaccountid))
 		else
 			header('Location: ?m=customerinfo&id='.$owner);
 
-		$body = '<P>'.trans('Voip account $a was deleted', $voipaccountname).'</P>';
+		$body = '<P>'.trans('Voip account $0 was deleted', $voipaccountname).'</P>';
 	}
 }
 

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: daemoninstanceadd.php,v 1.20 2011/01/18 08:12:21 alec Exp $
  */
 
 $instance = isset($_POST['instance']) ? $_POST['instance'] : NULL;
@@ -54,52 +54,30 @@ if($instance)
 		$instance['priority'] = 0;
 	elseif(!is_numeric($instance['priority']))
 		$error['priority'] = trans('Priority must be integer!');
-
-	if(!$error) {
-		$args = array(
-			'name' => $instance['name'], 
-			SYSLOG::RES_HOST => $instance['hostid'],
-			'description' => $instance['description'],
-			'module' => $instance['module'],
-			'crontab' => $instance['crontab'],
-			'priority' => $instance['priority']
-		);
+	
+	if(!$error)
+	{
 		$DB->Execute('INSERT INTO daemoninstances (name, hostid, description, module, crontab, priority) VALUES (?,?,?,?,?,?)',
-				array_values($args));
-		$id = $DB->GetLastInsertId('daemoninstances');
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_DAEMONINST] = $id;
-			$SYSLOG->AddMessage(SYSLOG::RES_DAEMONINST, SYSLOG::OPER_ADD, $args);
+				    array($instance['name'], 
+					    $instance['hostid'], 
+					    $instance['description'],
+					    $instance['module'],
+					    $instance['crontab'],
+					    $instance['priority']));
+		
+		if($instance['id'])
+		{
+			$id = $DB->GetLastInsertId('daemoninstances');
+			$DB->Execute('INSERT INTO daemonconfig (var, description, value, instanceid)
+					SELECT var, description, value, ? FROM daemonconfig
+					WHERE instanceid = ?', array($id, $instance['id']));
 		}
-
-		if ($instance['id']) {
-			$configs = $DB->GetAll('SELECT var, description, value FROM daemonconfig
-					WHERE instanceid = ?', array($instance['id']));
-			if (!empty($configs))
-				foreach ($configs as $config) {
-					$args = array(
-						'var' => $config['var'],
-						'description' => $config['description'],
-						'value' => $config['value'],
-						SYSLOG::RES_DAEMONINST => $id
-					);
-					$DB->Execute('INSERT INTO daemonconfig (var, description, value, instanceid)
-							VALUES (?, ?, ?, ?)', array_values($args));
-					if ($SYSLOG) {
-						$args[SYSLOG::RES_HOST] = $instance['hostid'];
-						$args[SYSLOG::RES_DAEMONCONF] =
-							$DB->GetLastInsertID('daemonconfig');
-						$SYSLOG->AddMessage(SYSLOG::RES_DAEMONCONF, SYSLOG::OPER_ADD, $args);
-					}
-				}
-		}
-
+		
 		if(!isset($instance['reuse']))
 		{
 			$SESSION->redirect('?m=daemoninstancelist&id='.$instance['hostid']);
 		}
-
+		
 		unset($instance['id']);
 		unset($instance['name']);
 		unset($instance['module']);
@@ -124,6 +102,6 @@ $SMARTY->assign('error', $error);
 $SMARTY->assign('instance', $instance);
 $SMARTY->assign('hosts', $DB->GetAll('SELECT id, name FROM hosts ORDER BY name'));
 
-$SMARTY->display('daemon/daemoninstanceadd.html');
+$SMARTY->display('daemoninstanceadd.html');
 
 ?>

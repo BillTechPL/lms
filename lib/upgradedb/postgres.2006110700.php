@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,18 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2006110700.php,v 1.7 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("ALTER TABLE rttickets ADD COLUMN cause smallint");
-$this->Execute("UPDATE rttickets SET cause = 0");
-$this->Execute("ALTER TABLE rttickets ALTER COLUMN cause SET NOT NULL");
-$this->Execute("ALTER TABLE rttickets ALTER COLUMN cause SET DEFAULT 0");
+$DB->Execute("ALTER TABLE rttickets ADD COLUMN cause smallint");
+$DB->Execute("UPDATE rttickets SET cause = 0");
+$DB->Execute("ALTER TABLE rttickets ALTER COLUMN cause SET NOT NULL");
+$DB->Execute("ALTER TABLE rttickets ALTER COLUMN cause SET DEFAULT 0");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2006110700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2006110700', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

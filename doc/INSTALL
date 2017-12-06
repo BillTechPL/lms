@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------
-                    LAN Management System 1.11-git
+                    LAN Management System 1.11.13 Dira
 ----------------------------------------------------------------------
 
 Complete install instructions can be found in second chapter of README
@@ -16,4 +16,4 @@ HTML zamieszczonej w katalogu doc/html/.
 
 Za utrudnienia przepraszamy ;-)
 
-$Id$
+$Id: INSTALL,v 1.47 2007/08/17 13:06:36 alec Exp $

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2010050600.php,v 1.5 2011/03/10 12:06:43 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 	CREATE SEQUENCE macs_id_seq;
 	CREATE TABLE macs (
 		id		integer		DEFAULT nextval('macs_id_seq'::text) NOT NULL,
@@ -43,9 +43,9 @@ $this->Execute("
 	ALTER TABLE nodes DROP mac;
 ");
 
-if(!$this->GetOne("SELECT COUNT(*) FROM pg_aggregate a JOIN pg_proc p ON (p.oid = a.aggfnoid)
+if(!$DB->GetOne("SELECT COUNT(*) FROM pg_aggregate a JOIN pg_proc p ON (p.oid = a.aggfnoid)
     WHERE p.proname='array_agg'"))
-	$this->Execute("
+	$DB->Execute("
 		CREATE AGGREGATE array_agg (
 		    BASETYPE=anyelement,
 			SFUNC=array_append,
@@ -54,8 +54,8 @@ if(!$this->GetOne("SELECT COUNT(*) FROM pg_aggregate a JOIN pg_proc p ON (p.oid 
 		);
 	");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010050600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010050600', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

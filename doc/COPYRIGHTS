@@ -1,7 +1,7 @@
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  Copyright (C) 2001-2013 LMS Developers
+ *  Copyright (C) 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,5 +19,5 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: COPYRIGHTS,v 1.20 2011/01/18 08:12:04 alec Exp $
  */

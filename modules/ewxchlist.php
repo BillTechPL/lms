@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxchlist.php,v 1.4 2011/01/18 08:12:22 alec Exp $
  */
 
 function GetChannelsList($order='name,asc')
@@ -54,7 +54,7 @@ function GetChannelsList($order='name,asc')
 
 	$channels = $DB->GetAll('('
 	    .'SELECT c.id, c.name, c.upceil, c.downceil,
-	    c.upceil_n, c.downceil_n, c.halfduplex, c2.id AS cid,
+	    c.upceil_n, c.downceil_n, c2.id AS cid,
 		(SELECT COUNT(*) FROM netdevices WHERE channelid = c.id) AS devcnt,
 		(SELECT COUNT(*) FROM ewx_stm_nodes n
 		    JOIN ewx_stm_channels ch ON (n.channelid = ch.id)
@@ -65,8 +65,8 @@ function GetChannelsList($order='name,asc')
 		UNION
 		(
 		SELECT 0 AS id, \''.trans('default').'\' AS name,
-		    ch.upceil, ch.downceil, 0 AS upceil_n, 0 AS downceil_n, 0, ch.id AS cid,
-		    (SELECT COUNT(DISTINCT netdev) FROM vnodes WHERE netdev IS NOT NULL AND id IN (
+		    ch.upceil, ch.downceil, 0 AS upceil_n, 0 AS downceil_n, ch.id AS cid,
+		    (SELECT COUNT(DISTINCT netdev) FROM nodes WHERE netdev > 0 AND id IN (
 		        SELECT nodeid FROM ewx_stm_nodes WHERE channelid = ch.id)) AS devcnt,
 		    (SELECT COUNT(*) FROM ewx_stm_nodes WHERE channelid = ch.id) AS nodecnt
 		    FROM ewx_stm_channels ch
@@ -101,7 +101,7 @@ unset($channels['order']);
 unset($channels['direction']);
 
 $page = (empty($_GET['page']) ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.channellist_pagelimit', $listdata['total']);
+$pagelimit = (empty($CONFIG['phpui']['channellist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['channellist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('eclp', $page);
@@ -115,6 +115,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('start', $start);
 $SMARTY->assign('channels', $channels);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('ewxch/ewxchlist.html');
+$SMARTY->display('ewxchlist.html');
 
 ?>

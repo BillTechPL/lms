@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: voipaccountsearch.php,v 1.4 2011/01/18 08:12:26 alec Exp $
  */
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
@@ -65,7 +65,7 @@ if(isset($_GET['search']))
 		
 	$page = (!isset($_GET['page']) ? 1 : $_GET['page']);
 	
-	$pagelimit = ConfigHelper::getConfig('phpui.voipaccountlist_pagelimit', $listdata['total']);
+	$pagelimit = (! $CONFIG['phpui']['voipaccountlist_pagelimit'] ? $listdata['total'] : $CONFIG['phpui']['voipaccountlist_pagelimit']);
 	$start = ($page - 1) * $pagelimit;
 	$SESSION->save('vaslp', $page);
 	
@@ -76,11 +76,11 @@ if(isset($_GET['search']))
 	$SMARTY->assign('listdata',$listdata);
 	
 	if(isset($_GET['print']))
-		$SMARTY->display('print/printvoipaccountlist.html');
+		$SMARTY->display('printvoipaccountlist.html');
 	elseif($listdata['total']==1)
 		$SESSION->redirect('?m=voipaccountinfo&id='.$voipaccountlist[0]['id']);
 	else
-		$SMARTY->display('voipaccount/voipaccountsearchresults.html');
+		$SMARTY->display('voipaccountsearchresults.html');
 }
 else
 {
@@ -89,7 +89,7 @@ else
 	$SESSION->remove('vaslp');
 
 	$SMARTY->assign('k',$k);
-	$SMARTY->display('voipaccount/voipaccountsearch.html');
+	$SMARTY->display('voipaccountsearch.html');
 }
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,21 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: choosenode.php,v 1.7 2011/01/18 08:12:20 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Select node');
 
-$p = isset($_GET['p']) ? $_GET['p'] : '';
-$js = '';
-$customerid = intval($_GET['id']);
-
-if(!$p || $p == 'main')
-        $SMARTY->assign('js', 'var targetfield = window.parent.targetfield;');
-
-$SMARTY->assign('customerid', $customerid);
-$SMARTY->assign('part', $p);
 $SMARTY->assign('nodelist',$LMS->GetCustomerNodes(intval($_GET['id'])));
-$SMARTY->display('choose/choosenode.html');
+$SMARTY->display('choosenode.html');
 
 ?>

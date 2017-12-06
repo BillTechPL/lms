@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,22 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: receiptdel.php,v 1.12 2011/01/18 08:12:25 alec Exp $
  */
 
 $id = intval($_GET['id']);
 
 if ($id && $_GET['is_sure'] == '1') {
 	$regid = $DB->GetOne('SELECT DISTINCT regid FROM receiptcontents WHERE docid=?', array($id));
-	if ($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array(Auth::GetCurrentUser(), $regid)) < 256) {
+	if ($DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($AUTH->id, $regid)) < 256) {
 		$SMARTY->display('noaccess.html');
 		$SESSION->close();
 		die;
 	}
 
-	$LMS->ReceiptDelete($id);
+	if ($DB->Execute('DELETE FROM documents WHERE id = ?', array($id))) {
+		$DB->Execute('DELETE FROM receiptcontents WHERE docid = ?', array($id));
+		$DB->Execute('DELETE FROM cash WHERE docid = ?', array($id));
+	}
 }
 
-$SESSION->redirect('?m=receiptlist');
+header('Location: ?m=receiptlist');
 
 ?>

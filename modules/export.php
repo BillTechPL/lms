@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: export.php,v 1.17 2011/04/01 10:35:12 alec Exp $
  */
 
-include(ConfigHelper::getConfig('phpui.export_config', 'exportcfg.php'));
+include(isset($CONFIG['phpui']['export_config']) && $CONFIG['phpui']['export_config'] ? $CONFIG['phpui']['export_config'] : 'exportcfg.php');
 
 function form_num($num)
 {
@@ -61,6 +61,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 	if($user)
 		$where .= ' AND userid = '.intval($user);
 
+    	// wysy³amy ...
 	header('Content-Type: application/octetstream');
 	header('Content-Disposition: attachment; filename='.$cash_filename);
 	header('Pragma: public');
@@ -68,7 +69,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 	if($list = $DB->GetAll(
     		'SELECT d.id AS id, value, number, cdate, customerid, 
 		d.name AS customer, address, zip, city, ten, ssn, userid,
-		numberplans.template, extnumber, receiptcontents.description, 
+		template, extnumber, receiptcontents.description, 
 		cashregs.name AS cashreg
 		FROM documents d
 		LEFT JOIN receiptcontents ON (d.id = docid)
@@ -84,6 +85,8 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 	{
 		$record = '';
 		$i = 0;
+		$maz_from = array(chr(161),chr(198),chr(202),chr(163),chr(209),chr(211),chr(166),chr(172),chr(175),chr(177),chr(230),chr(234),chr(179),chr(241),chr(243),chr(182),chr(188),chr(191));
+		$maz_to = array(chr(143),chr(149),chr(144),chr(156),chr(165),chr(163),chr(152),chr(160),chr(161),chr(134),chr(141),chr(145),chr(146),chr(164),chr(162),chr(158),chr(166),chr(167));
 
 		if(is_array($cash_record))
 			foreach($cash_record as $r)
@@ -96,13 +99,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 
 			$clariondate = intval($row['cdate']/86400)+61731;
 			$date = date($date_format, $row['cdate']);
-			$number = docnumber(array(
-				'number' => $row['number'],
-				'template' => $row['template'],
-				'cdate' => $row['cdate'],
-				'ext_num' => $row['extnumber'],
-				'customerid' => $row['customerid'],
-			));
+			$number = docnumber($row['number'], $row['template'], $row['cdate'], $row['extnumber']);
 
 			$line = str_replace('%CLARION_DATE', $clariondate, $line);
 			$line = str_replace('%NUMBER', $number, $line);
@@ -128,23 +125,11 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 			{
 				$tmp = explode('%N',$row['template']);
 				if($tmp[0])
-					$line = str_replace('%PREFIX', docnumber(array(
-							'number' => $row['number'],
-							'template' => $tmp[0],
-							'cdate' => $row['cdate'],
-							'ext_num' => $row['extnumber'],
-							'customerid' => $row['customerid'],
-						)), $line);
+					$line = str_replace('%PREFIX', docnumber($row['number'], $tmp[0], $row['cdate'], $row['extnumber']), $line);
 				else
 					$line = str_replace('%PREFIX', '', $line);
 				if($tmp[1])
-					$line = str_replace('%SUFFIX', docnumber(array(
-							'number' => $row['number'],
-							'template' => $tmp[1],
-							'cdate' => $row['cdate'],
-							'ext_num' => $row['extnumber'],
-							'customerid' => $row['customerid'],
-						)), $line);
+					$line = str_replace('%SUFFIX', docnumber($row['number'], $tmp[1], $row['cdate'], $row['extnumber']), $line);
 				else
 					$line = str_replace('%SUFFIX', '', $line);
 			}
@@ -157,7 +142,7 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 					$type = $cash_in_type;
 				
 				// fragment dla systemu Enova: rozpoznawanie
-				// wyciï¿½gï¿½w bankowych na podstawie przedrostka
+				// wyci±gów bankowych na podstawie przedrostka
 				// planu numeracyjnego
 				if(strpos($number, 'PB')===0)
 					$type += 2;
@@ -169,7 +154,10 @@ if(isset($_GET['type']) && $_GET['type'] == 'cash')
 			{
 				if(strtoupper($encoding)=='MAZOVIA')
 				{
-					$line = mazovia_to_utf8($line);
+					// iconv don't support Mazovia standard, but some 
+					// old Polish programs need it
+					$line = iconv('UTF-8', 'ISO-8859-2//TRANSLIT', $line);
+					$line = str_replace($maz_from, $maz_to, $line);
 				}
 				else
 					$line = iconv('UTF-8', $encoding.'//TRANSLIT', $line);
@@ -209,7 +197,7 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 	// because we need here incoices-like round-off
 
 	// get documents items numeric values for calculations
-	$items = $DB->GetAll('SELECT docid, itemid, taxid, value, count, description, prodid, content, d.customerid
+	$items = $DB->GetAll('SELECT docid, itemid, taxid, value, count, description, prodid, content
 		FROM documents d
 		LEFT JOIN invoicecontents ON docid = d.id 
 		WHERE (type = ? OR type = ?) AND (cdate BETWEEN ? AND ?) 
@@ -220,13 +208,12 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 		ORDER BY cdate, docid', array(DOC_INVOICE, DOC_CNOTE, $unixfrom, $unixto));
 
 	// get documents data
-	$docs = $DB->GetAllByKey('SELECT documents.id AS id, number, cdate, customerid, userid, name, address, zip, city, ten, ssn,
-			numberplans.template, reference, extnumber, paytime, closed
+	$docs = $DB->GetAllByKey('SELECT documents.id AS id, number, cdate, customerid, userid, name, address, zip, city, ten, ssn, template, reference, extnumber, paytime, closed
 		FROM documents 
 	        LEFT JOIN numberplans ON numberplanid = numberplans.id
 		WHERE (type = ? OR type = ?) AND (cdate BETWEEN ? AND ?) ', 'id', array(DOC_INVOICE, DOC_CNOTE, $unixfrom, $unixto));
 
-    	// wysyï¿½amy ...
+    	// wysy³amy ...
 	header('Content-Type: application/octetstream');
 	header('Content-Disposition: attachment; filename='.$inv_filename);
 	header('Pragma: public');
@@ -236,6 +223,8 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 		// get taxes for calculations
 		$taxes = $LMS->GetTaxes();
 		$i = 0;
+		$maz_from = array(chr(161),chr(198),chr(202),chr(163),chr(209),chr(211),chr(166),chr(172),chr(175),chr(177),chr(230),chr(234),chr(179),chr(241),chr(243),chr(182),chr(188),chr(191));
+		$maz_to = array(chr(143),chr(149),chr(144),chr(156),chr(165),chr(163),chr(152),chr(160),chr(161),chr(134),chr(141),chr(145),chr(146),chr(164),chr(162),chr(158),chr(166),chr(167));
 
 		if(is_array($inv_record))
 			foreach($inv_record as $r)
@@ -283,13 +272,7 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 
 				$clariondate = intval($doc['cdate']/86400)+61731;
 				$date = date($date_format, $doc['cdate']);
-				$number = docnumber(array(
-					'number' => $doc['number'],
-					'template' => $doc['template'],
-					'cdate' => $doc['cdate'],
-					'ext_num' => $doc['extnumber'],
-					'customerid' => $doc['customerid'],
-				));
+				$number = docnumber($doc['number'], $doc['template'], $doc['cdate'], $doc['extnumber']);
 
 				$line = str_replace('%CLARION_DATE', $clariondate, $line);
 				$line = str_replace('%NUMBER', $number, $line);
@@ -340,23 +323,11 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 				{
 					$tmp = explode('%N',$doc['template']);
 					if($tmp[0])
-						$line = str_replace('%PREFIX', docnumber(array(
-								'number' => $doc['number'],
-								'template' => $tmp[0],
-								'cdate' => $doc['cdate'],
-								'ext_num' => $doc['extnumber'],
-								'customerid' => $doc['customerid'],
-							)), $line);
+						$line = str_replace('%PREFIX', docnumber($doc['number'], $tmp[0], $doc['cdate'], $doc['extnumber']), $line);
 					else
 						$line = str_replace('%PREFIX', '', $line);
 					if($tmp[1])
-						$line = str_replace('%SUFFIX', docnumber(array(
-								'number' => $doc['number'],
-								'template' => $tmp[1],
-								'cdate' => $doc['cdate'],
-								'ext_num' => $doc['extnumber'],
-								'customerid' => $doc['customerid'],
-							)), $line);
+						$line = str_replace('%SUFFIX', docnumber($doc['number'], $tmp[1], $doc['cdate'], $doc['extnumber']), $line);
 					else
 						$line = str_replace('%SUFFIX', '', $line);
 				}
@@ -375,7 +346,10 @@ elseif(isset($_GET['type']) && $_GET['type'] == 'invoices')
 				{
 					if(strtoupper($encoding)=='MAZOVIA')
 					{
-						$line = mazovia_to_utf8($line);
+						// iconv don't support Mazovia standard, but some 
+						// old Polish programs need it
+						$line = iconv('UTF-8', 'ISO-8859-2//TRANSLIT', $line);
+						$line = str_replace($maz_from, $maz_to, $line);
 					}
 					else
 						$line = iconv('UTF-8', $encoding.'//TRANSLIT', $line);

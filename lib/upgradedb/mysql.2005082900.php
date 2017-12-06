@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005082900.php,v 1.9 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->Execute("CREATE TABLE hosts (
+$DB->Execute("CREATE TABLE hosts (
     id int(11) NOT NULL auto_increment,
     name varchar(255) default '' NOT NULL,
     description text default '' NOT NULL,
@@ -32,10 +32,10 @@ $this->Execute("CREATE TABLE hosts (
     reload tinyint(1) default '0' NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY name (name)
-) ENGINE=MyISAM");
-$this->Execute("INSERT INTO hosts (id, name, description, lastreload, reload) SELECT id, name, description, lastreload, reload FROM daemonhosts");
-$this->Execute("DROP TABLE daemonhosts");
+) TYPE=MyISAM");
+$DB->Execute("INSERT INTO hosts (id, name, description, lastreload, reload) SELECT id, name, description, lastreload, reload FROM daemonhosts");
+$DB->Execute("DROP TABLE daemonhosts");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005082900', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2005082900', 'dbversion'));
 
 ?>

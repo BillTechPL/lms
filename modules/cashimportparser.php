@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,21 +21,184 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashimportparser.php,v 1.28 2011/01/18 08:12:20 alec Exp $
  */
 
-include(ConfigHelper::getConfig('phpui.import_config', 'cashimportcfg.php'));
+include(!empty($CONFIG['phpui']['import_config']) ? $CONFIG['phpui']['import_config'] : 'cashimportcfg.php');
 
 if(!isset($patterns) || !is_array($patterns))
+{
 	$error['file'] = trans('Configuration error. Patterns array not found!');
-elseif (isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name']) && $_FILES['file']['size']) {
-	$contents = file_get_contents($_FILES['file']['tmp_name']);
-	$filename = $_FILES['file']['name'];
-	$ln = 0;
+}
+elseif(isset($_FILES['file']) && is_uploaded_file($_FILES['file']['tmp_name']) && $_FILES['file']['size'])
+{
+	$file         = file($_FILES['file']['tmp_name']);
+	$filename     = $_FILES['file']['name'];
+	$patterns_cnt = isset($patterns) ? sizeof($patterns) : 0;
+	$ln           = 0;
 
-	$error = $LMS->CashImportParseFile($filename, $contents, $patterns);
+	foreach($file as $line)
+	{
+		$id = NULL;
+		$count = 0;
+		$ln++;
 
-	include(MODULES_DIR . DIRECTORY_SEPARATOR . 'cashimport.php');
+		if($patterns_cnt) foreach($patterns as $idx => $pattern)
+		{
+			$theline = $line;
+
+			if(strtoupper($pattern['encoding']) != 'UTF-8')
+			{
+				$theline = @iconv($pattern['encoding'], 'UTF-8//TRANSLIT', $theline);
+			}
+
+			if(!preg_match($pattern['pattern'], $theline, $matches))
+				$count++;
+			else
+				break;
+		}
+
+		// line isn't matching to any pattern
+		if($count == $patterns_cnt)
+		{
+			if(trim($line) != '') 
+				$error['lines'][$ln] = $patterns_cnt == 1 ? $theline : $line;
+			continue; // go to next line
+		}
+
+		$name = isset($matches[$pattern['pname']]) ? trim($matches[$pattern['pname']]) : '';
+		$lastname = isset($matches[$pattern['plastname']]) ? trim($matches[$pattern['plastname']]) : '';
+		$comment = isset($matches[$pattern['pcomment']]) ? trim($matches[$pattern['pcomment']]) : '';
+		$time = isset($matches[$pattern['pdate']]) ? trim($matches[$pattern['pdate']]) : '';
+		$value = str_replace(',','.', isset($matches[$pattern['pvalue']]) ? trim($matches[$pattern['pvalue']]) : '');
+
+		if(!$pattern['pid'])
+		{
+			if(!empty($pattern['pid_regexp'])) 
+				$regexp = $pattern['pid_regexp'];
+			else
+				$regexp = '/.*ID[:\-\/]([0-9]{0,4}).*/i';
+
+			if(preg_match($regexp, $theline, $matches))
+				$id = $matches[1];
+		}
+		else
+			$id = isset($matches[$pattern['pid']]) ? intval($matches[$pattern['pid']]) : NULL;
+
+		// seek invoice number
+		if(!$id && !empty($pattern['invoice_regexp']))
+		{
+			if(preg_match($pattern['invoice_regexp'], $theline, $matches)) 
+			{
+				$invid = $matches[$pattern['pinvoice_number']];
+				$invyear = $matches[$pattern['pinvoice_year']];
+				$invmonth = !empty($pattern['pinvoice_month']) && $pattern['pinvoice_month'] > 0 ? intval($matches[$pattern['pinvoice_month']]) : 1;
+
+				if($invid && $invyear)
+				{
+					$from = mktime(0,0,0, $invmonth, 1, $invyear);
+					$to = mktime(0,0,0, !empty($pattern['pinvoice_month']) && $pattern['pinvoice_month'] > 0 ? $invmonth + 1 : 13, 1, $invyear);
+					$id = $DB->GetOne('SELECT customerid FROM documents 
+							WHERE number=? AND cdate>? AND cdate<? AND type IN (?,?)', 
+							array($invid, $from, $to, DOC_INVOICE, DOC_CNOTE));
+				}
+			}
+		}
+
+		if(!$id && $name && $lastname)
+		{
+			$uids = $DB->GetCol('SELECT id FROM customers WHERE UPPER(lastname)=UPPER(?) and UPPER(name)=UPPER(?)', array($lastname, $name));
+			if(sizeof($uids)==1)
+				$id = $uids[0];
+		}
+		elseif($id && (!$name || !$lastname))
+		{
+			if($tmp = $DB->GetRow('SELECT lastname, name FROM customers WHERE id = ?', array($id)))
+			{
+				$lastname = $tmp['lastname'];
+				$name = $tmp['name'];
+			}
+			else
+				$id = NULL;
+		}
+
+		if($time)
+		{
+			if(preg_match($pattern['date_regexp'], $time, $date))
+			{
+				$time = mktime(0,0,0, 
+					$date[$pattern['pmonth']], 
+					$date[$pattern['pday']], 
+					$date[$pattern['pyear']]);
+			}
+			elseif(!is_numeric($time))
+				$time = time();
+		}
+		else
+			$time = time();
+
+		if(!empty($pattern['comment_replace']))
+			$comment = preg_replace($pattern['comment_replace']['from'], $pattern['comment_replace']['to'], $comment);
+
+		$customer = trim($lastname.' '.$name);
+		$comment = trim($comment);
+
+		if(!empty($pattern['use_line_hash']))
+			$hash = md5($theline.(!empty($pattern['line_idx_hash']) ? $ln : ''));
+		else
+			$hash = md5($time.$value.$customer.$comment.(!empty($pattern['line_idx_hash']) ? $ln : ''));
+
+		if(is_numeric($value))
+		{
+			if(isset($pattern['modvalue']) && $pattern['modvalue'])
+			{
+				$value = str_replace(',','.', $value * $pattern['modvalue']);
+			}
+
+			if(!$DB->GetOne('SELECT id FROM cashimport WHERE hash = ?', array($hash)))
+			{
+                // Add file
+                if (!$sourcefileid) {
+                    $DB->Execute('INSERT INTO sourcefiles (name, idate, userid)
+                        VALUES (?, ?NOW?, ?)',
+                        array($filename, $AUTH->id));
+
+                    $sourcefileid = $DB->GetLastInsertId('sourcefiles');
+                }
+
+				if(!empty($_POST['source']))
+					$sourceid = intval($_POST['source']);
+				elseif(!empty($pattern['id']))
+					$sourceid = intval($pattern['id']);
+				else
+					$sourceid = NULL;
+
+				$DB->Execute('INSERT INTO cashimport (date, value, customer,
+					customerid, description, hash, sourceid, sourcefileid)
+					VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+					array(
+					    $time,
+					    $value,
+					    $customer,
+					    $id,
+					    $comment,
+					    $hash,
+					    $sourceid,
+					    $sourcefileid,
+					));
+			} else {
+				$error['lines'][$ln] = array(
+					'customer' => $customer,
+					'customerid' => $id,
+					'date' => $time,
+					'value' => $value,
+					'comment' => $comment
+				);
+		    }
+		}
+	}
+
+	include(MODULES_DIR.'/cashimport.php');
 	die;
 }
 elseif(isset($_FILES['file'])) // upload errors
@@ -55,14 +218,13 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 $sourcefiles = $DB->GetAll('SELECT s.*, u.name AS username,
     (SELECT COUNT(*) FROM cashimport WHERE sourcefileid = s.id) AS count
     FROM sourcefiles s
-    LEFT JOIN vusers u ON (u.id = s.userid)
+    LEFT JOIN users u ON (u.id = s.userid)
     ORDER BY s.idate DESC LIMIT 10');
 
 $SMARTY->assign('error', $error);
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
-$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources WHERE deleted = 0 ORDER BY name'));
+$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
+$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources ORDER BY name'));
 $SMARTY->assign('sourcefiles', $sourcefiles);
-$SMARTY->display('cash/cashimport.html');
+$SMARTY->display('cashimport.html');
 
 ?>

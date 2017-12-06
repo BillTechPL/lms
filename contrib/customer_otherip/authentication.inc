@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, 
  *  USA.
  *
- *  $Id$
+ *  $Id: authentication.inc,v 1.18 2011/01/18 08:11:59 alec Exp $
  */
 
 function GetCustomerIDByPhoneAndPIN($phone, $pin)
@@ -30,8 +30,8 @@ function GetCustomerIDByPhoneAndPIN($phone, $pin)
 	if(!preg_match('/^[0-9]+$/', $pin))
 		return NULL;
 	return $DB->GetOne('SELECT id FROM customers, customercontacts 
-		    WHERE customerid = customers.id AND pin=? AND contact=? AND customercontacts.type & ? > 0 LIMIT 1', 
-		    array($pin, $phone, (CONTACT_MOBILE|CONTACT_FAX|CONTACT_LANDLINE)));
+		    WHERE customerid = customers.id AND pin=? AND phone=? LIMIT 1', 
+		    array($pin, $phone));
 }
 
 function GetCustomerIDByIDAndPIN($id, $pin)

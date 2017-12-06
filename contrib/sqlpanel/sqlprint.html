@@ -1,5 +1,5 @@
 {include file="clearheader.html"}
-<!--// $Id$ //-->
+<!--// $Id: sqlprint.html,v 1.3 2005/10/19 09:11:34 alec Exp $ //-->
 <TABLE WIDTH="100%">
 	<TR>
 		<TD WIDTH="50%" VALIGN="TOP">
@@ -8,7 +8,7 @@
 		<TD WIDTH="50%" ALIGN="RIGHT">
 			LMS {$layout.lmsv} @ {$layout.hostname}<BR>
 			{$smarty.now|date_format:"%A, %x"}<BR>
-			{t a=$layout.logname}Prepared by: $a{/t}
+			{t 0=$layout.logname}Prepared by: $0{/t}
 		</TD>
 	</TR>
 </TABLE>

@@ -1,8 +1,8 @@
 #!/usr/bin/perl -Tw
 #
-#  LMS version 1.11-git
+#  LMS version 1.11.13 Dira
 #
-#  Copyright (C) 2001-2013 LMS Developers
+#  Copyright (C) 2001-2011 LMS Developers
 #
 #  Please, see the doc/AUTHORS for more information about authors!
 #
@@ -20,7 +20,7 @@
 #  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 #  USA.
 #
-#  $Id$
+#  $Id: lms-reminder,v 1.25 2011/01/18 08:11:58 alec Exp $
 
 use strict;
 use DBI;
@@ -31,7 +31,7 @@ use POSIX qw(strftime mktime floor);
 use MIME::QuotedPrint;
 use Mail::Sender;
 
-my $_version = '1.11-git';
+my $_version = '1.11.13 Dira';
 
 my %options = (
 	"--config-file|C=s"	=>	\$configfile,
@@ -47,7 +47,7 @@ if($help)
 {
 	print STDERR <<EOF;
 lms-reminder, version $_version
-(C) 2001-2013 LMS Developers
+(C) 2001-2011 LMS Developers
 
 -C, --config-file=/etc/lms/lms.ini	alternate config file (default: /etc/lms/lms.ini);
 -h, --help			print this help and exit;
@@ -62,7 +62,7 @@ if($version)
 {
 	print STDERR <<EOF;
 lms-reminder, version $_version
-(C) 2001-2013 LMS Developers
+(C) 2001-2011 LMS Developers
 
 EOF
 	exit 0;
@@ -76,7 +76,7 @@ if(!$configfile)
 if(!$quiet)
 {
 	print STDOUT "lms-reminder, version $_version\n";
-	print STDOUT "(C) 2001-2013 LMS Developers\n";
+	print STDOUT "(C) 2001-2011 LMS Developers\n";
 	print STDOUT "Using file $configfile as config.\n";
 }
 
@@ -161,7 +161,7 @@ $Mail::Sender::SITE_HEADERS = "X-Mailer: lms-reminder v.$_version";
 my $date = mktime(0, 0, 0, int strftime("%d",localtime()), strftime("%m",localtime())-1, strftime("%Y",localtime())-1900, 0, 0, -1);
 my $day = strftime("%x", 0, 0, 0, int strftime("%d",localtime()), strftime("%m",localtime())-1, strftime("%Y",localtime())-1900, 0, 0, -1);
 
-my $dbq = $dbase->prepare("SELECT id, name, email FROM vusers WHERE deleted = 0 AND email != '' AND ntype & 1 = 1");
+my $dbq = $dbase->prepare("SELECT id, name, email FROM users WHERE deleted = 0 AND email != ''");
 $dbq->execute();
 while (my $row = $dbq->fetchrow_hashref())
 {
@@ -170,17 +170,17 @@ while (my $row = $dbq->fetchrow_hashref())
 	my $recipient = $row->{'email'};
 	
 	my $dbqi = $dbase->prepare("SELECT DISTINCT title, description, begintime, endtime,
-			customerid, UPPER(lastname) AS lastname, c.name AS name, address, city, zip,
-			(SELECT contact FROM customercontacts cc
-				WHERE customerid = e.customerid AND (cc.type & 7 > 0)
-				ORDER BY contact LIMIT 1) AS phone 
-			FROM events e
-			LEFT JOIN customeraddressview c ON (c.id = customerid)
-			LEFT JOIN eventassignments ea ON (e.id = ea.eventid)
-			WHERE date = $date AND
-				((private = 1 AND e.userid = $row->{'id'}) OR
-				(private = 0 AND ea.userid = $row->{'id'}) OR
-				(private = 0 AND ea.userid IS NULL))
+			customerid, UPPER(lastname) AS lastname, customers.name AS name, address, city, zip,
+			(SELECT phone FROM customercontacts 
+				WHERE customerid = events.customerid 
+				ORDER BY phone LIMIT 1) AS phone 
+			FROM events 
+			LEFT JOIN customers ON (customers.id = customerid)
+			LEFT JOIN eventassignments ON (events.id = eventid)
+			WHERE date=$date AND
+			((private=1 AND events.userid=$row->{'id'}) OR
+			(private=0 AND eventassignments.userid=$row->{'id'}) OR
+			(private=0 AND eventassignments.userid IS NULL))
 			ORDER BY begintime");
 	$dbqi->execute();
  	while (my $rowi = $dbqi->fetchrow_hashref())

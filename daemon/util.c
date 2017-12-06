@@ -1,7 +1,7 @@
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: util.c,v 1.26 2011/01/18 08:12:01 alec Exp $
  */
 
 #include <string.h>
@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <syslog.h>
 #include <ctype.h>
-#include <stdarg.h>
 
 #include "util.h"
 
@@ -127,34 +126,3 @@ char * str_upc(const char *s)
     return l;
 }
 
-/* join vlist elements with delmimiter */
-char * va_list_join(int cnt, char * delim, va_list vl)
-{
-    int i;
-    char * result = strdup("");
-    char * arg;
-
-    for (i=0; i < cnt; i++)
-    {
-        arg = va_arg(vl, char *);
-        result = (char *) realloc(result, strlen(result) + strlen(arg) + sizeof(char));
-        strcat(result, arg);
-        if (i < cnt - 1 ) {
-            result = (char *) realloc(result, strlen(result) + strlen(delim) + sizeof(char));
-            strcat(result, delim);
-        }
-    }
-
-    return result;
-}
-
-int file_exists(const char * filename)
-{
-    FILE * file = fopen(filename, "r");
-    if (file)
-    {
-        fclose(file);
-        return 1;
-    }
-    return 0;
-}

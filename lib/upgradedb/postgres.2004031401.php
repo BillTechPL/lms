@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,14 +21,14 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004031401.php,v 1.13 2011/01/18 08:12:12 alec Exp $
  */
 
-$this->Execute("BEGIN");
-$this->Execute("ALTER TABLE networks ADD UNIQUE (name)");
-$this->Execute("ALTER TABLE networks ADD UNIQUE (address)");
-$this->Execute("ALTER TABLE rtqueues ADD UNIQUE (email)");
-$this->Execute("UPDATE dbinfo SET keyvalue='2004031401' WHERE keytype='dbversion'");
-$this->Execute("COMMIT");
+$DB->Execute("BEGIN");
+$DB->Execute("ALTER TABLE networks ADD UNIQUE (name)");
+$DB->Execute("ALTER TABLE networks ADD UNIQUE (address)");
+$DB->Execute("ALTER TABLE rtqueues ADD UNIQUE (email)");
+$DB->Execute("UPDATE dbinfo SET keyvalue='2004031401' WHERE keytype='dbversion'");
+$DB->Execute("COMMIT");
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customergroupinfo.php,v 1.12 2011/01/18 08:12:21 alec Exp $
  */
 
 $id = !empty($_GET['id']) ? $_GET['id'] : NULL;
@@ -51,7 +51,7 @@ $customergroup = $LMS->CustomergroupGet($id, isset($membersnetid) ? $membersneti
 $customers = $LMS->GetCustomerWithoutGroupNames($id, isset($othersnetid) ? $othersnetid : 0);
 $customerscount = sizeof($customers);
 
-$layout['pagetitle'] = trans('Group Info: $a',$customergroup['name']);
+$layout['pagetitle'] = trans('Group Info: $0',$customergroup['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
@@ -61,6 +61,6 @@ $SMARTY->assign('customerscount', $customerscount);
 $SMARTY->assign('networks', $LMS->GetNetworks());
 $SMARTY->assign('membersnetid', isset($membersnetid) ? $membersnetid : 0);
 $SMARTY->assign('othersnetid', isset($othersnetid) ? $othersnetid : 0);
-$SMARTY->display('customer/customergroupinfo.html');
+$SMARTY->display('customergroupinfo.html');
 
 ?>

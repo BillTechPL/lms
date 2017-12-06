@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotionlist.php,v 1.2 2011/03/21 07:57:57 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Promotions List');
 
-$promolist = $DB->GetAll('SELECT p.id, p.name, p.description, p.datefrom, p.dateto, disabled,
+$promolist = $DB->GetAll('SELECT p.id, p.name, p.description, disabled,
 			(SELECT COUNT(*) FROM promotionschemas
 				WHERE p.id = promotionid) AS scs,
 			(SELECT COUNT(DISTINCT a.tariffid)
@@ -43,6 +43,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('promotionlist', $promolist);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('promotion/promotionlist.html');
+$SMARTY->display('promotionlist.html');
 
 ?>

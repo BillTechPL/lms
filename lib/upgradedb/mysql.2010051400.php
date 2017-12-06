@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,25 +21,25 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2010051400.php,v 1.6 2011/01/18 08:12:11 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 CREATE VIEW vnodes_mac AS
 SELECT nodeid, GROUP_CONCAT(mac ORDER BY id SEPARATOR ',') AS mac
 	FROM macs GROUP BY nodeid
 ");
-$this->Execute("
+$DB->Execute("
 CREATE VIEW vnodes AS
 SELECT n.*, m.mac
 	FROM nodes n
 	LEFT JOIN vnodes_mac m ON (n.id = m.nodeid)
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010051400', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010051400', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

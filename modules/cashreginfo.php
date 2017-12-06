@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashreginfo.php,v 1.9 2011/01/18 08:12:20 alec Exp $
  */
 
 
@@ -39,18 +39,18 @@ if( !$registry )
 	$SESSION->redirect('?m=cashreglist');
 }
 
-$users = $DB->GetAll('SELECT id, name FROM vusers WHERE deleted=0');
+$users = $DB->GetAll('SELECT id, name FROM users WHERE deleted=0');
 foreach($users as $user)
 {
         $user['rights'] = $DB->GetOne('SELECT rights FROM cashrights WHERE userid=? AND regid=?', array($user['id'], $id));
         $registry['rights'][] = $user;
 }
 
-$layout['pagetitle'] = trans('Cash Registry Info: $a', $registry['name']);
+$layout['pagetitle'] = trans('Cash Registry Info: $0', $registry['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('registry', $registry);
-$SMARTY->display('cash/cashreginfo.html');
+$SMARTY->display('cashreginfo.html');
 
 ?>

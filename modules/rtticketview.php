@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,49 +21,35 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtticketview.php,v 1.43 2011/04/01 10:35:12 alec Exp $
  */
 
 if(! $LMS->TicketExists($_GET['id']))
 {
 	$SESSION->redirect('?m=rtqueuelist');
 }
-else
-{
-	$id = $_GET['id'];
-}
 
-$rights = $LMS->GetUserRightsRT(Auth::GetCurrentUser(), 0, $id);
-$catrights = $LMS->GetUserRightsToCategory(Auth::GetCurrentUser(), 0, $id);
+$rights = $LMS->GetUserRightsRT($AUTH->id, 0, $_GET['id']);
 
-if(!$rights || !$catrights)
+if (!$rights)
 {
 	$SMARTY->display('noaccess.html');
 	$SESSION->close();
 	die;
 }
 
-$ticket = $LMS->GetTicketContents($id);
-$categories = $LMS->GetCategoryListByUser(Auth::GetCurrentUser());
-if (empty($categories))
-	$categories = array();
+$ticket = $LMS->GetTicketContents($_GET['id']);
 
-if($ticket['deluserid'])
-	$ticket['delusername'] = $LMS->GetUserName($ticket['deluserid']);
-
-if ($ticket['customerid'] && ConfigHelper::checkConfig('phpui.helpdesk_stats')) {
+if ($ticket['customerid'] && isset($CONFIG['phpui']['helpdesk_stats']) && chkconfig($CONFIG['phpui']['helpdesk_stats'])) {
 	$yearago = mktime(0, 0, 0, date('n'), date('j'), date('Y')-1);
-	//$del = 0;
-	$stats = $DB->GetAllByKey('SELECT COUNT(*) AS num, cause FROM rttickets
-				WHERE 1=1'
-				. (!ConfigHelper::checkPrivilege('helpdesk_advanced_operations') ? ' AND rttickets.deleted = 0' : '')
-				. ' AND customerid = ? AND createtime >= ?'
-				. ' GROUP BY cause', 'cause', array($ticket['customerid'], $yearago));
+	$stats = $DB->GetAllByKey('SELECT COUNT(*) AS num, cause FROM rttickets 
+			    WHERE customerid = ? AND createtime >= ? 
+			    GROUP BY cause', 'cause', array($ticket['customerid'], $yearago));
 
 	$SMARTY->assign('stats', $stats);
 }
 
-if ($ticket['customerid'] && ConfigHelper::checkConfig('phpui.helpdesk_customerinfo')) {
+if ($ticket['customerid'] && chkconfig($CONFIG['phpui']['helpdesk_customerinfo'])) {
 	$customer = $LMS->GetCustomer($ticket['customerid'], true);
 	$customer['groups'] = $LMS->CustomergroupGetForCustomer($ticket['customerid']);
 
@@ -77,35 +63,23 @@ if ($ticket['customerid'] && ConfigHelper::checkConfig('phpui.helpdesk_customeri
 	$SMARTY->assign('allnodegroups', $allnodegroups);
 }
 
-foreach($categories as $category)
-	$catids[] = $category['id'];
-$iteration = $LMS->GetQueueContents($ticket['queueid'], $order='createtime,desc', $state=-1, 0, $catids);
-if (!empty($iteration['total'])) {
-	foreach ($iteration as $idx => $element)
-		if (isset($element['id']) && intval($element['id']) == intval($_GET['id'])) {
-			$next_ticketid = isset($iteration[$idx + 1]) ? $iteration[$idx + 1]['id'] : 0;
-			$prev_ticketid = isset($iteration[$idx - 1]) ? $iteration[$idx - 1]['id'] : 0;
-			break;
-		}
-	$ticket['next_ticketid'] = $next_ticketid;
-	$ticket['prev_ticketid'] = $prev_ticketid;
+$iteration = $LMS->GetQueueContents($ticket['queueid'], $order = 'createtime,desc', $state = -1);
+foreach ($iteration as $idx => $element) {
+	if (intval($element['id']) == intval($_GET['id'])) {
+		$next_ticketid = isset($iteration[$idx + 1]) ? $iteration[$idx + 1]['id'] : 0;
+		$prev_ticketid = isset($iteration[$idx - 1]) ? $iteration[$idx - 1]['id'] : 0;
+		break;
+	}
 }
 
-foreach ($categories as $category)
-{
-	$category['checked'] = isset($ticket['categories'][$category['id']]);
-	$ncategories[] = $category;
-}
-$categories = $ncategories;
-$assignedevents = $LMS->GetEventsByTicketId($id);
+$ticket['next_ticketid'] = $next_ticketid;
+$ticket['prev_ticketid'] = $prev_ticketid;
 
-$layout['pagetitle'] = trans('Ticket Review: $a',sprintf("%06d", $ticket['ticketid']));
+$layout['pagetitle'] = trans('Ticket Review: $0', sprintf("%06d", $ticket['ticketid']));
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('ticket', $ticket);
-$SMARTY->assign('categories', $categories);
-$SMARTY->assign('assignedevents', $assignedevents);
-$SMARTY->display('rt/rtticketview.html');
+$SMARTY->display('rtticketview.html');
 
 ?>

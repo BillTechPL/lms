@@ -1,8 +1,8 @@
 <?php
 
-/* LMS version 1.11-git
+/* LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -20,7 +20,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: traffic.php,v 1.58 2011/04/01 10:35:12 alec Exp $
  */
 
 function Traffic($from = 0, $to = 0, $net = 0, $customerid = 0, $order = '', $limit = 0)
@@ -216,8 +216,9 @@ switch($bar)
 	default: // set filter window
 		$SMARTY->assign('netlist',$LMS->GetNetworks());
 		$SMARTY->assign('nodelist',$LMS->GetNodeList());
-		if (!ConfigHelper::checkConfig('phpui.big_networks'))
+		if (!isset($CONFIG['phpui']['big_networks']) || !chkconfig($CONFIG['phpui']['big_networks'])) {
 			$SMARTY->assign('customers', $LMS->GetCustomerNames());
+		}
 		$bars = 0;
 	break;
 }
@@ -232,20 +233,8 @@ if(isset($traffic))
 
 $starttime = $DB->GetOne('SELECT MIN(dt) FROM stats');
 $endtime = $DB->GetOne('SELECT MAX(dt) FROM stats');
-
-// if 'stats' table is empty use fixed values for time ranges
-if (empty($starttime))
-{
-	$starttime = time()-(3600*24);
-	$endtime = time();
-	$startyear = 2001;
-	$endyear = date('Y',$endtime);
-}
-else
-{
-	$startyear = date('Y',$starttime);
-	$endyear = date('Y',$endtime);
-}
+$startyear = date('Y', $starttime);
+$endyear = date('Y', $endtime);
 
 $SMARTY->assign('starttime',$starttime);
 $SMARTY->assign('startyear',$startyear);
@@ -256,6 +245,6 @@ $SMARTY->assign('bars', $bars);
 $SMARTY->assign('bar', $bar);
 $SMARTY->assign('trafficorder', $SESSION->is_set('trafficorder') ? $SESSION->get('trafficorder') : 'download');
 $SMARTY->assign('trafficnet', $SESSION->is_set('trafficnet') ? $SESSION->get('trafficnet') : 0);
-$SMARTY->display('traffic/traffic.html');
+$SMARTY->display('traffic.html');
 
 ?>

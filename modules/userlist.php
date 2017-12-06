@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: userlist.php,v 1.62 2011/01/18 08:12:26 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Users List');
@@ -29,6 +29,6 @@ $layout['pagetitle'] = trans('Users List');
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('userslist',$LMS->GetUserList());
-$SMARTY->display('user/userlist.html');
+$SMARTY->display('userlist.html');
 
 ?>

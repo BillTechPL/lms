@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,29 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2005080300.php,v 1.9 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+if($temp = $DB->GetOne('SELECT value FROM uiconfig WHERE section=? AND var=? AND disabled=0', 
+		array('invoices', 'number_template')))
+	$CONFIG['invoices']['number_template'] = $temp;
+	
+if($temp = $DB->GetOne('SELECT value FROM uiconfig WHERE section=? AND var=? AND disabled=0', 
+		array('receipts', 'number_template')))
+	$CONFIG['receipts']['number_template'] = $temp;
 
-$this->Execute("
+if($temp = $DB->GetOne('SELECT value FROM uiconfig WHERE section=? AND var=? AND disabled=0', 
+		array('invoices', 'monthly_numbering')))
+	$CONFIG['invoices']['monthly_numbering'] = $temp;
+
+if($temp = $DB->GetOne('SELECT value FROM uiconfig WHERE section=? AND var=? AND disabled=0', 
+		array('receipts', 'monthly_numbering')))
+	$CONFIG['receipts']['monthly_numbering'] = $temp;
+
+
+$DB->BeginTrans();
+
+$DB->Execute("
     CREATE SEQUENCE numberplans_id_seq;
     CREATE TABLE numberplans (
 	id integer DEFAULT nextval('numberplans_id_seq'::text) NOT NULL,
@@ -37,12 +54,12 @@ $this->Execute("
 	PRIMARY KEY (id))
 ");
 
-$this->Execute("INSERT INTO numberplans (template, period, doctype, isdefault) VALUES(?,?,1,1)", 
-		array(str_replace('%M','%m',ConfigHelper::getConfig('invoices.number_template')), ConfigHelper::getConfig('invoices.monthly_numbering') ? 3 : 5));
-$this->Execute("INSERT INTO numberplans (template, period, doctype, isdefault) VALUES(?,?,2,1)", 
-		array(str_replace('%M','%m',ConfigHelper::getConfig('receipts.number_template')), ConfigHelper::getConfig('receipts.monthly_numbering') ? 3 : 5));
+$DB->Execute("INSERT INTO numberplans (template, period, doctype, isdefault) VALUES(?,?,1,1)", 
+		array(str_replace('%M','%m',$CONFIG['invoices']['number_template']), $CONFIG['invoices']['monthly_numbering'] ? 3 : 5));
+$DB->Execute("INSERT INTO numberplans (template, period, doctype, isdefault) VALUES(?,?,2,1)", 
+		array(str_replace('%M','%m',$CONFIG['receipts']['number_template']), $CONFIG['receipts']['monthly_numbering'] ? 3 : 5));
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE documents ADD numberplanid integer;
     UPDATE documents SET numberplanid = 0;
     ALTER TABLE documents ALTER numberplanid SET NOT NULL;
@@ -53,8 +70,8 @@ $this->Execute("
     CREATE INDEX documents_numberplanid_idx ON documents(numberplanid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005080300', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005080300', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

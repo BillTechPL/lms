@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,17 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id: 53048ec0e5c24f4148a2f925ac72c28fc7678385 $
+ *  $Id: cashreglist.php,v 1.11 2011/01/18 08:12:20 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Cash Registries List');
-
-$allowed = ConfigHelper::checkPrivilege('cash_registry_administration');
-
-if ($allowed)
-	$args = array();
-else
-	$args = array(Auth::GetCurrentUser());
 
 $reglist = $DB->GetAll('SELECT cashregs.id AS id, cashregs.name AS name, 
 			cashregs.description AS description, disabled,
@@ -41,9 +34,8 @@ $reglist = $DB->GetAll('SELECT cashregs.id AS id, cashregs.name AS name,
 				WHERE in_numberplanid = numberplans.id ) AS in_template,
 			(SELECT template FROM numberplans 
 				WHERE out_numberplanid = numberplans.id) AS out_template
-		FROM cashregs
-		' . ($allowed ? '' : 'JOIN cashrights r ON r.regid = cashregs.id AND (r.rights & 1) > 0 AND r.userid = ?') . '
-		ORDER BY cashregs.name', $args);
+		FROM cashregs 
+		ORDER BY cashregs.name');
 
 $listdata['sum'] = 0;
 if($reglist)
@@ -55,6 +47,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('reglist', $reglist);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('cash/cashreglist.html');
+$SMARTY->display('cashreglist.html');
 
 ?>

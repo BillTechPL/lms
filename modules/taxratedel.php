@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,23 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: taxratedel.php,v 1.10 2011/01/18 08:12:26 alec Exp $
  */
 
-$id = intval($_GET['id']);
+$id = $_GET['id'];
 
 if ($_GET['is_sure'] == 1 && $id) {
-	if (($DB->GetOne('SELECT 1 FROM cash WHERE taxid=? LIMIT 1', array($id))
-		+ $DB->GetOne('SELECT 1 FROM tariffs WHERE taxid=? LIMIT 1', array($id))
-		+ $DB->GetOne('SELECT 1 FROM invoicecontents WHERE taxid=? LIMIT 1', array($id))
-		) == 0) {
+	if ((
+			$DB->GetOne('SELECT 1 FROM cash WHERE taxid=? LIMIT 1', array($id))
+			+ $DB->GetOne('SELECT 1 FROM tariffs WHERE taxid=? LIMIT 1', array($id))
+			+ $DB->GetOne('SELECT 1 FROM invoicecontents WHERE taxid=? LIMIT 1', array($id))
+		) == 0
+	)
 		$DB->Execute('DELETE FROM taxes WHERE id=?', array($id));
-		if ($SYSLOG) {
-			$args = array(SYSLOG::RES_TAX => $id);
-			$SYSLOG->AddMessage(SYSLOG::RES_TAX, SYSLOG::OPER_DELETE, $args);
-		}
-	}
-}
+}	
 
 $SESSION->redirect('?'.$SESSION->get('backto'));
 

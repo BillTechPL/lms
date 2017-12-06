@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,16 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: notedel.php,v 1.3 2011/01/18 08:12:24 alec Exp $
  */
 
 $id = intval($_GET['id']);
 
-if ($id && $_GET['is_sure'] == '1') {
-	if ($LMS->isDocumentPublished($id) && !ConfigHelper::checkConfig('privileges.superuser'))
-		return;
-
-	$LMS->DebitNoteDelete($id);
+if($id && $_GET['is_sure'] == '1')
+{
+	$DB->BeginTrans();
+        $DB->Execute('DELETE FROM documents WHERE id = ?', array($id));
+	$DB->Execute('DELETE FROM debitnotecontents WHERE docid = ?', array($id));
+	$DB->Execute('DELETE FROM cash WHERE docid = ?', array($id));
+	$DB->CommitTrans();
 }
 
 $SESSION->redirect('?m=notelist');

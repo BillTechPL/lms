@@ -1,8 +1,8 @@
 #!/usr/bin/perl -Tw
 #
-#  LMS version 1.11-git
+#  LMS version 1.11.13 Dira
 #
-#  Copyright (C) 2001-2013 LMS Developers
+#  Copyright (C) 2001-2011 LMS Developers
 #  
 #  Please, see the doc/AUTHORS for more information about authors!
 #
@@ -20,7 +20,7 @@
 #  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 #  USA.
 #
-#  $Id$
+#  $Id: lms-makeiptables,v 1.51 2011/01/18 08:11:57 alec Exp $
 
 use strict;
 use DBI;
@@ -68,7 +68,7 @@ sub isprivate($)
 	return matchip($ip,"192.168.0.0","255.255.0.0") || matchip($ip,"10.0.0.0","255.0.0.0") || matchip($ip,"172.16.0.0","255.240.0.0");
 }
 
-my $_version = '1.11-git';
+my $_version = '1.11.13 Dira';
 
 my %options = (
 	"--config-file|C=s"	=>	\$configfile,
@@ -84,7 +84,7 @@ if($help)
 {
 	print STDERR <<EOF;
 lms-makeiptables, version $_version
-(C) 2001-2013 LMS Developers
+(C) 2001-2011 LMS Developers
 
 -C, --config-file=/etc/lms/lms.ini	alternate config file (default: /etc/lms/lms.ini);
 -h, --help			print this help and exit;
@@ -99,7 +99,7 @@ if($version)
 {
 	print STDERR <<EOF;
 lms-makeiptables, version $_version
-(C) 2001-2013 LMS Developers
+(C) 2001-2011 LMS Developers
 
 EOF
 	exit 0;
@@ -113,7 +113,7 @@ if(!$configfile)
 if(!$quiet)
 {
 	print STDOUT "lms-makeiptables, version $_version\n";
-	print STDOUT "(C) 2001-2013 LMS Developers\n";
+	print STDOUT "(C) 2001-2011 LMS Developers\n";
 	print STDOUT "Using file $configfile as config.\n";
 }
 
@@ -230,7 +230,7 @@ foreach my $key (@networks)
 	$dbq->execute();
 	while (my $row = $dbq->fetchrow_hashref())
 	{
-		my $sdbq = $dbase->prepare("SELECT inet_ntoa(ipaddr) AS ip, inet_ntoa(ipaddr_pub) AS pubip FROM vnodes WHERE access = 1 ORDER BY ipaddr");
+		my $sdbq = $dbase->prepare("SELECT inet_ntoa(ipaddr) AS ip, inet_ntoa(ipaddr_pub) AS pubip FROM nodes WHERE access = 1 ORDER BY ipaddr");
 		$sdbq->execute();
 		while(my $srow = $sdbq->fetchrow_hashref())
 		{

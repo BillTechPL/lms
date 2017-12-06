@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.4 2011/01/18 08:12:01 alec Exp $
  */
 
 $_LANG['Add'] = 'Dodaj';
@@ -44,7 +44,7 @@ $_LANG['Now, you can only select:'] = 'Teraz możesz wybrać tylko:';
 $_LANG['Runs problems solving center'] = 'Uruchamia centrum rozwiązywania problemów';
 $_LANG['Select:'] = 'Wybierz:';
 $_LANG['Submit'] = 'Zapisz';
-$_LANG['There is no Help Center tree. Use $athis form$b to add root item.'] = 'Nie ma jeszcze struktury Centrum Pomocy. Użyj $atego formularza$b aby dodać główną pozycję.';
+$_LANG['There is no Help Center tree. Use $0this form$1 to add root item.'] = 'Nie ma jeszcze struktury Centrum Pomocy. Użyj $0tego formularza$1 aby dodać główną pozycję.';
 $_LANG['This cannot be empty'] = 'To nie może być puste';
 $_LANG['This module is not configured yet.'] = 'Ten moduł nie jest jeszcze skonfigurowany.';
 $_LANG['This module shows problems solving center'] = 'Moduł ten wyświetla centrum rozwiązywania problemów';

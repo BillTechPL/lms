@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: documenttypeedit.php,v 1.3 2011/01/18 08:12:22 alec Exp $
  */
 
 //$type = $DB->GetRow('SELECT * FROM types WHERE id=?', array($_GET['id']));
@@ -58,7 +58,7 @@ if(isset($_POST['rights']))
 	}
 	else
 	{
-		$users = $DB->GetAllByKey('SELECT id, name FROM vusers
+		$users = $DB->GetAllByKey('SELECT id, name FROM users
 			WHERE deleted = 0 ORDER BY name', 'id');
 	
 		foreach($users as $idx => $user)
@@ -72,7 +72,7 @@ if(isset($_POST['rights']))
 else
 {
 	$rights = $DB->GetAllByKey('SELECT u.id, u.name, d.rights
-		FROM vusers u
+		FROM users u
 		LEFT JOIN docrights d ON (u.id = d.userid AND d.doctype = ?)
 		WHERE u.deleted = 0
 		ORDER BY u.name', 'id', array($id));
@@ -84,12 +84,12 @@ $type = array(
 	'id' => $id
 );
 
-$layout['pagetitle'] = trans('Document Type Edit: $a', $type['name']);
+$layout['pagetitle'] = trans('Document Type Edit: $0', $type['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('documenttype', $type);
 $SMARTY->assign('error', $error);
-$SMARTY->display('document/documenttypeedit.html');
+$SMARTY->display('documenttypeedit.html');
 
 ?>

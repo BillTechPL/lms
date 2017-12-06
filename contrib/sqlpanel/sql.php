@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: sql.php,v 1.24 2011/01/18 08:12:00 alec Exp $
  */
 
 include('sqllang.php');
@@ -30,7 +30,7 @@ $layout['pagetitle'] = trans('SQL');
 
 if($query = $_POST['query'])
 {
-	$pagelimit = ConfigHelper::getConfig('phpui.sqlpanel_pagelimit', 50);
+	$pagelimit = ( $CONFIG['phpui']['sqlpanel_pagelimit'] ? $CONFIG['phpui']['sqlpanel_pagelimit'] : 50 );
 	$page = (! $_GET['page'] ? 1 : $_GET['page']); 
 	$start = ($page - 1) * $pagelimit;
 	$words = array('SELECT','EXPLAIN','SHOW','DESCRIBE','ANALYZE','CHECK','OPTIMIZE','REPAIR','VACUUM');
@@ -39,7 +39,7 @@ if($query = $_POST['query'])
 	$rows = $LMS->DB->Execute($query);
 	$duration = getmicrotime() - $t;
 
-	if(sizeof($DB->GetErrors())) 
+	if(sizeof($DB->errors)) 
 	{
 		$error['query'] = trans('Query is not correct!');
 		$SMARTY->assign('error', $error);
@@ -58,24 +58,24 @@ if($query = $_POST['query'])
 	{
 		unset($result);
 
-		switch(ConfigHelper::getConfig('database.type'))
+		switch($CONFIG['database']['type'])
 		{
 		case 'postgres':
-			$cols = pg_num_fields($DB->GetResult());
+			$cols = pg_num_fields($DB->_result);
 			for($i=0; $i < $cols; $i++)
-				$colnames[] = pg_field_name($DB->GetResult(), $i);
+				$colnames[] = pg_field_name($DB->_result, $i);
 		break;
 		case 'mysql':
-			$cols = mysql_num_fields($DB->GetResult());
+			$cols = mysql_num_fields($DB->_result);
 			for($i=0; $i < $cols; $i++)
-				$colnames[] = mysql_field_name($DB->GetResult(), $i);
+				$colnames[] = mysql_field_name($DB->_result, $i);
 		break;
 		case 'mysqli':
-			$cols = mysqli_num_fields($DB->GetResult());
+			$cols = mysqli_num_fields($DB->_result);
 			for($i=0; $i < $cols; $i++)
 			{
-				mysqli_field_seek($DB->GetResult(), $i);
-				$finfo = mysqli_fetch_field($DB->GetResult());
+				mysqli_field_seek($DB->_result, $i);
+				$finfo = mysqli_fetch_field($DB->_result);
 				$colnames[] = $finfo->name;
 			}
 		break;

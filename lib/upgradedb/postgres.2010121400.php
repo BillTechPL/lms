@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,9 +21,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     DELETE FROM customercontacts WHERE customerid NOT IN (SELECT id FROM customers);
     ALTER TABLE customercontacts ADD FOREIGN KEY (customerid)
         REFERENCES customers (id) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -38,15 +38,17 @@ $this->Execute("
     UPDATE customercontacts SET type = 2 WHERE name ILIKE '%fax%';
 ");
 
-$lang = ConfigHelper::getConfig('phpui.lang');
+$lang = $DB->GetOne("SELECT value FROM uiconfig WHERE var='lang' AND section='phpui' AND disabled=0");
+if (!$lang)
+    $lang = $CONFIG['phpui']['lang'];
 
 if ($lang == 'pl') {
-    $this->Execute("UPDATE customercontacts SET type = COALESCE(type, 0) + 1
-        WHERE regexp_replace(phone, '[^0-9]', '', 'g') ~ '^(\\\\+?[0-9]{2}|0|)(88[0-9]|5[01][0-9]|6[069][0-9]|7[2789][0-9])[0-9]{6}$'");
+    $DB->Execute("UPDATE customercontacts SET type = COALESCE(type, 0) + 1
+        WHERE regexp_replace(phone, '[^0-9]', '') ~ '^(\\\\+?[0-9]{2}|0|)(88[0-9]|5[01][0-9]|6[069][0-9]|7[2789][0-9])[0-9]{6}$'");
 }
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121400', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121400', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

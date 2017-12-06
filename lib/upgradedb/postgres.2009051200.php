@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2009051200.php,v 1.4 2011/03/10 12:06:43 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 
 CREATE SEQUENCE docrights_id_seq;
 CREATE TABLE docrights (
@@ -41,7 +41,7 @@ CREATE TABLE docrights (
 ");
 
 foreach(array(-1,-2,-3,-4,-5,-6,-7,-8, -9,-10) as $doctype)
-	$this->Execute("INSERT INTO docrights (userid, doctype, rights)
+	$DB->Execute("INSERT INTO docrights (userid, doctype, rights)
 		SELECT id, ?, ? FROM users WHERE deleted = 0",
 		array($doctype, 31)); 
 /*
@@ -52,8 +52,8 @@ foreach(array(-1,-2,-3,-4,-5,-6,-7,-8, -9,-10) as $doctype)
 16 - delete
 */
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009051200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009051200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

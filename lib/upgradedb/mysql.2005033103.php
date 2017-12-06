@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005033103.php,v 1.10 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
 	CREATE TABLE daemonhosts (
 	id int(11) NOT NULL auto_increment,
 	name varchar(255) DEFAULT '' NOT NULL,
@@ -34,7 +34,7 @@ $this->Execute("
 	PRIMARY KEY (id),
 	UNIQUE KEY name (name))
 ");
-$this->Execute("
+$DB->Execute("
 	CREATE TABLE daemoninstances (
 	id int(11) NOT NULL auto_increment,
 	name varchar(255) DEFAULT '' NOT NULL,
@@ -46,7 +46,7 @@ $this->Execute("
 	disabled tinyint(1) DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id))
 ");
-$this->Execute("
+$DB->Execute("
 	CREATE TABLE daemonconfig (
 	id int(11) NOT NULL auto_increment,
 	instanceid int(11) DEFAULT '0' NOT NULL,
@@ -58,6 +58,6 @@ $this->Execute("
 	UNIQUE KEY instanceid (instanceid, var))
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005033103', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005033103', 'dbversion'));
 
 ?>

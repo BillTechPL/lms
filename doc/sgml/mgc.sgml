@@ -1,4 +1,4 @@
-<!-- $Id$ -->
+<!-- $Id: mgc.sgml,v 1.29 2009/12/02 14:49:19 alec Exp $ -->
 <chapter id="mgc">
  <title>Configuration file generator (lms-mgc)</title>
   <para>LMS-MGC is "magical" configuration file generator. With some efforts, you can create virtually any configuration file using it (ie. zone definition file for BIND)</para>

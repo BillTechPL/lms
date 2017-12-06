@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodedel.php,v 1.44 2011/02/18 14:32:46 alec Exp $
  */
 
 $nodeid = intval($_GET['id']);
@@ -34,9 +34,9 @@ else if ($_GET['is_sure']!=1)
 {
 	$nodename = $LMS->GetNodeName($nodeid);
 
-	$layout['pagetitle'] = trans('Delete Node $a', $nodename);
+	$layout['pagetitle'] = trans('Delete Node $0', $nodename);
 
-	$body = '<P>'.trans('Are you sure, you want to delete node $a?', $nodename).'</P>'; 
+	$body = '<P>'.trans('Are you sure, you want to delete node $0?', $nodename).'</P>'; 
 	$body .= '<P><A HREF="?m=nodedel&id='.$nodeid.'&is_sure=1">'.trans('Yes, I am sure.').'</A></P>';
 
 	$SMARTY->assign('body',$body);
@@ -46,20 +46,16 @@ else
 {
 	$owner = $LMS->GetNodeOwner($nodeid);
 
-	$plugin_data = array(
-		'id'		=> $nodeid,
-		'ownerid'	=> $owner,
-	);
-	$LMS->ExecHook('node_del_before', $plugin_data);
+    $plugin_data = array(
+        'id'      => $nodeid,
+        'ownerid' => $owner,
+    );
 
-	$LMS->executeHook('nodedel_before_submit', $plugin_data);
+    $LMS->ExecHook('node_del_before', $plugin_data);
 
 	$LMS->DeleteNode($nodeid);
-	$LMS->CleanupProjects();
 
-	$LMS->ExecHook('node_del_after', $plugin_data);
-
-	$LMS->executeHook('nodedel_after_submit', $plugin_data);
+    $LMS->ExecHook('node_del_after', $plugin_data);
 
 	if ($SESSION->is_set('backto'))
 		header('Location: ?'.$SESSION->get('backto'));

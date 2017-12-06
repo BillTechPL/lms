@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,9 +21,9 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     DROP VIEW customersview;
     DROP VIEW vnodes;
     DROP VIEW vmacs;
@@ -54,44 +54,42 @@ function parse_address_tmp($addr)
         $zip = $matches[1];
         $city = $matches[2];
         $street = trim(preg_replace($regexp, '', $addr));
-        $tmp = explode("\n", $street);
-        $street = trim(reset($tmp));
+        $street = trim(array_shift(explode("\n", $street)));
 
         if ($street)
             return array($zip, $city, $street);
     }
     else {
         // first line only
-        $tmp = explode("\n", $addr);
-        $addr = trim(reset($tmp));
+        $addr = trim(array_shift(explode("\n", $addr)));
         return array(NULL, NULL, $addr);
     }
     return NULL;
 }
 
-$data = $this->GetAll("SELECT id, serviceaddr FROM customers WHERE serviceaddr <> ''");
+$data = $DB->GetAll("SELECT id, serviceaddr FROM customers WHERE serviceaddr <> ''");
 if (is_array($data)) {
     foreach ($data as $row) {
         $addr = parse_address_tmp($row['serviceaddr']);
         if (!empty($addr)) {
-            $this->Execute('UPDATE customers SET post_address=?, post_zip=?, post_city=?
+            $DB->Execute('UPDATE customers SET post_address=?, post_zip=?, post_city=?
                     WHERE id=?', array($addr[2], $addr[0], $addr[1], $row['id']));
         }
     }
 }
 
-$data = $this->GetAll("SELECT id, location FROM nodes WHERE location <> ''");
+$data = $DB->GetAll("SELECT id, location FROM nodes WHERE location <> ''");
 if (is_array($data)) {
     foreach ($data as $row) {
         $addr = parse_address_tmp($row['location']);
         if (!empty($addr)) {
-            $this->Execute('UPDATE nodes SET location_address=?, location_zip=?, location_city=?
+            $DB->Execute('UPDATE nodes SET location_address=?, location_zip=?, location_city=?
                 WHERE id=?', array($addr[2], $addr[0], $addr[1], $row['id']));
         }
     }
 }
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE customers DROP serviceaddr;
     ALTER TABLE nodes DROP location;
 
@@ -114,8 +112,8 @@ $this->Execute("
         JOIN macs m ON (n.id = m.nodeid);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2010121600', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

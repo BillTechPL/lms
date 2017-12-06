@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005012600.php,v 1.10 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE events (
 	id int(11) NOT NULL auto_increment,
 	title varchar(255) NOT NULL default '',
@@ -37,18 +37,18 @@ $this->Execute("
 	userid int(11) NOT NULL default '0',
 	private tinyint(1) NOT NULL default '0',
 	closed tinyint(1) NOT NULL default '0',
-	PRIMARY KEY (id)) ENGINE=MyISAM
+	PRIMARY KEY (id)) TYPE=MyISAM
 ");
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE eventassignments (
 	eventid int(11) NOT NULL default '0',
 	adminid int(11) NOT NULL default '0',
-	UNIQUE (eventid, adminid)) ENGINE=MyISAM
+	UNIQUE (eventid, adminid)) TYPE=MyISAM
 ");
 
-$this->Execute("CREATE INDEX events_date_idx ON events(date)");
+$DB->Execute("CREATE INDEX events_date_idx ON events(date)");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005012600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005012600', 'dbversion'));
 
 ?>

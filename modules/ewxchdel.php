@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxchdel.php,v 1.3 2011/01/18 08:12:22 alec Exp $
  */
 
 if(!empty($_GET['is_sure']))
@@ -31,7 +31,7 @@ if(!empty($_GET['is_sure']))
 }
 else if ($channel = $DB->GetRow('SELECT id, name FROM ewx_channels WHERE id = ?', array(intval($_GET['id']))))
 {
-	$layout['pagetitle'] = trans('Removing channel $a', strtoupper($channel['name']));
+	$layout['pagetitle'] = trans('Removing channel $0', strtoupper($channel['name']));
 	$SMARTY->display('header.html');
 	echo '<H1>'.$layout['pagetitle'].'</H1>';
 	echo '<P>'.trans('Are you sure, you want to delete this channel?').'</P>';

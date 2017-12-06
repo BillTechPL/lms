@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,27 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewxdevlist.php,v 1.2 2011/01/18 08:12:22 alec Exp $
  */
-
-$channelid = intval($_GET['id']);
-
-if ($channelid)
-    $where = 'WHERE d.channelid = '.$channelid;
-else // default channel
-    $where = 'WHERE d.id IN (SELECT netdev
-        FROM nodes
-        WHERE netdev IS NOT NULL AND id IN (
-            SELECT nodeid
-            FROM ewx_stm_nodes
-            WHERE channelid IN (SELECT id FROM ewx_stm_channels
-                WHERE cid = 0)))';
 
 $devices = $DB->GetAll('SELECT d.id, d.name, d.producer,
         d.model, d.location
-    FROM netdevices d '.$where);
+    FROM netdevices d
+    WHERE d.channelid = ?', array($_GET['id']));
 
 $SMARTY->assign('devices', $devices);
-$SMARTY->display('netdev/netdevlistshort.html');
+$SMARTY->display('netdevlistshort.html');
 
 ?>

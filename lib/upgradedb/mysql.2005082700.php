@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005082700.php,v 1.9 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->Execute("ALTER TABLE documents ADD closed tinyint(1) DEFAULT '0' NOT NULL");
-$this->Execute("ALTER TABLE cash DROP reference");
+$DB->Execute("ALTER TABLE documents ADD closed tinyint(1) DEFAULT '0' NOT NULL");
+$DB->Execute("ALTER TABLE cash DROP reference");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005082700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005082700', 'dbversion'));
 
 ?>

@@ -1,7 +1,8 @@
 {include file="header.html"}
-<!--// $Id$ //-->
-<SCRIPT>
-<!--
+<!--// $Id: sql.html,v 1.8 2005/03/16 13:15:57 alec Exp $ //-->
+{literal}
+<SCRIPT language=JavaScript>
+	<!--
 	function page_change(page)
 	{
 		document.sql.action="?m=sql&page="+page;
@@ -14,8 +15,9 @@
 		document.sql.target="_blank";
 		document.sql.submit();
 	}
-//-->
+	//-->
 </SCRIPT>
+{/literal}
 <H1>{$layout.pagetitle}</H1>
 <FORM NAME="sql" method="post" action="?m=sql">
 {if $page}

@@ -1,7 +1,7 @@
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -19,7 +19,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ewx-stm.c,v 1.21 2011/01/18 08:12:02 alec Exp $
  */
 
 #include <stdio.h>
@@ -181,17 +181,17 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
         eip_nets = (struct net *) malloc(sizeof(struct net));
 
 	// get all networks params
-        res = g->db->pquery(g->db->conn, "SELECT UPPER(name) AS name, address, "
+        res = g->db_pquery(g->conn, "SELECT UPPER(name) AS name, address, "
 			"INET_ATON(mask) AS mask, interface FROM networks");
 	
-	for(anc=0; anc<g->db->nrows(res); anc++)
+	for(anc=0; anc<g->db_nrows(res); anc++)
 	{
 	        all_nets = (struct net*) realloc(all_nets, (sizeof(struct net) * (anc+1)));
-		all_nets[anc].name = strdup(g->db->get_data(res, anc, "name"));
-		all_nets[anc].address = inet_addr(g->db->get_data(res, anc, "address"));
-	        all_nets[anc].mask = inet_addr(g->db->get_data(res, anc, "mask"));
+		all_nets[anc].name = strdup(g->db_get_data(res, anc, "name"));
+		all_nets[anc].address = inet_addr(g->db_get_data(res, anc, "address"));
+	        all_nets[anc].mask = inet_addr(g->db_get_data(res, anc, "mask"));
 	}
-	g->db->free(&res);
+	g->db_free(&res);
 	
 	n = 2;																							 
 	netnames = strdup(ewx->networks);
@@ -421,8 +421,8 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 				"SUM(t.downrate) AS downrate, SUM(t.downceil) AS downceil "
 			"FROM assignments a "
 			"LEFT JOIN tariffs t ON (a.tariffid = t.id) "
-			"WHERE a.datefrom <= %NOW% AND (a.dateto >= %NOW% OR a.dateto = 0) "
-				"AND EXISTS (SELECT 1 FROM nodeassignments JOIN vnodes n ON (n.id = nodeid) " 
+			"WHERE (datefrom <= %NOW% OR datefrom = 0) AND (dateto >= %NOW% OR dateto = 0) "
+				"AND EXISTS (SELECT 1 FROM nodeassignments JOIN nodes n ON (n.id = nodeid) " 
 					"WHERE a.id = assignmentid"
 					"%disabled%enets) "
 			"GROUP BY a.customerid"
@@ -439,13 +439,13 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 	        g->str_replace(&query, "t.upceil", "(CASE WHEN t.upceil_n > 0 THEN t.upceil_n ELSE t.upceil END)");
 	}				
 	
-	res = g->db->query(g->db->conn, query);
+	res = g->db_query(g->conn, query);
 	
-	for(i=0; i<g->db->nrows(res); i++) 
+	for(i=0; i<g->db_nrows(res); i++) 
 	{	
-		int cid 	= atoi(g->db->get_data(res,i,"id"));
-		int upceil 	= atoi(g->db->get_data(res,i,"upceil"));
-		int downceil 	= atoi(g->db->get_data(res,i,"downceil"));
+		int cid 	= atoi(g->db_get_data(res,i,"id"));
+		int upceil 	= atoi(g->db_get_data(res,i,"upceil"));
+		int downceil 	= atoi(g->db_get_data(res,i,"downceil"));
 
 		if(upceil || downceil)
 		{ 
@@ -461,7 +461,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 			cc++;
 		}
 	}
-	g->db->free(&res);
+	g->db_free(&res);
 	free(query);
 
 	if(!cc)
@@ -482,14 +482,14 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 		"JOIN ( "
 			"SELECT count(*) AS cnt, assignmentid "
 			"FROM nodeassignments "
-			"LEFT JOIN vnodes n ON (nodeid = n.id) "
+			"LEFT JOIN nodes n ON (nodeid = n.id) "
 			"WHERE 1=1"
 			"%disabled "
 //			"%enets "
 			"GROUP BY assignmentid"
 			") cn ON (cn.assignmentid = na.assignmentid) "
 		"WHERE "
-			"a.datefrom <= %NOW% AND (a.dateto >= %NOW% OR a.dateto = 0)"
+			"(a.datefrom <= %NOW% OR a.datefrom = 0) AND (a.dateto >= %NOW% OR a.dateto = 0)"
 			"%disabled"
 			"%enets"
 	);
@@ -505,14 +505,14 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 	        g->str_replace(&query, "t.upceil", "(CASE WHEN t.upceil_n > 0 THEN t.upceil_n ELSE t.upceil END) AS upceil");
 	}
 
-	res = g->db->query(g->db->conn,  query);
+	res = g->db_query(g->conn,  query);
 
 	// adding hosts to customers array
-	for(i=0; i<g->db->nrows(res); i++)
+	for(i=0; i<g->db_nrows(res); i++)
         {
-		int ownerid = atoi(g->db->get_data(res,i,"ownerid"));
-        	int hostid = atoi(g->db->get_data(res,i,"id"));
-		char *ip = g->db->get_data(res,i,"ip");
+		int ownerid = atoi(g->db_get_data(res,i,"ownerid"));
+        	int hostid = atoi(g->db_get_data(res,i,"id"));
+		char *ip = g->db_get_data(res,i,"ip");
 		unsigned long inet = inet_addr(ip);
 
 		// looking for customer
@@ -532,11 +532,11 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 			if(n == nc) continue;
 		}
 		
-		int cnt 	= atoi(g->db->get_data(res,i,"cnt"));
-		int uprate 	= atoi(g->db->get_data(res,i,"uprate"));
-		int downrate 	= atoi(g->db->get_data(res,i,"downrate"));
-		int upceil 	= atoi(g->db->get_data(res,i,"upceil"));
-		int downceil 	= atoi(g->db->get_data(res,i,"downceil"));
+		int cnt 	= atoi(g->db_get_data(res,i,"cnt"));
+		int uprate 	= atoi(g->db_get_data(res,i,"uprate"));
+		int downrate 	= atoi(g->db_get_data(res,i,"downrate"));
+		int upceil 	= atoi(g->db_get_data(res,i,"upceil"));
+		int downceil 	= atoi(g->db_get_data(res,i,"downceil"));
 		
 		// looking for host
 		for(k=0; k<customers[j].no; k++)
@@ -567,7 +567,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 				if(n != emnc) dummy_mac = 0;
 			}
 			
-			if(!dummy_mac && !atoi(g->db->get_data(res,i,"chkmac")))
+			if(!dummy_mac && !atoi(g->db_get_data(res,i,"chkmac")))
 			{
 				dummy_mac = 1;
 			}
@@ -598,7 +598,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 			customers[j].hosts[k].downrate = downrate;
 			customers[j].hosts[k].downceil = downceil;
 			customers[j].hosts[k].status = UNKNOWN;
-			customers[j].hosts[k].halfduplex = atoi(g->db->get_data(res,i,"halfduplex"));
+			customers[j].hosts[k].halfduplex = atoi(g->db_get_data(res,i,"halfduplex"));
 			customers[j].hosts[k].cnt = cnt;
 			
 			if(!dummy_ip)
@@ -607,7 +607,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 				customers[j].hosts[k].ip = strdup(DUMMY_IP);
 			
 			if(!dummy_mac)
-				customers[j].hosts[k].mac = strdup(g->db->get_data(res,i,"mac"));
+				customers[j].hosts[k].mac = strdup(g->db_get_data(res,i,"mac"));
 			else
 				customers[j].hosts[k].mac = strdup(DUMMY_MAC);
 			
@@ -627,7 +627,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 				customers[j].hosts[k].cnt = cnt;
 		}
 	}
-	g->db->free(&res);
+	g->db_free(&res);
 	free(query);
 
 	// Przelecmy po wszystkich klientach i komputerach, zliczajac sumy rate i ceil
@@ -674,7 +674,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 
 	// Reading hosts/channels definitions from ewx_stm_* tables
 	// NOTE: to re-create device configuration do DELETE FROM ewx_stm_nodes; DELETE FROM ewx_stm_channels;
-	query = strdup("SELECT nodeid, mac, INET_NTOA(ipaddr) AS ip, channelid, n.halfduplex, "
+	query = strdup("SELECT nodeid, mac, INET_NTOA(ipaddr) AS ip, channelid, halfduplex, "
 				"n.uprate, n.upceil, n.downrate, n.downceil, cid, "
 				"c.upceil AS cupceil, c.downceil AS cdownceil "
 			"FROM ewx_stm_nodes n "
@@ -685,16 +685,16 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 
 //	g->str_replace(&query, "%enets", strlen(enetsql) ? enets : "");	
 
-	res = g->db->query(g->db->conn, query);
+	res = g->db_query(g->conn, query);
         
 	channels = (struct channel *) malloc(sizeof(struct channel));
 
 	// Creating current config array
-	for(i=0; i<g->db->nrows(res); i++)
+	for(i=0; i<g->db_nrows(res); i++)
         {
-        	int channelid = atoi(g->db->get_data(res,i,"channelid"));
-        	int hostid = atoi(g->db->get_data(res,i,"nodeid"));
-		char *ip = g->db->get_data(res,i,"ip");
+        	int channelid = atoi(g->db_get_data(res,i,"channelid"));
+        	int hostid = atoi(g->db_get_data(res,i,"nodeid"));
+		char *ip = g->db_get_data(res,i,"ip");
 		unsigned long inet = inet_addr(ip);
 
 		// Networks test
@@ -716,9 +716,9 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 		{
 			channels = (struct channel *) realloc(channels, (sizeof(struct channel) * (sc+1)));
 			channels[sc].id = channelid;
-			channels[sc].customerid = atoi(g->db->get_data(res,i,"cid"));
-			channels[sc].upceil = atoi(g->db->get_data(res,i,"cupceil"));
-			channels[sc].downceil = atoi(g->db->get_data(res,i,"cdownceil"));
+			channels[sc].customerid = atoi(g->db_get_data(res,i,"cid"));
+			channels[sc].upceil = atoi(g->db_get_data(res,i,"cupceil"));
+			channels[sc].downceil = atoi(g->db_get_data(res,i,"cdownceil"));
                         channels[sc].no = 0;
                         channels[sc].hosts = NULL;
 			channels[sc].status = UNKNOWN;
@@ -729,18 +729,18 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 
 		channels[j].hosts = (struct host *) realloc(channels[j].hosts, (sizeof(struct host) * (k+1)));
 		channels[j].hosts[k].id = hostid;
-		channels[j].hosts[k].uprate = atoi(g->db->get_data(res,i,"uprate"));
-		channels[j].hosts[k].upceil = atoi(g->db->get_data(res,i,"upceil"));
-		channels[j].hosts[k].downrate = atoi(g->db->get_data(res,i,"downrate"));
-		channels[j].hosts[k].downceil = atoi(g->db->get_data(res,i,"downceil"));
+		channels[j].hosts[k].uprate = atoi(g->db_get_data(res,i,"uprate"));
+		channels[j].hosts[k].upceil = atoi(g->db_get_data(res,i,"upceil"));
+		channels[j].hosts[k].downrate = atoi(g->db_get_data(res,i,"downrate"));
+		channels[j].hosts[k].downceil = atoi(g->db_get_data(res,i,"downceil"));
 		channels[j].hosts[k].ip = strdup(ip);
-		channels[j].hosts[k].mac = strdup(g->db->get_data(res,i,"mac"));
-		channels[j].hosts[k].halfduplex = atoi(g->db->get_data(res,i,"halfduplex"));
+		channels[j].hosts[k].mac = strdup(g->db_get_data(res,i,"mac"));
+		channels[j].hosts[k].halfduplex = atoi(g->db_get_data(res,i,"halfduplex"));
 		channels[j].hosts[k].status = UNKNOWN;
 		channels[j].hosts[k].cnt = 1; // pole nie jest istotne
 		channels[j].no++;
 	}
-	g->db->free(&res);
+	g->db_free(&res);
 	free(query);
 	
 	// Open the session again
@@ -798,7 +798,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 						{
 							if( // komputer nalezy do innego kanalu
 							    ((x && channels[x].customerid != channels[j].customerid) || 
-								    !channels[j].customerid)
+								    channels[j].customerid == 0)
 							    || // zmiana ID
 							    (c.hosts[n].id != channels[j].hosts[k].id)
 							)
@@ -883,7 +883,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 								    ) 
 								{
 									// komputer byl w kanale
-									if( (channels[j].customerid)
+									if( (channels[j].customerid != 0) 
 									    || // lub zmiana ID
 									    (c.hosts[k].id != channels[j].hosts[n].id))
 									{
@@ -893,7 +893,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 									}
 							
 									// jesli komputer nie byl w kanale, mozemy go zaktualizowac bez usuwania
-									if( (!channels[j].customerid &&
+									if( (channels[j].customerid == 0 &&
 									    (c.hosts[k].uprate != channels[j].hosts[n].uprate ||
 									    c.hosts[k].upceil != channels[j].hosts[n].upceil ||
 									    c.hosts[k].downrate != channels[j].hosts[n].downrate ||
@@ -938,7 +938,7 @@ void reload(GLOBAL *g, struct ewx_module *ewx)
 					deleted++;
 				}
 
-			if(deleted == channels[i].no && channels[i].customerid)
+			if(deleted == channels[i].no && channels[i].customerid != 0)
 				del_channel(g, ewx, sh, &channels[i]);
 		}
 	
@@ -1097,7 +1097,7 @@ int del_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 //    		for(vars = response->variables; vars; vars = vars->next_variable)
 //    			print_variable(vars->name, vars->name_length, vars);
 
-		g->db->pexec(g->db->conn, "DELETE FROM ewx_stm_channels WHERE id = ?", itoa(c.id));
+		g->db_pexec(g->conn, "DELETE FROM ewx_stm_channels WHERE id = ?", itoa(c.id));
 #ifdef DEBUG1
 		syslog(LOG_INFO, "DEBUG: [%s/ewx-stm] Deleted channel %d", ewx->base.instance, c.id);
 #endif
@@ -1138,13 +1138,13 @@ int add_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 	if(!sh) return result;
 
 	// Adding channel to database
-	g->db->pexec(g->db->conn, "INSERT INTO ewx_stm_channels (cid, upceil, downceil) "
+	g->db_pexec(g->conn, "INSERT INTO ewx_stm_channels (cid, upceil, downceil) "
 			    "VALUES(?, ?, ?)", itoa(c.id), upceil, downceil);
 
-	res = g->db->pquery(g->db->conn, "SELECT id FROM ewx_stm_channels WHERE cid = ?", itoa(c.id));
+	res = g->db_pquery(g->conn, "SELECT id FROM ewx_stm_channels WHERE cid = ?", itoa(c.id));
 
-	channelid = atoi(g->db->get_data(res, 0, "id"));
-	g->db->free(&res);
+	channelid = atoi(g->db_get_data(res, 0, "id"));
+	g->db_free(&res);
 
 	// Pilnujemy aby channelid nie przekroczyl 99999
 	// @TODO: na postgresie mozna uzyc generate_series() i zalatwic to jednym zapytaniem
@@ -1156,18 +1156,18 @@ int add_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 		
 		while(newid==0)
 		{
-			res = g->db->pquery(g->db->conn, "SELECT id FROM ewx_stm_channels ORDER BY id LIMIT 100 OFFSET ?", itoa(row));
+			res = g->db_pquery(g->conn, "SELECT id FROM ewx_stm_channels ORDER BY id LIMIT 100 OFFSET ?", itoa(row));
 		
 			// break loop when there're no rows
-			if(!g->db->nrows(res))
+			if(!g->db_nrows(res))
 			{
-				g->db->free(&res);
+				g->db_free(&res);
 				break;
 			}
 			
-			for(i=0; i<g->db->nrows(res); i++)
+			for(i=0; i<g->db_nrows(res); i++)
     			{
-        			int cid = atoi(g->db->get_data(res,i,"id"));
+        			int cid = atoi(g->db_get_data(res,i,"id"));
 		    		if(cid > lastid + 1)
 		    		{
 					// found first free ID
@@ -1180,13 +1180,13 @@ int add_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 		            		row++;
 		    		}
 			}
-			g->db->free(&res);
+			g->db_free(&res);
 		}
 		
 		if(newid)
 		{
 			char *nid = strdup(itoa(newid));
-			g->db->pexec(g->db->conn, "UPDATE ewx_stm_channels SET id = ? WHERE id = ?", itoa(channelid), nid);
+			g->db_pexec(g->conn, "UPDATE ewx_stm_channels SET id = ? WHERE id = ?", itoa(channelid), nid);
 		        free(nid);
 			channelid = newid;
 		}
@@ -1247,7 +1247,7 @@ int add_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 	if(result == STATUS_OK)
 		for(i=0; i<c.no; i++)
 		{
-			add_node(g, ewx, sh, &c.hosts[i], channelid);
+			add_node(g, ewx, sh, &c.hosts[i], channelid + ewx->offset);
 		}
 
 	return result;
@@ -1336,7 +1336,7 @@ int update_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, s
 //		for(vars = response->variables; vars; vars = vars->next_variable)
 //    			print_variable(vars->name, vars->name_length, vars);
 		
-		g->db->pexec(g->db->conn, "UPDATE ewx_stm_channels SET upceil = ?, downceil = ? "
+		g->db_pexec(g->conn, "UPDATE ewx_stm_channels SET upceil = ?, downceil = ? "
 			    "WHERE id = ?", upceil, downceil, itoa(c.id));
 #ifdef DEBUG1
 		syslog(LOG_INFO, "DEBUG: [%s/ewx-stm] Updated channel %d", ewx->base.instance, c.id);
@@ -1363,7 +1363,7 @@ int update_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, s
 	if(result == STATUS_OK)
 		for(i=0; i<cu.no; i++)
 		{
-			add_node(g, ewx, sh, &cu.hosts[i], c.id);
+			add_node(g, ewx, sh, &cu.hosts[i], c.id + ewx->offset);
 		}
 
 	free(upceil);
@@ -1441,7 +1441,7 @@ int mod_channel(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, int 
 //		for(vars = response->variables; vars; vars = vars->next_variable)
 //    			print_variable(vars->name, vars->name_length, vars);
 		
-		g->db->pexec(g->db->conn, "UPDATE ewx_stm_channels SET upceil = ?, downceil = ? "
+		g->db_pexec(g->conn, "UPDATE ewx_stm_channels SET upceil = ?, downceil = ? "
 			    "WHERE id = ?", upceil, downceil, itoa(id));
 #ifdef DEBUG1
 		syslog(LOG_INFO, "DEBUG: [%s/ewx-stm] Modified channel %d", ewx->base.instance, id);
@@ -1498,7 +1498,7 @@ int del_node(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, struct 
 //    		for(vars = response->variables; vars; vars = vars->next_variable)
 //    			print_variable(vars->name, vars->name_length, vars);
 
-		g->db->pexec(g->db->conn, "DELETE FROM ewx_stm_nodes WHERE nodeid = ?", itoa(h.id));
+		g->db_pexec(g->conn, "DELETE FROM ewx_stm_nodes WHERE nodeid = ?", itoa(h.id));
 #ifdef DEBUG1
 		syslog(LOG_INFO, "DEBUG: [%s/ewx-stm] Deleted node %s (%05d)", ewx->base.instance, h.ip, h.id);
 #endif
@@ -1552,7 +1552,7 @@ int add_node(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, struct 
 
 //	snmp_add_var(pdu, CustomerNo, STM_OID_LEN, 'i', itoa(h.id));
 	snmp_add_var(pdu, CustomerPathNo, STM_OID_LEN, 'u', itoa(ewx->path));
-	snmp_add_var(pdu, CustomerChannelNo, STM_OID_LEN, 'u', itoa(chid + (chid ? ewx->offset : 0)));
+	snmp_add_var(pdu, CustomerChannelNo, STM_OID_LEN, 'u', itoa(chid));
 	snmp_add_var(pdu, CustomerIpAddr, STM_OID_LEN, 's', h.ip);
 	snmp_add_var(pdu, CustomerMacAddr, STM_OID_LEN, 's', h.mac);
 	snmp_add_var(pdu, CustomerUpMinSpeed, STM_OID_LEN, 'u', itoa(h.uprate));
@@ -1581,7 +1581,7 @@ int add_node(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, struct 
 		char *halfduplex = strdup(itoa(h.halfduplex));
 		char *channelid = strdup(itoa(chid));
 
-		g->db->pexec(g->db->conn, "INSERT INTO ewx_stm_nodes (nodeid, mac, ipaddr, channelid, uprate, upceil, downrate, downceil, halfduplex) "
+		g->db_pexec(g->conn, "INSERT INTO ewx_stm_nodes (nodeid, mac, ipaddr, channelid, uprate, upceil, downrate, downceil, halfduplex) "
 				    "VALUES (?, '?', INET_ATON('?'), ?, ?, ?, ?, ?, ?)", 
 				    itoa(h.id), h.mac, h.ip, channelid, uprate, upceil, downrate, downceil, halfduplex);
 
@@ -1715,7 +1715,7 @@ int update_node(GLOBAL *g, struct ewx_module *ewx, struct snmp_session *sh, stru
 		char *downceil = strdup(itoa(h.downceil));
 		char *halfduplex = strdup(itoa(h.halfduplex));
 
-		g->db->pexec(g->db->conn, "UPDATE ewx_stm_nodes SET mac = '?', ipaddr = INET_ATON('?'), "
+		g->db_pexec(g->conn, "UPDATE ewx_stm_nodes SET mac = '?', ipaddr = INET_ATON('?'), "
 				"uprate = ?, downrate = ?, upceil = ?, downceil = ?, halfduplex = ? "
 				"WHERE nodeid = ?",
 				h.mac, h.ip, uprate, downrate, upceil, downceil, halfduplex, itoa(h.id));

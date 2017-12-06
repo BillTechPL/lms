@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: notelist.php,v 1.4 2011/01/18 08:12:24 alec Exp $
  */
 
 function GetNotesList($search=NULL, $cat=NULL, $group=NULL, $hideclosed=NULL, $order, $pagelimit=100, $page=NULL)
@@ -95,7 +95,7 @@ function GetNotesList($search=NULL, $cat=NULL, $group=NULL, $hideclosed=NULL, $o
 	if($hideclosed)
 		$where .= ' AND closed = 0';
 
-	if($res = $DB->Exec('SELECT d.id AS id, number, cdate, d.template, closed, published,
+	if($res = $DB->Exec('SELECT d.id AS id, number, cdate, template, closed, 
 			d.customerid, d.name, address, zip, city, c.name AS country,
 			SUM(n.value) AS value, COUNT(n.docid) AS count
 			FROM documents d
@@ -114,7 +114,7 @@ function GetNotesList($search=NULL, $cat=NULL, $group=NULL, $hideclosed=NULL, $o
 			            SELECT 1 FROM customerassignments WHERE customergroupid = '.intval($group['group']).'
 			            AND customerid = d.customerid)' : '')
 			.' GROUP BY d.id, number, cdate, d.customerid, 
-			d.name, address, zip, city, d.template, closed, published, c.name '
+			d.name, address, zip, city, template, closed, c.name '
 			.(isset($having) ? $having : '')
 			.$sqlord.' '.$direction))
 	{
@@ -176,10 +176,10 @@ else
 	$SESSION->restore('dnlc', $c);
 $SESSION->save('dnlc', $c);
 
-if (isset($_POST['search']))
-	$h = isset($_POST['hideclosed']);
+if(isset($_POST['search']))
+	$h = isset($_POST['hideclosed']) ? true : false;
 elseif (($h = $SESSION->get('dnlh')) === NULL)
-	$h = ConfigHelper::checkConfig('notes.hide_closed');
+	$h = isset($CONFIG['notes']['hide_closed']) ? chkconfig($CONFIG['notes']['hide_closed']) : false;
 $SESSION->save('dnlh', $h);
 
 if(isset($_POST['group'])) {
@@ -203,7 +203,7 @@ elseif($c == 'month' && $s && preg_match('/^[0-9]{4}\/[0-9]{2}$/', $s))
         $s = mktime(0,0,0, $month, 1, $year);
 }
 
-$pagelimit = ConfigHelper::getConfig('phpui.debitnotelist_pagelimit');
+$pagelimit = $CONFIG['phpui']['debitnotelist_pagelimit'];
 $page = !isset($_GET['page']) ? 0 : intval($_GET['page']);
 
 $notelist = GetNotesList($s, $c, array('group' => $g, 'exclude'=> $ge), $h, $o, $pagelimit, $page);
@@ -237,6 +237,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('marks', $marks);
 $SMARTY->assign('grouplist', $LMS->CustomergroupGetAll());
 $SMARTY->assign('notelist', $notelist);
-$SMARTY->display('note/notelist.html');
+$SMARTY->display('notelist.html');
 
 ?>

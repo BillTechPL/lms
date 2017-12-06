@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netedit.php,v 1.63 2011/01/18 08:12:23 alec Exp $
  */
 
 if(!$LMS->NetworkExists($_GET['id']))
@@ -42,36 +42,32 @@ else
 
 $SESSION->save('ntlp.'.$_GET['id'], $page);
 	
-$network = $LMS->GetNetworkRecord($_GET['id'], $page, ConfigHelper::getConfig('phpui.networkhosts_pagelimit'));
+$network = $LMS->GetNetworkRecord($_GET['id'], $page, $CONFIG['phpui']['networkhosts_pagelimit']);
 
 if(isset($_POST['networkdata']))
 {
 	$networkdata = $_POST['networkdata'];
 
 	foreach($networkdata as $key => $value)
-		if ($key != 'authtype')
-			$networkdata[$key] = trim($value);
-
+		$networkdata[$key] = trim($value);
+		
 	$networkdata['id'] = $_GET['id'];
 	$networkdata['size'] = pow(2,32-$networkdata['prefix']);
 	$networkdata['addresslong'] = ip_long($networkdata['address']);
 	$networkdata['mask'] = prefix2mask($networkdata['prefix']);
-
-	if (empty($networkdata['hostid']))
-		$error['hostid'] = trans('Host should be selected!');
-
+	
 	if(!check_ip($networkdata['address']))
 		$error['address'] = trans('Incorrect network IP address!');
 	else
 	{
 		if(getnetaddr($networkdata['address'],prefix2mask($networkdata['prefix']))!=$networkdata['address'])
 		{
-			$error['address'] = trans('Specified address is not a network address, setting $a',getnetaddr($networkdata['address'],prefix2mask($networkdata['prefix'])));
+			$error['address'] = trans('Specified address is not a network address, setting $0',getnetaddr($networkdata['address'],prefix2mask($networkdata['prefix'])));
 			$networkdata['address'] = getnetaddr($networkdata['address'],prefix2mask($networkdata['prefix']));
 		}
 		else
 		{
-			if($LMS->NetworkOverlaps($networkdata['address'],prefix2mask($networkdata['prefix']), $networkdata['hostid'], $networkdata['id']))
+			if($LMS->NetworkOverlaps($networkdata['address'],prefix2mask($networkdata['prefix']),$networkdata['id']))
 				$error['address'] = trans('Specified IP address overlaps with other network!');
 			else
 			{
@@ -110,12 +106,6 @@ if(isset($_POST['networkdata']))
 
 	if($networkdata['interface'] != '' && !preg_match('/^[a-z0-9:.]+$/', $networkdata['interface']))
 		$error['interface'] = trans('Incorrect interface name!');
-
-	if ($networkdata['vlanid'] != '')
-		if (!is_numeric($networkdata['vlanid']))
-			$error['vlanid'] = trans('Vlan ID must be integer!');
-		elseif ($networkdata['vlanid'] < 1 || $networkdata['vlanid'] > 4094)
-			$error['vlanid'] = trans('Vlan ID must be between 1 and 4094!');
 
 	if($networkdata['name']=='')
 		$error['name'] = trans('Network name is required!');
@@ -162,49 +152,17 @@ if(isset($_POST['networkdata']))
 		if($networkdata['dhcpstart']!='' && $networkdata['dhcpend']!='' && !(ip_long($networkdata['dhcpend']) >= ip_long($networkdata['dhcpstart'])))
 			$error['dhcpend'] = trans('End of DHCP range has to be equal or greater than start!');
 	}
-
-	if (!empty($networkdata['ownerid']) && !$LMS->CustomerExists($networkdata['ownerid']))
-		$error['ownerid'] = trans('Customer with the specified ID does not exist');
-
-	$authtype = 0;
-	if (isset($networkdata['authtype']))
-		foreach ($networkdata['authtype'] as $idx)
-			$authtype |= intval($idx);
-	$networkdata['authtype'] = $authtype;
-
-	if (!$error) {
-		if (isset($networkdata['needshft']) && $networkdata['needshft'])
-			$LMS->NetworkShift($networkdata['id'], $network['address'], $network['mask'], $networkdata['addresslong'] - $network['addresslong']);
-
-		if($networkdata['ownerid'] != $network['ownerid']) {
-			$vnetwork = $DB->GetRow('SELECT nodeid, ownerid FROM vnetworks WHERE id = ?', array($networkdata['id']));
-			if($networkdata['ownerid'] == '' && $vnetwork) {
-				$DB->Execute('DELETE FROM nodes WHERE id = ?', array($vnetwork['nodeid']));
-			} elseif($vnetwork) {
-				$DB->Execute('UPDATE nodes SET ownerid = ? WHERE id = ?',
-					array(
-						empty($networkdata['ownerid']) ? null : $networkdata['ownerid'],
-						$vnetwork['nodeid'],
-					)
-				);
-			} else {
-				$DB->Execute('INSERT INTO nodes (name, ownerid, netid) VALUES(?, ?, ?)',
-					array(
-						$networkdata['name'],
-						empty($networkdata['ownerid']) ? null : $networkdata['ownerid'],
-						$networkdata['id'],
-					)
-				);
-			}
-		}
+	
+	if(!$error)
+	{
+	        if(isset($networkdata['needshft']) && $networkdata['needshft'])
+		        $LMS->NetworkShift($network['address'],$network['mask'],$networkdata['addresslong'] - $network['addresslong']);
 
 		$LMS->NetworkUpdate($networkdata);
-		$SESSION->redirect('?m=netinfo&id=' . $networkdata['id']);
-	}
+		$SESSION->redirect('?m=netinfo&id='.$networkdata['id']);
+	}	
 
-	$network['name'] = $networkdata['name'];
 	$network['interface'] = $networkdata['interface'];
-	$network['vlanid'] = $networkdata['vlanid'];
 	$network['prefix'] = $networkdata['prefix'];
 	$network['address'] = $networkdata['address'];
 	$network['size'] = $networkdata['size'];
@@ -216,25 +174,18 @@ if(isset($_POST['networkdata']))
 	$network['dns'] = $networkdata['dns'];
 	$network['dns2'] = $networkdata['dns2'];
 	$network['notes'] = $networkdata['notes'];
-	$network['hostid'] = $networkdata['hostid'];
-	$network['ownerid'] = $networkdata['ownerid'];
-	$network['authtype'] = $networkdata['authtype'];
 }
 
 $networks = $LMS->GetNetworks();
 
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customers', $LMS->GetCustomerNames());
-
-$layout['pagetitle'] = trans('Network Edit: $a',$network['name']);
+$layout['pagetitle'] = trans('Network Edit: $0',$network['name']);
 
 $SMARTY->assign('unlockedit',TRUE);
 $SMARTY->assign('network',$network);
 $SMARTY->assign('networks',$networks);
 $SMARTY->assign('netlistsize',sizeof($networks));
 $SMARTY->assign('prefixlist', $LMS->GetPrefixList());
-$SMARTY->assign('hostlist', $LMS->DB->GetAll('SELECT id, name FROM hosts ORDER BY name'));
 $SMARTY->assign('error',$error);
-$SMARTY->display('net/netinfo.html');
+$SMARTY->display('netinfo.html');
 
 ?>

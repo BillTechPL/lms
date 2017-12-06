@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdevlist.php,v 1.27 2011/01/18 08:12:23 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Network Devices');
@@ -32,69 +32,10 @@ else
 	$o = $_GET['o'];
 $SESSION->save('ndlo', $o);
 
-if(!isset($_GET['s']))
-	$SESSION->restore('ndfs', $s);
-else
-	$s = $_GET['s'];
-$SESSION->save('ndfs', $s);
-
-if(!isset($_GET['p']))
-	$SESSION->restore('ndfp', $p);
-else
-	$p = $_GET['p'];
-$SESSION->save('ndfp', $p);
-
-if(!isset($_GET['n']))
-	$SESSION->restore('ndfn', $n);
-else
-	$n = $_GET['n'];
-$SESSION->save('ndfn', $n);
-
-if(!isset($_GET['producer']))
-	$SESSION->restore('ndfproducer', $producer);
-else
-	$producer = $_GET['producer'];
-$SESSION->save('ndfproducer', $producer);
-
-if(!isset($_GET['model']))
-	$SESSION->restore('ndfmodel', $model);
-else
-	$model = $_GET['model'];
-$SESSION->save('ndfmodel', $model);
-
-if (empty($model))
-	$model = -1;
-if (empty($producer))
-	$producer = -1;
-
-$producers = $DB->GetCol("SELECT DISTINCT UPPER(TRIM(producer)) AS producer FROM netdevices WHERE producer <> '' ORDER BY producer");
-$models = $DB->GetCol("SELECT DISTINCT UPPER(TRIM(model)) AS model FROM netdevices WHERE model <> ''"
-	. ($producer != '-1' ? " AND UPPER(TRIM(producer)) = " . $DB->Escape($producer == '-2' ? '' : $producer) : '') . " ORDER BY model");
-if (!preg_match('/^-[0-9]+$/', $model) && !in_array($model, $models)) {
-	$SESSION->save('ndfmodel', '-1');
-	$SESSION->redirect('?' . preg_replace('/&model=[^&]+/', '', $_SERVER['QUERY_STRING']));
-}
-if (!preg_match('/^-[0-9]+$/', $producer) && !in_array($producer, $producers)) {
-	$SESSION->save('ndfproducer', '-1');
-	$SESSION->redirect('?' . preg_replace('/&producer=[^&]+/', '', $_SERVER['QUERY_STRING']));
-}
-
-$search = array(
-	'status' => $s,
-	'project' => $p,
-	'netnode' => $n,
-	'producer' => $producer,
-	'model' => $model,
-);
-$netdevlist = $LMS->GetNetDevList($o, $search);
+$netdevlist = $LMS->GetNetDevList($o);
 $listdata['total'] = $netdevlist['total'];
 $listdata['order'] = $netdevlist['order'];
 $listdata['direction'] = $netdevlist['direction'];
-$listdata['status'] = $s;
-$listdata['invprojectid'] = $p;
-$listdata['netnode'] = $n;
-$listdata['producer'] = $producer;
-$listdata['model'] = $model;
 unset($netdevlist['total']);
 unset($netdevlist['order']);
 unset($netdevlist['direction']);
@@ -103,25 +44,18 @@ if(!isset($_GET['page']))
         $SESSION->restore('ndlp', $_GET['page']);
 	
 $page = (! $_GET['page'] ? 1 : $_GET['page']);
-$pagelimit = ConfigHelper::getConfig('phpui.nodelist_pagelimit', $listdata['total']);
+$pagelimit = (! $CONFIG['phpui']['nodelist_pagelimit'] ? $listdata['total'] : $CONFIG['phpui']['nodelist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('ndlp', $page);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
-$netnodes = $LMS->GetNetNodeList(array(), 'name,ASC');
-unset($netnodes['total'], $netnodes['order'], $netnodes['direction']);
-$SMARTY->assign('netnodes', $netnodes);
-
 $SMARTY->assign('page',$page);
 $SMARTY->assign('pagelimit',$pagelimit);
 $SMARTY->assign('start',$start);
 $SMARTY->assign('netdevlist',$netdevlist);
 $SMARTY->assign('listdata',$listdata);
-$SMARTY->assign('NNprojects', $LMS->GetProjects());
-$SMARTY->assign('producers', $producers);
-$SMARTY->assign('models', $models);
-$SMARTY->display('netdev/netdevlist.html');
+$SMARTY->display('netdevlist.html');
 
 ?>

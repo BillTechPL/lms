@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: userpanel.php,v 1.11 2011/01/18 08:12:26 alec Exp $
  */
 
-if(file_exists(ConfigHelper::getConfig('directories.userpanel_dir')."/lib/LMS.setup.php"))
-	include(ConfigHelper::getConfig('directories.userpanel_dir')."/lib/LMS.setup.php");
+if (file_exists($CONFIG['directories']['userpanel_dir'] . "/lib/LMS.setup.php"))
+	include($CONFIG['directories']['userpanel_dir'] . "/lib/LMS.setup.php");
 
 ?>

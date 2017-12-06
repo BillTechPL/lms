@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -21,14 +21,14 @@
  *
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("ALTER TABLE users ADD phone varchar(32) DEFAULT NULL");
-$this->Execute("ALTER TABLE users ADD ntype smallint DEFAULT NULL");
-$this->Execute("UPDATE users SET ntype = 1"); // MSG_MAIL
+$DB->Execute("ALTER TABLE users ADD phone varchar(32) DEFAULT NULL");
+$DB->Execute("ALTER TABLE users ADD ntype smallint DEFAULT NULL");
+$DB->Execute("UPDATE users SET ntype = 1"); // MSG_MAIL
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011031000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2011031000', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

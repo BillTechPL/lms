@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -22,12 +22,12 @@
  *
  */
 
-$this->Execute("ALTER TABLE divisions ADD inv_paytime tinyint DEFAULT NULL");
-$this->Execute("ALTER TABLE divisions ADD inv_paytype varchar(255) DEFAULT NULL");
-$this->Execute("ALTER TABLE invoicecontents CHANGE description description text DEFAULT '' NOT NULL");
-$this->Execute("ALTER TABLE receiptcontents CHANGE description description text DEFAULT '' NOT NULL");
-$this->Execute("ALTER TABLE cash CHANGE comment comment text DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE divisions ADD inv_paytime tinyint DEFAULT NULL");
+$DB->Execute("ALTER TABLE divisions ADD inv_paytype varchar(255) DEFAULT NULL");
+$DB->Execute("ALTER TABLE invoicecontents CHANGE description description text DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE receiptcontents CHANGE description description text DEFAULT '' NOT NULL");
+$DB->Execute("ALTER TABLE cash CHANGE comment comment text DEFAULT '' NOT NULL");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009111700', 'dbversion'));
 
 ?>

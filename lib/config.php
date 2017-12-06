@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,8 +21,20 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: config.php,v 1.15 2011/01/18 08:12:05 alec Exp $
  */
+
+function chkconfig($value, $default = FALSE)
+{
+	if($value == '')
+		return $default;
+	elseif(preg_match('/^(1|y|on|yes|true|tak|t|enabled)$/i', $value))
+		return TRUE;
+	elseif(preg_match('/^(0|n|no|off|false|nie|disabled)$/i', $value))
+		return FALSE;
+	else
+		trigger_error('Incorrect option value: '.$value);
+}
 
 /*
   Default values of some configuration options.
@@ -42,7 +54,6 @@ $DEFAULTS = array(
 		'allow_from' => '',
 		'default_module' => 'welcome',
 		'timeout' => 600,
-		'settings_timeout' => 28800,
 		'customerlist_pagelimit' => 100,
 		'nodelist_pagelimit' => 100,
 		'balancelist_pagelimit' => 100,
@@ -63,7 +74,6 @@ $DEFAULTS = array(
 		'messagelist_pagelimit' => 100,
 		'recordlist_pagelimit' => 100,
 		'cashreglog_pagelimit' => 100,
-		'netdevmodel_pagelimit' => 100,
 		'reload_type' => 'sql',
 		'reload_execcmd' => '/bin/true',
 		'reload_sqlquery' => '',
@@ -72,8 +82,7 @@ $DEFAULTS = array(
 		'gd_translate_to' => 'ISO-8859-2',
 		'check_for_updates_period' => 86400,
 		'homedir_prefix' => '/home/',
-		'default_taxrate' => 23.00,
-		'default_prodid' => '',
+		'default_taxrate' => 22.00,
 		'default_zip' => '',
 		'default_city' => '',
 		'default_address' => '',
@@ -100,12 +109,6 @@ $DEFAULTS = array(
 		'radius' => 1,
 		'public_ip' => 1,
 		'default_assignment_period' => 3,
-		'default_assignment_invoice' => 0,
-		'default_editor' => 'html',
-		'logging' => false,
-		'hide_toolbar' => false,
-		'auto_remove_investment_project' => true,
-		'logout_confirmation' => false
 	),
 	'invoices' => array(
 		'template_file' => 'invoice.html',
@@ -153,15 +156,12 @@ $DEFAULTS = array(
 		'default_mailserver_ip' => '127.0.0.1',
 		'default_mx' => 'localhost'
 	),
-	'voip' => array(
-		'default_account_flags' => 0,
-	)
 );
 
-foreach ($DEFAULTS as $section => $values)
-    foreach ($values as $key => $val)
-        if (!isset($CONFIG[$section][$key]))
-            $CONFIG[$section][$key] = $val;
+foreach($DEFAULTS as $section => $values)
+        foreach($values as $key => $val)
+	        if(!isset($CONFIG[$section][$key]))
+			$CONFIG[$section][$key] = $val;
 unset($DEFAULTS);
 
 ?>

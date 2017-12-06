@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtticketprint.php,v 1.21 2011/01/18 08:12:25 alec Exp $
  */
 
 if(! $LMS->TicketExists($_GET['id']))
@@ -29,7 +29,7 @@ if(! $LMS->TicketExists($_GET['id']))
 	$SESSION->redirect('?m=rtqueuelist');
 }
 
-if(! $LMS->GetUserRightsRT(Auth::GetCurrentUser(), 0, $_GET['id']))
+if(! $LMS->GetUserRightsRT($AUTH->id, 0, $_GET['id']))
 {
 	$SMARTY->display('noaccess.html');
 	$SESSION->close();
@@ -38,13 +38,14 @@ if(! $LMS->GetUserRightsRT(Auth::GetCurrentUser(), 0, $_GET['id']))
 
 $ticket = $LMS->GetTicketContents($_GET['id']);
 
-if ($ticket['customerid'] && ConfigHelper::checkConfig('phpui.helpdesk_stats')) {
-	$yearago = mktime(0, 0, 0, date('n'), date('j'), date('Y')-1);
+if($ticket['customerid'] && isset($CONFIG['phpui']['helpdesk_stats']) && chkconfig($CONFIG['phpui']['helpdesk_stats']))
+{
+        $yearago = mktime(0, 0, 0, date('n'), date('j'), date('Y')-1);
 	$stats = $DB->GetAllByKey('SELECT COUNT(*) AS num, cause FROM rttickets
-		WHERE customerid = ? AND createtime >= ?
-		GROUP BY cause', 'cause', array($ticket['customerid'], $yearago));
+	            	    WHERE customerid = ? AND createtime >= ?
+			    GROUP BY cause', 'cause', array($ticket['customerid'], $yearago));
 
-	$SMARTY->assign('stats', $stats);
+        $SMARTY->assign('stats', $stats);
 }
 
 if($ticket['customerid'])
@@ -53,14 +54,11 @@ if($ticket['customerid'])
 	$SMARTY->assign('customernodes', $LMS->GetCustomerNodes($ticket['customerid']));
 }
 
-$layout['pagetitle'] = trans('Ticket No. $a',sprintf("%06d",$ticket['ticketid']));
+$layout['pagetitle'] = trans('Ticket No. $0',sprintf("%06d",$ticket['ticketid']));
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('ticket', $ticket);
-$SMARTY->assign('messages', isset($_GET['messages']) ? 1 : 0);
-$SMARTY->assign('notes', isset($_GET['notes']) ? 1 : 0);
-$SMARTY->assign('history', isset($_GET['history']) ? 1 : 0);
-$SMARTY->display('rt/' . ConfigHelper::getConfig('phpui.ticket_template_file'));
+$SMARTY->display($CONFIG['phpui']['ticket_template_file']);
 
 ?>

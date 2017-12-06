@@ -1,4 +1,4 @@
-/* $Id$ */
+/* $Id: dictionary.h,v 1.2 2006/01/28 21:20:18 alec Exp $ */
 
 #ifndef _DICTIONARY_H_
 #define _DICTIONARY_H_

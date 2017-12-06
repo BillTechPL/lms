@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004112600.php,v 1.11 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE uiconfig (
 	id int(11) NOT NULL auto_increment,
 	section varchar(255) NOT NULL default '',
@@ -33,9 +33,9 @@ $this->Execute("
 	description text NOT NULL default '',
 	disabled tinyint(1) NOT NULL default '0',
 	PRIMARY KEY (id)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004112600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004112600', 'dbversion'));
 
 ?>

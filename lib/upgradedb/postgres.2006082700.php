@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,15 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2006082700.php,v 1.7 2011/01/18 08:12:14 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
 /* tariffs with nodes many-to-many assignments */
 
-$this->Execute("CREATE SEQUENCE nodeassignments_id_seq");
-$this->Execute("CREATE TABLE nodeassignments (
+$DB->Execute("CREATE SEQUENCE nodeassignments_id_seq");
+$DB->Execute("CREATE TABLE nodeassignments (
 	id integer 		DEFAULT nextval('nodeassignments_id_seq'::text) NOT NULL,
 	nodeid integer 		DEFAULT 0 NOT NULL,
 	assignmentid integer 	DEFAULT 0 NOT NULL,
@@ -37,17 +37,17 @@ $this->Execute("CREATE TABLE nodeassignments (
 	UNIQUE (nodeid, assignmentid))
 ");
 
-if($assign = $this->GetAll('SELECT id, nodeid FROM assignments WHERE nodeid>0'))
+if ($assign = $DB->GetAll('SELECT id, nodeid FROM assignments WHERE nodeid>0'))
 {
 	foreach($assign as $item)
-		$this->Execute('INSERT INTO nodeassignments (nodeid, assignmentid) VALUES (?,?)',
+		$DB->Execute('INSERT INTO nodeassignments (nodeid, assignmentid) VALUES (?,?)',
 			array($item['nodeid'], $item['id']));
 }
 
-$this->Execute("ALTER TABLE assignments DROP COLUMN nodeid");
+$DB->Execute("ALTER TABLE assignments DROP COLUMN nodeid");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2006082700', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2006082700', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2008122900.php,v 1.6 2011/03/10 12:06:43 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 CREATE SEQUENCE numberplanassignments_id_seq;
 CREATE TABLE numberplanassignments (
         id integer DEFAULT nextval('numberplanassignments_id_seq'::text) NOT NULL,
@@ -38,13 +38,13 @@ CREATE TABLE numberplanassignments (
 CREATE INDEX numberplanassignments_divisionid_idx ON numberplanassignments (divisionid);
 ");
 
-if($divs = $this->GetAll('SELECT id FROM divisions'))
+if($divs = $DB->GetAll('SELECT id FROM divisions'))
 	foreach($divs as $div)
-		$this->Execute('INSERT INTO numberplanassignments (planid, divisionid)
+		$DB->Execute('INSERT INTO numberplanassignments (planid, divisionid)
 			SELECT id, ? FROM numberplans', array($div['id']));
 
-$this->Execute('UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?', array('2008122900', 'dbversion'));
+$DB->Execute('UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?', array('2008122900', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

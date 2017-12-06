@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,10 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.5 2011/01/18 08:12:34 alec Exp $
  */
 
-$_LANG['$a dollars $b cents'] = '$a Lt‚ $b cnt.';
+$_LANG['$0 dollars $1 cents'] = '$0 Lt‚ $1 cnt.';
 $_LANG['Accounting day:'] = 'Priskaičiavimo diena:';
 $_LANG['Admin:'] = 'Administratorius:';
 $_LANG['After:'] = 'Po:';
@@ -33,7 +33,7 @@ $_LANG['Amount:'] = 'Kiekis:';
 $_LANG['Balance'] = 'Balansas';
 $_LANG['Cancel'] = 'Panaikink';
 $_LANG['Click here to print payment form'] = 'Paspauskite čia, kad išspausdintumėte įmokos formą';
-$_LANG['Customer No.: $a'] = 'Kliento numeris: $a';
+$_LANG['Customer No.: $0'] = 'Kliento numeris: $0';
 $_LANG['Date:'] = 'Data:';
 $_LANG['Deadline:'] = 'Mokėjimo terminas:';
 $_LANG['Description:'] = 'Aprašas:';
@@ -46,7 +46,7 @@ $_LANG['from'] = 'nuo';
 $_LANG['Gross Value:'] = 'Bruto vertė:';
 $_LANG['in it:'] = 'įskaitant:';
 $_LANG['Invoice:'] = 'Faktūra:';
-$_LANG['Invoice No. $a'] = 'PVM Faktūra Nr.$a';
+$_LANG['Invoice No. $0'] = 'PVM Faktūra Nr.$0';
 $_LANG['Invoices'] = 'Faktūros';
 $_LANG['In words:'] = 'Žodžiais:';
 $_LANG['Module Configuration:'] = 'Modulio konfiguracija:';
@@ -56,7 +56,7 @@ $_LANG['No.'] = 'Nr.';
 $_LANG['No such transactions on your account.'] = 'Jūsų sąskaitoje nėra jokių pavedimų.';
 $_LANG['Notes:'] = 'Pastabos:';
 $_LANG['ORIGINAL'] = 'ORIGINALAS';
-$_LANG['Payment for invoice No. $a'] = 'Mokėjimas pagal faktūrą Nr. $a';
+$_LANG['Payment for invoice No. $0'] = 'Mokėjimas pagal faktūrą Nr. $0';
 $_LANG['Payment type:'] = 'Mokėjimo tipas:';
 $_LANG['Period:'] = 'Laikotarpis:';
 $_LANG['[ Print ]'] = '[ Spausdink ]';
@@ -74,7 +74,7 @@ $_LANG['Submit'] = 'Tęsk';
 $_LANG['Subscription:'] = 'Abonementas:';
 $_LANG['Tax Rate:'] = 'Mokesčio tarifas:';
 $_LANG['Tax Value:'] = 'Mokesčio vertė:';
-$_LANG['TEN:'] = 'PVM kodas:';
+$_LANG['TEN:'] = 'Įmonės kodas:';
 $_LANG['This module is for showing financial informations, printing invoices'] = 'Šis modulis parodo informciją susijusią su finansais bei leidžia klientui atspausdinti faktūrą';
 $_LANG['to'] = 'iki';
 $_LANG['To pay:'] = 'Iki mokėjimo:';
@@ -90,7 +90,7 @@ $_LANG['yes'] = 'taip';
 $_LANG['You haven\'t got any assigned subscriptions.'] = 'Neturi priskirtų tarifų';
 $_LANG['Your balance'] = 'Tavo sąskaita';
 $_LANG['Your subscriptions'] = 'Tavo įkainiai';
-$_LANG['monthly ($a)'] = 'per menėsį ($a)';
+$_LANG['monthly ($0)'] = 'per menėsį ($0)';
 $_LANG['Reason:'] = 'Priežastis:';
 
 ?>

@@ -2,17 +2,20 @@
 #define SQL_H
 
 #include "tscript_context.h"
-#include "../../../lmsd.h"
 
-void tscript_ext_sql_init(tscript_context *,  GLOBAL *);
+#ifdef USE_PGSQL
+#include "../../../dbdrivers/pgsql/db.h"
+#endif
+#ifdef USE_MYSQL
+#include "../../../dbdrivers/mysql/db.h"
+#endif
+
+void tscript_ext_sql_init(tscript_context *, ConnHandle *);
 void tscript_ext_sql_close(tscript_context *);
 
 #define CUSTOMERS "SELECT customers.id AS id, customers.lastname AS lastname, \
 		    customers.name AS name, customers.status AS status, \
-		    address, zip, city, ten, ssn, \
-			(SELECT contact FROM customercontacts \
-				WHERE customerid = customers.id AND customercontacts.type = 8 \
-				ORDER BY id LIMIT 1) AS email, \
+		    address, zip, city, email, ten, ssn, \
 		    customers.info AS info, message, regon, rbe, icn, \
 		    SUM(nodes.warning) AS warning, SUM(nodes.access) AS access, \
 		    ROUND(COALESCE(SUM(value), 0.00)/( \
@@ -20,8 +23,8 @@ void tscript_ext_sql_close(tscript_context *);
 			WHEN 0 THEN 1 \
 			ELSE COUNT(DISTINCT nodes.id) END \
 		    ),2) AS balance \
-		FROM customeraddressview \
-		LEFT JOIN cash ON (customers.id = cash.customerid) \
+		FROM customers \
+		LEFT JOIN cash ON (customers.id = customerid) \
 		LEFT JOIN nodes ON (customers.id = ownerid) \
 		WHERE deleted = 0 \
 		GROUP BY customers.id, lastname, customers.name, \
@@ -29,18 +32,29 @@ void tscript_ext_sql_close(tscript_context *);
 		    ten, ssn, customers.info, message, regon, \
 		    rbe, icn"
 
-#define NODES "SELECT n.id, n.name, n.ownerid, n.access, \
-		    n.warning, n.netdev, n.lastonline, n.info, n.port, \
-		    %cfullname AS owner, \
-		    c.message, n.mac, n.passwd, n.linktype, \
-		    INET_NTOA(n.ipaddr) AS ip, INET_NTOA(n.ipaddr_pub) AS ip_pub, \
-		    n.chkmac, n.halfduplex \
-		    FROM vnodes n \
-		    LEFT JOIN customers c ON (c.id = n.ownerid)"
+#ifdef USE_MYSQL
+#define NODES "SELECT nodes.id AS id, nodes.name AS name, ownerid, access, \
+		    warning, netdev, lastonline, nodes.info AS info, \
+		    CONCAT(customers.lastname, ' ', customers.name) AS owner, \
+		    customers.message AS message, mac, passwd, linktype, \
+		    INET_NTOA(ipaddr) AS ip, INET_NTOA(ipaddr_pub) AS ip_pub, \
+		    chkmac, halfduplex \
+		    FROM vnodes \
+		    LEFT JOIN customers ON (customers.id = ownerid)"
+#else
+#define NODES "SELECT nodes.id AS id, nodes.name AS name, ownerid, access, \
+		    warning, netdev, lastonline, nodes.info AS info, port, \
+		    customers.lastname || ' ' || customers.name AS owner, \
+		    customers.message AS message, mac, passwd, linktype, \
+		    INET_NTOA(ipaddr) AS ip, INET_NTOA(ipaddr_pub) AS ip_pub, \
+		    chkmac, halfduplex \
+		    FROM vnodes \
+		    LEFT JOIN customers ON (customers.id = ownerid)"
+#endif
 
 #define NETWORKS "SELECT id, name, INET_NTOA(address) AS address, \
 		    mask, interface, gateway, dns, dns2, wins, domain, \
 		    dhcpstart, dhcpend \
-		    FROM networks"
+		    FROM networks" 
 
 #endif

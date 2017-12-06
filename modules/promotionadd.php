@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotionadd.php,v 1.1 2011/03/02 10:31:05 alec Exp $
  */
 
 $promotion = isset($_POST['promotion']) ? $_POST['promotion'] : NULL;
@@ -41,45 +41,18 @@ if ($promotion)
 	else if ($DB->GetOne('SELECT id FROM promotions WHERE name = ?', array($promotion['name'])))
 		$error['name'] = trans('Specified name is in use!');
 
-        if (empty($promotion['datefrom']))
-                $promotion['from'] = 0;
-        else
-        {
-                $from = date_to_timestamp($promotion['datefrom']);
-                if(empty($from))
-                        $error['datefrom'] = trans('Incorrect effective start time!');
-        }
-
-        if (empty($promotion['dateto']))
-                $promotion['to'] = 0;
-        else
-        {
-                $to = date_to_timestamp($promotion['dateto']);
-                if(empty($to))
-                        $error['dateto'] = trans('Incorrect effective start time!');
-        }
-
-        if ($promotion['to'] != 0 && $promotion['from'] != 0 && $to < $from)
-                $error['dateto'] = trans('Incorrect date range!');
-
-	if (!$error) {
-		$args = array(
-			'name' => $promotion['name'],
-			'description' => $promotion['description'],
-			'datefrom' => $promotion['from'],
-			'dateto' => $promotion['to'],
-		);
-		$DB->Execute('INSERT INTO promotions (name, description, datefrom, dateto)
-			VALUES (?, ?, ?, ?)', array_values($args));
-		$pid = $DB->GetLastInsertId('promotions');
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_PROMO] = $pid;
-			$SYSLOG->AddMessage(SYSLOG::RES_PROMO, SYSLOG::OPER_ADD, $args);
-		}
+	if (!$error)
+	{
+        $DB->Execute('INSERT INTO promotions (name, description)
+            VALUES (?, ?)',
+            array($promotion['name'], $promotion['description']));
 
 		if (empty($promotion['reuse']))
-			$SESSION->redirect('?m=promotioninfo&id=' . $pid);
+		{
+            $pid = $DB->GetLastInsertId('promotions');
+
+			$SESSION->redirect('?m=promotioninfo&id='.$pid);
+		}
 
 		unset($promotion);
 		$promotion['reuse'] = '1';
@@ -90,6 +63,6 @@ $layout['pagetitle'] = trans('New Promotion');
 
 $SMARTY->assign('error', $error);
 $SMARTY->assign('promotion', $promotion);
-$SMARTY->display('promotion/promotionadd.html');
+$SMARTY->display('promotionadd.html');
 
 ?>

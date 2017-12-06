@@ -31,7 +31,6 @@
 
 %{
 	#include <stdlib.h>
-	#include <stdio.h>
 	#include "tscript_ast.h"
 
 	#define YYSTYPE tscript_ast_node*

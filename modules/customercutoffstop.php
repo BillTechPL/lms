@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,36 +21,30 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: customercutoffstop.php,v 1.5 2011/01/18 08:12:21 alec Exp $
  */
 
 $customerid = intval($_GET['customerid']);
 
-if (!$LMS->CustomerExists($customerid))
+if(! $LMS->CustomerExists($customerid))
+{
 	$SESSION->redirect('?m=customerlist');
+}
 
-if (isset($_GET['cutoffstop'])) {
-	if (isset($_GET['cutoffstopindefinitely']))
-		$cutoffstop = intval(pow(2, 31) - 1);
-	elseif ($_GET['cutoffstop'] == '')
-		$cutoffstop = 0;
-	elseif (check_date($_GET['cutoffstop'])) {
-		list ($y, $m, $d) = explode('/', $_GET['cutoffstop']);
-		if (checkdate($m, $d, $y))
-			$cutoffstop = mktime(23, 59, 59, $m, $d, $y);
-	}
+if(isset($_GET['cutoffstop']))
+{
+	if(!intval($_GET['cutoffstop']))
+	        $cutoffstop = 0;
+	else
+		$cutoffstop = mktime(23,59,59,date('m'), date('d') + intval($_GET['cutoffstop']));
+	
 	// excluded groups check
-	if (!$DB->GetOne('SELECT 1 FROM customerassignments a
-			JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
+	if(!$DB->GetOne('SELECT 1 FROM customerassignments a
+	                JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
 			WHERE e.userid = lms_current_user() AND a.customerid = ?',
-			array($customerid))) {
-		$args = array(
-			'cutoffstop' => $cutoffstop,
-			SYSLOG::RES_CUST => $customerid,
-		);
-		$DB->Execute('UPDATE customers SET cutoffstop = ? WHERE id = ?', array_values($args));
-		if ($SYSLOG)
-			$SYSLOG->AddMessage(SYSLOG::RES_CUST, SYSLOG::OPER_UPDATE, $args);
+			array($customerid)))
+	{
+		$DB->Execute('UPDATE customers SET cutoffstop = ? WHERE id = ?', array($cutoffstop, $customerid));
 	}
 }
 

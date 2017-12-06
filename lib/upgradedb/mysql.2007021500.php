@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,18 +21,18 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2007021500.php,v 1.6 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("UPDATE documents SET closed = 1 WHERE type = 2");
+$DB->Execute("UPDATE documents SET closed = 1 WHERE type = 2");
 
-$this->Execute("UPDATE cashrights SET rights = 63 WHERE rights = 2");
-$this->Execute("UPDATE cashrights SET rights = 319 WHERE rights = 3");
+$DB->Execute("UPDATE cashrights SET rights = 63 WHERE rights = 2");
+$DB->Execute("UPDATE cashrights SET rights = 319 WHERE rights = 3");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007021500', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007021500', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

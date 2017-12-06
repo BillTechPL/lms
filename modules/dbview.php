@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: dbview.php,v 1.43 2011/01/18 08:12:22 alec Exp $
  */
 
 function readfile_chunked($filename,$retbytes=true)
@@ -46,7 +46,7 @@ function readfile_chunked($filename,$retbytes=true)
 	return $status;
 }
 
-$filename = ConfigHelper::getConfig('directories.backup_dir').'/lms-'.$_GET['db'].'.sql';
+$filename = $CONFIG['directories']['backup_dir'].'/lms-'.$_GET['db'].'.sql';
 
 header('Content-Type: application/octet-stream');
 if ((extension_loaded('zlib')) && (strstr($_GET['file'],"sql.gz")))
@@ -57,7 +57,7 @@ if ((extension_loaded('zlib')) && (strstr($_GET['file'],"sql.gz")))
 else
 	header('Content-Disposition: attachment; filename=lms-backup-'.date('Ymd-His',$_GET['db']).'.sql');
 header('Pragma: public');
-header('Content-Length: '.filesize($filename));
+header('Content-Length: '.$filename);
 set_time_limit(0);
 readfile_chunked($filename, false);
 

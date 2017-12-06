@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdel.php,v 1.39 2011/01/18 08:12:23 alec Exp $
  */
 
 if(!$LMS->NetworkExists($_GET['id']))
@@ -43,7 +43,7 @@ if(!$error)
 	}
 	else
 	{
-		$layout['pagetitle'] = trans('Removing network $a', strtoupper($network['name']));
+		$layout['pagetitle'] = trans('Removing network $0', strtoupper($network['name']));
 		$SMARTY->display('header.html');
 		echo '<H1>'.$layout['pagetitle'].'</H1>';
 		echo '<P>'.trans('Are you sure, you want to delete that network?').'</P>';
@@ -53,11 +53,11 @@ if(!$error)
 }
 else
 {
-	$layout['pagetitle'] = trans('Info Network: $a', $network['name']);
+	$layout['pagetitle'] = trans('Info Network: $0', $network['name']);
 	$SMARTY->assign('network',$network);
 	$SMARTY->assign('networks', $LMS->GetNetworks());
 	$SMARTY->assign('error',$error);
-	$SMARTY->display('net/netinfo.html');
+	$SMARTY->display('netinfo.html');
 }
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: taxratelist.php,v 1.13 2011/04/01 10:35:12 alec Exp $
  */
 
 function GetTaxRateList($order='name,asc')
@@ -64,7 +64,7 @@ if ($SESSION->is_set('trlp') && !isset($_GET['page']))
 	$SESSION->restore('trlp', $_GET['page']);
 
 $page = (!isset($_GET['page']) ? 1 : $_GET['page']); 
-$pagelimit = ConfigHelper::getConfig('phpui.taxratelist_pagelimit', $listdata['total']);
+$pagelimit = (!isset($CONFIG['phpui']['taxratelist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['taxratelist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('trlp', $page);
@@ -86,6 +86,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('start', $start);
 $SMARTY->assign('taxratelist', $taxratelist);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('taxrate/taxratelist.html');
+$SMARTY->display('taxratelist.html');
 
 ?>

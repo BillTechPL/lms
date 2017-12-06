@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $Id$
+# $Id: rc.reminder_1st,v 1.7 2005/06/12 00:38:24 hunter Exp $
 # 
 # simle reminder, send 1st info, i.e. today payings are accounded.
 # you could use may scripts, we advise at least two, one simply saying 

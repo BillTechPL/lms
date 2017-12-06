@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,23 +21,23 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004040701.php,v 1.15 2011/01/18 08:12:12 alec Exp $
  */
 
 // upgrade nie potrzebny dla bazy powy¿ej 1.2.0rc5 dla ga³êzi 1.2, za³atwmy to transakcj±
 
-$this->Execute("
+$DB->Execute("
     BEGIN;
     ALTER TABLE invoicecontents ALTER taxvalue DROP NOT NULL;
     COMMIT"
 );
 
-$this->Execute("
+$DB->Execute("
     BEGIN;
     ALTER TABLE tariffs ALTER taxvalue DROP NOT NULL;
     COMMIT"
 );
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2004040701', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2004040701', 'dbversion'));
 
 ?>

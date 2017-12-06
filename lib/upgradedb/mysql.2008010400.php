@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2008010400.php,v 1.4 2011/01/18 08:12:10 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     CREATE TABLE nodegroups (
 	id 		int(11) 	NOT NULL auto_increment,
         name		varchar(255) 	NOT NULL DEFAULT '',
@@ -35,7 +35,7 @@ $this->Execute("
 	UNIQUE KEY name (name)
     );
 ");
-$this->Execute("
+$DB->Execute("
     CREATE TABLE nodegroupassignments (
 	id 		int(11) 	NOT NULL auto_increment,
         nodegroupid	int(11) 	NOT NULL DEFAULT 0,
@@ -45,8 +45,8 @@ $this->Execute("
     );
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008010400', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008010400', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,16 +21,16 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2009101600.php,v 1.3 2011/01/18 08:12:11 alec Exp $
  */
 					
-$this->Execute("ALTER TABLE tariffs ADD uprate_n int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE tariffs ADD upceil_n int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE tariffs ADD downrate_n int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE tariffs ADD downceil_n int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE tariffs ADD climit_n int(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE tariffs ADD plimit_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD uprate_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD upceil_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD downrate_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD downceil_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD climit_n int(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE tariffs ADD plimit_n int(11) DEFAULT NULL");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009101600', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009101600', 'dbversion'));
 
 ?>

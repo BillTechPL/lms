@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.5 2011/01/18 08:12:34 alec Exp $
  */
 
 $_LANG['Add'] = 'Pridėk';
@@ -44,7 +44,7 @@ $_LANG['Now, you can only select:'] = 'Dabar gali pasirinkti tik:';
 $_LANG['Runs problems solving center'] = 'Paleidžia problemų šalinimo centrą';
 $_LANG['Select:'] = 'Pasirink:';
 $_LANG['Submit'] = 'Tęsk';
-$_LANG['There is no Help Center tree. Use $athis form$b to add root item.'] = 'Dar nėra Pagalbos Cnetro struktūros. Pasinaudok šia forma, kad pridėtum pagrindinį punktą';
+$_LANG['There is no Help Center tree. Use $0this form$1 to add root item.'] = 'Dar nėra Pagalbos Cnetro struktūros. Pasinaudok šia forma, kad pridėtum pagrindinį punktą';
 $_LANG['This cannot be empty'] = 'Tai negali būti tuščia';
 $_LANG['This module is not configured yet.'] = 'Šis modulis nėra sukonfiguruotas.';
 $_LANG['This module shows problems solving center'] = 'Šis modulis parodo problemų sprendimo centrą';

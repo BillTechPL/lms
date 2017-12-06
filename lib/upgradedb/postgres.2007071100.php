@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2007071100.php,v 1.6 2011/01/18 08:12:15 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
     CREATE SEQUENCE \"customercontacts_id_seq\";
     CREATE TABLE customercontacts (
 	    id integer DEFAULT nextval('customercontacts_id_seq'::text) NOT NULL,
@@ -40,30 +40,30 @@ $this->Execute("
     CREATE INDEX customercontacts_phone_idx ON customercontacts (phone);
 ");
 
-if($list = $this->GetAll('SELECT phone1, phone2, phone3, id FROM customers'))
+if($list = $DB->GetAll('SELECT phone1, phone2, phone3, id FROM customers'))
 {
 	foreach($list as $row)
 	{
 		if(trim($row['phone1']))
-			$this->Execute('INSERT INTO customercontacts (customerid, phone)
+			$DB->Execute('INSERT INTO customercontacts (customerid, phone)
 					VALUES(?, ?)', array($row['id'], $row['phone1'])); 
 		if(trim($row['phone2']))
-			$this->Execute('INSERT INTO customercontacts (customerid, phone)
+			$DB->Execute('INSERT INTO customercontacts (customerid, phone)
 					VALUES(?, ?)', array($row['id'], $row['phone2']));
 		if(trim($row['phone3']))
-			$this->Execute('INSERT INTO customercontacts (customerid, phone)
+			$DB->Execute('INSERT INTO customercontacts (customerid, phone)
 					VALUES(?, ?)', array($row['id'], $row['phone3']));
 	}
 }
 
-$this->Execute("
+$DB->Execute("
     ALTER TABLE customers DROP phone1;
     ALTER TABLE customers DROP phone2;
     ALTER TABLE customers DROP phone3;
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007071100', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007071100', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

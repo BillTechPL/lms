@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,38 +21,33 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: number.php,v 1.13 2011/01/18 08:12:24 alec Exp $
  */
 
-if($doc = $DB->GetRow('SELECT number, cdate, type, numberplans.template, extnumber
-			FROM documents
+if ($doc = $DB->GetRow('SELECT number, cdate, type, template, extnumber 
+			FROM documents 
 			LEFT JOIN numberplans ON (numberplanid = numberplans.id)
 			WHERE documents.id = ?', array($_GET['id'])))
 {
-	$ntempl = docnumber(array(
-		'number' => $doc['number'],
-		'template' => $doc['template'],
-		'cdate' => $doc['cdate'],
-		'ext_num' => $doc['extnumber'],
-	));
+	$ntempl = docnumber($doc['number'], $doc['template'], $doc['cdate'], $doc['extnumber']);
 
 	switch($doc['type'])
 	{
 		case DOC_INVOICE:
-			$ntempl = trans('Invoice No. $a',$ntempl);
+			$ntempl = trans('Invoice No. $0', $ntempl);
 		break;
 		case DOC_RECEIPT:
-			$ntempl = trans('Cash Receipt No. $a',$ntempl);
+			$ntempl = trans('Cash Receipt No. $0', $ntempl);
 		break;
 		case DOC_CNOTE:
-			$ntempl = trans('Credit Note No. $a',$ntempl);
+			$ntempl = trans('Credit Note No. $0', $ntempl);
 		break;
 		case DOC_DNOTE:
-			$ntempl = trans('Debit Note No. $a',$ntempl);
+			$ntempl = trans('Debit Note No. $0', $ntempl);
 		break;
 	}
-	
-	$SMARTY->assign('content', $ntempl);
+
+	$SMARTY->assign('content', '<NOBR>' . $ntempl . '</NOBR>');
 	$SMARTY->display('dynpopup.html');
 }
 

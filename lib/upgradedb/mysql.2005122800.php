@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,28 +21,28 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2005122800.php,v 1.9 2011/01/18 08:12:09 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$create_reg = $this->GetOne('SELECT docid FROM receiptcontents LIMIT 1');
+$create_reg = $DB->GetOne('SELECT docid FROM receiptcontents LIMIT 1');
 
-$this->Execute("ALTER TABLE receiptcontents ADD COLUMN regid int(11) NOT NULL DEFAULT '0'");
-$this->Execute("UPDATE receiptcontents SET regid = ?", array($create_reg ? 1 : 0));
-$this->Execute("ALTER TABLE receiptcontents ADD INDEX regid (regid)");
+$DB->Execute("ALTER TABLE receiptcontents ADD COLUMN regid int(11) NOT NULL DEFAULT '0'");
+$DB->Execute("UPDATE receiptcontents SET regid = ?", array($create_reg ? 1 : 0));
+$DB->Execute("ALTER TABLE receiptcontents ADD INDEX regid (regid)");
 
-$this->Execute("CREATE TABLE cashrights (
+$DB->Execute("CREATE TABLE cashrights (
 	id int(11) 	NOT NULL auto_increment,
         userid int(11) 	DEFAULT '0' NOT NULL,
 	regid int(11) 	DEFAULT '0' NOT NULL,
 	rights int(11) 	DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY userid (userid, regid)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
-$this->Execute("CREATE TABLE cashregs (
+$DB->Execute("CREATE TABLE cashregs (
 	id int(11) 		NOT NULL auto_increment,
         name varchar(255) 	DEFAULT '' NOT NULL,
 	description text 	DEFAULT '' NOT NULL,
@@ -50,14 +50,14 @@ $this->Execute("CREATE TABLE cashregs (
 	out_numberplanid int(11) DEFAULT '0' NOT NULL,
 	PRIMARY KEY (id),
 	UNIQUE KEY name (name)
-    ) ENGINE=MyISAM
+    ) TYPE=MyISAM
 ");
 
 if($create_reg)
-	$this->Execute("INSERT INTO cashregs (name) VALUES ('default')");
+	$DB->Execute("INSERT INTO cashregs (name) VALUES ('default')");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005122800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2005122800', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,31 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: numberplandel.php,v 1.10 2011/01/18 08:12:24 alec Exp $
  */
 
-$id = intval($_GET['id']);
+$id = $_GET['id'];
 
 if ($_GET['is_sure'] == 1 && $id) {
 	if (!$DB->GetOne('SELECT COUNT(*) FROM documents WHERE numberplanid=?', array($id))) {
-		if ($SYSLOG) {
-			$args = array(SYSLOG::RES_NUMPLAN => $id);
-			$SYSLOG->AddMessage(SYSLOG::RES_NUMPLAN, SYSLOG::OPER_DELETE, $args);
-			$assigns = $DB->GetAll('SELECT * FROM numberplanassignments WHERE planid = ?', array($id));
-			if (!empty($assigns))
-				foreach ($assigns as $assign) {
-					$args = array(
-						SYSLOG::RES_NUMPLANASSIGN => $assign['id'],
-						SYSLOG::RES_NUMPLAN => $assign['planid'],
-						SYSLOG::RES_DIV => $assign['divisionid']
-					);
-					$SYSLOG->AddMessage(SYSLOG::RES_NUMPLANASSIGN, SYSLOG::OPER_DELETE, $args);
-				}
-		}
-		$DB->Execute('DELETE FROM numberplanassignments WHERE planid=?', array($id));
 		$DB->Execute('DELETE FROM numberplans WHERE id=?', array($id));
+		$DB->Execute('DELETE FROM numberplanassignments WHERE planid=?', array($id));
 	}
-}
+}	
 
 $SESSION->redirect('?'.$SESSION->get('backto'));
 

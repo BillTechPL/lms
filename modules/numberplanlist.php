@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: numberplanlist.php,v 1.16 2011/04/01 10:35:12 alec Exp $
  */
 
 function GetNumberPlanList()
@@ -73,7 +73,7 @@ if ($SESSION->is_set('nplp') && !isset($_GET['page']))
 	$SESSION->restore('nplp', $_GET['page']);
 
 $page = (!isset($_GET['page']) ? 1 : $_GET['page']); 
-$pagelimit = ConfigHelper::getConfig('phpui.numberplanlist_pagelimit', $listdata['total']);
+$pagelimit = (!isset($CONFIG['phpui']['numberplanlist_pagelimit']) ? $listdata['total'] : $CONFIG['phpui']['numberplanlist_pagelimit']);
 $start = ($page - 1) * $pagelimit;
 
 $SESSION->save('nplp', $page);
@@ -90,6 +90,6 @@ $SMARTY->assign('page', $page);
 $SMARTY->assign('start', $start);
 $SMARTY->assign('numberplanlist', $numberplanlist);
 $SMARTY->assign('listdata', $listdata);
-$SMARTY->display('numberplan/numberplanlist.html');
+$SMARTY->display('numberplanlist.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtmessagedel.php,v 1.6 2011/01/18 08:12:25 alec Exp $
  */
 
 $msg = intval($_GET['id']);
-$maction = ($_GET['maction']);
 $ticket = $DB->GetOne('SELECT ticketid FROM rtmessages WHERE id = ?', array($msg));
-$rights = $LMS->GetUserRightsRT(Auth::GetCurrentUser(), 0, $ticket);
+$rights = $LMS->GetUserRightsRT($AUTH->id, 0, $ticket);
 
 if(($rights & 4) != 4)
 {
@@ -36,13 +35,15 @@ if(($rights & 4) != 4)
 	die;
 }
 
-if ($maction == 'delete')
+if($DB->GetOne('SELECT MIN(id) FROM rtmessages WHERE ticketid = ?', array($ticket)) != $msg)
 {
-	$del = 1;
-	$deltime = time();
-	$DB->Execute('UPDATE rtmessages SET deleted=?, deltime=?, deluserid=? WHERE id = ?', array($del, $deltime, Auth::GetCurrentUser(), $msg));
+	if(isset($CONFIG['rt']['mail_dir'])) {
+		rrmdir($CONFIG['rt']['mail_dir'].sprintf('/%06d/%06d', $ticket, $msg));
+	}
+
+	$DB->Execute('DELETE FROM rtmessages WHERE id = ?', array($msg));
 }
 
-$SESSION->redirect('?m=rtticketview&id=' . $ticket);
+header('Location: ?m=rtticketview&id='.$ticket);
 
 ?>

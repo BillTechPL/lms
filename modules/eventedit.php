@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,118 +21,93 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: eventedit.php,v 1.21 2011/01/18 08:12:22 alec Exp $
  */
-
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'eventxajax.inc.php');
 
 if(isset($_GET['action']) && $_GET['action'] == 'open')
 {
-	$DB->Execute('UPDATE events SET closed = 0, closeduserid = NULL, closeddate = 0 WHERE id = ?',array($_GET['id']));
-	$SESSION->redirect('?'.$SESSION->get('backto'));
-}
-elseif(isset($_GET['action']) && $_GET['action'] == 'close' && isset($_GET['ticketid']) )
-{
-	$DB->Execute('UPDATE events SET closed = 1, closeduserid = ?, closeddate = ?NOW?  WHERE ticketid = ?',array(Auth::GetCurrentUser(), $_GET['ticketid']));
-	$SESSION->redirect('?'.$SESSION->get('backto'));
+	$DB->Execute('UPDATE events SET closed = 0 WHERE id = ?',array($_GET['id']));
+	$SESSION->redirect('?m=eventlist');
 }
 elseif(isset($_GET['action']) && $_GET['action'] == 'close')
 {
-	$DB->Execute('UPDATE events SET closed = 1, closeduserid = ?, closeddate = ?NOW?  WHERE id = ?',array(Auth::GetCurrentUser(), $_GET['id']));
+	$DB->Execute('UPDATE events SET closed = 1 WHERE id = ?',array($_GET['id']));
+	$SESSION->redirect('?m=eventlist');
+}
+elseif(isset($_GET['action']) && $_GET['action'] == 'dropuser')
+{
+	$DB->Execute('DELETE FROM eventassignments WHERE eventid = ? AND userid = ?',array($_GET['eid'], $_GET['aid']));
 	$SESSION->redirect('?'.$SESSION->get('backto'));
 }
 
-$event = $LMS->GetEvent($_GET['id']);
+$event = $DB->GetRow('SELECT events.id AS id, title, description, note, 
+			date, begintime, endtime, customerid, private, closed, ' 
+			.$DB->Concat('UPPER(customers.lastname)',"' '",'customers.name').' AS customername
+			FROM events LEFT JOIN customers ON (customers.id = customerid)
+			WHERE events.id = ?', array($_GET['id']));
 
 $event['date'] = sprintf('%04d/%02d/%02d', date('Y',$event['date']),date('n',$event['date']),date('j',$event['date']));
-if (empty($event['enddate']))
-	$event['enddate'] = '';
-else
-	$event['enddate'] = sprintf('%04d/%02d/%02d', date('Y',$event['enddate']),date('n',$event['enddate']),date('j',$event['enddate']));
+
+$eventuserlist = $DB->GetAll('SELECT userid AS id, users.name
+					FROM users, eventassignments
+					WHERE users.id = userid
+					AND eventid = ?', array($event['id']));
 
 if(isset($_POST['event']))
 {
 	$event = $_POST['event'];
-
-	if (!isset($event['usergroup']))
-		$event['usergroup'] = 0;
-	$SESSION->save('eventgid', $event['usergroup']);
-
 	$event['id'] = $_GET['id'];
-
+	
 	if($event['title'] == '')
-		$error['title'] = trans('Event title is required!');
-	elseif(strlen($event['title']) > 255)
-		$error['title'] = trans('Event title is too long!');
-
-	if ($event['date'] == '')
+    		$error['title'] = trans('Event title is required!');
+	
+	if($event['date'] == '')
 		$error['date'] = trans('You have to specify event day!');
-	else {
-		list ($year,$month, $day) = explode('/',$event['date']);
-		if (checkdate($month, $day, $year))
-			$date = mktime(0, 0, 0, $month, $day, $year);
-		else
+	else
+	{
+		list($year,$month, $day) = explode('/',$event['date']);
+		if(!checkdate($month,$day,$year))
 			$error['date'] = trans('Incorrect date format! Enter date in YYYY/MM/DD format!');
 	}
 
-	$enddate = 0;
-	if ($event['enddate'] != '') {
-		list ($year,$month, $day) = explode('/', $event['enddate']);
-		if (checkdate($month, $day, $year))
-			$enddate = mktime(0, 0, 0, $month, $day, $year);
-		else
-			$error['enddate'] = trans('Incorrect date format! Enter date in YYYY/MM/DD format!');
-	}
-
-	if ($enddate && $date > $enddate)
-		$error['enddate'] = trans('End time must not precede start time!');
-
-	if (!$error) {
+	if(!$error)
+	{
+		$date = mktime(0, 0, 0, $month, $day, $year);
 		$event['private'] = isset($event['private']) ? 1 : 0;
-		if (isset($event['customerid']))
-			$event['custid'] = $event['customerid'];
-		if ($event['custid'] == '')
-			$event['custid'] = 0;
 
-		$event['address_id'] = !isset($event['address_id']) || $event['address_id'] == -1 ? null : $event['address_id'];
-		$event['nodeid'] = !isset($event['nodeid']) || empty($event['nodeid']) ? null : $event['nodeid'];
-
-		$event['date'] = $date;
-		$event['enddate'] = $enddate;
-
-		$LMS->EventUpdate($event);
+		$DB->Execute('UPDATE events SET title=?, description=?, date=?, begintime=?, endtime=?, private=?, note=?, customerid=? WHERE id=?',
+				array($event['title'], $event['description'], $date, $event['begintime'], $event['endtime'], $event['private'], $event['note'], $event['customerid'], $event['id']));
+				
+		if($event['user'])
+		{
+			if(!$DB->GetOne('SELECT 1 FROM eventassignments WHERE eventid = ? AND userid = ?',array($event['id'], $event['user'])))
+			{
+				$DB->Execute('INSERT INTO eventassignments (eventid, userid) VALUES(?,?)',array($event['id'], $event['user']));
+			}
+		}
 
 		$SESSION->redirect('?m=eventlist');
 	}
 }
 
+$event['userlist'] = $eventuserlist;
+
 $layout['pagetitle'] = trans('Event Edit');
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
-$usergroups = $DB->GetAll('SELECT id, name FROM usergroups');
-$userlist = $DB->GetAll('SELECT id, rname FROM vusers
-	WHERE deleted = 0 AND vusers.access = 1 ORDER BY lastname ASC');
+$userlist = $LMS->GetUserNames();
 
-if (isset($event['customerid']) || intval($event['customerid']))
-	$SMARTY->assign('nodes', $LMS->GetNodeLocations($event['customerid'],
-		isset($event['address_id']) && intval($event['address_id']) > 0 ? $event['address_id'] : null));
-
-if (!isset($event['usergroup']))
-	$SESSION->restore('eventgid', $event['usergroup']);
-
-$SMARTY->assign('max_userlist_size', ConfigHelper::getConfig('phpui.event_max_userlist_size'));
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
+$SMARTY->assign('customerlist', $LMS->GetCustomerNames());
 $SMARTY->assign('userlist', $userlist);
-$SMARTY->assign('usergroups', $usergroups);
+$SMARTY->assign('userlistsize', sizeof($userlist));
 $SMARTY->assign('error', $error);
 $SMARTY->assign('event', $event);
-$SMARTY->assign('hours',
+$SMARTY->assign('hours', 
 		array(0,30,100,130,200,230,300,330,400,430,500,530,
 		600,630,700,730,800,830,900,930,1000,1030,1100,1130,
 		1200,1230,1300,1330,1400,1430,1500,1530,1600,1630,1700,1730,
 		1800,1830,1900,1930,2000,2030,2100,2130,2200,2230,2300,2330));
-$SMARTY->display('event/eventedit.html');
+$SMARTY->display('eventedit.html');
 
 ?>

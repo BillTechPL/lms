@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,457 +21,186 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: LMSDB_driver_postgres.class.php,v 1.56 2011/01/18 08:12:05 alec Exp $
  */
 
-/**
- * LMSDB_driver_postgres
- * 
- * PostgreSQL engine driver wrapper for LMS.
- * 
- * @package LMS
+/*
+ * To jest pseudo-driver dla LMSDB, dla bazy danych 'postgres'.
  */
-class LMSDB_driver_postgres extends LMSDB_common implements LMSDBDriverInterface
+
+class LMSDB_driver_postgres extends LMSDB_common
 {
+	var $_loaded = TRUE;
+	var $_dbtype = 'postgres';
 
-    /**
-     * Constructs driver.
-     * 
-     * Connects to database.
-     * 
-     * @param string $dbhost
-     * @param string $dbuser
-     * @param string $dbpasswd
-     * @param string $dbname
-     * @return void
-     */
-    public function __construct($dbhost, $dbuser, $dbpasswd, $dbname)
-    {
-        if (!extension_loaded('pgsql')) {
-            trigger_error('PostgreSQL extension not loaded!', E_USER_WARNING);
-            $this->_loaded = FALSE;
-            return;
-        }
-
-        $this->_dbtype = LMSDB::POSTGRESQL;
-
-        //$this->_version .= ' ('.preg_replace('/^.Revision: ([0-9.]+).*/','\1',$this->_revision).'/'.preg_replace('/^.Revision: ([0-9.]+).*/','\1','$Revision$').')';
-        $this->_version .= '';
-        $this->Connect($dbhost, $dbuser, $dbpasswd, $dbname);
-
-    }
-
-    /**
-     * Returns database engine info.
-     * 
-     * @return string
-     */
-    public function _driver_dbversion()
-    {
-        return $this->GetOne("SELECT split_part(version(),' ',2)");
-
-    }
-
-    /**
-     * Connects to database.
-     * 
-     * @param string $dbhost
-     * @param string $dbuser
-     * @param string $dbpasswd
-     * @param string $dbname
-     * @return void
-     */
-    public function _driver_connect($dbhost, $dbuser, $dbpasswd, $dbname)
-    {
-        $cstring = join(' ', array(
-            ($dbhost != '' && $dbhost != 'localhost' ? 'host=' . $dbhost : ''),
-            ($dbuser != '' ? 'user=' . $dbuser : ''),
-            ($dbpasswd != '' ? 'password=' . $dbpasswd : ''),
-            ($dbname != '' ? 'dbname=' . $dbname : ''),
-            'connect_timeout=10'
-        ));
-
-        $this->_dblink = @pg_connect($cstring, PGSQL_CONNECT_FORCE_NEW);
-        if ($this->_dblink) {
-            $this->_dbhost = $dbhost;
-            $this->_dbuser = $dbuser;
-            $this->_dbname = $dbname;
-            $this->_error = FALSE;
-            $this->_loaded = TRUE;
-        } else {
-            $this->_error = TRUE;
-        }
-
-        return $this->_dblink;
-
-    }
-
-    /**
-     * Closes driver.
-     */
-    public function _driver_shutdown()
-    {
-        $this->_driver_disconnect();
-
-    }
-
-    /**
-     * Disconnects driver from database.
-     * 
-     * @return bool
-     */
-    public function _driver_disconnect()
-    {
-        $this->_loaded = FALSE;
-        @pg_close($this->_dblink);
-
-    }
-
-    /**
-     * Selects database.
-     * 
-     * @param string $dbname
-     * @throws Exception
-     */
-    public function _driver_selectdb($dbname)
-    {
-        throw new Exception('PostgreSQL driver cannot change dbname. Sorry...');
-
-    }
-
-    /**
-     * Returns errors.
-     * 
-     * @return string
-     */
-    public function _driver_geterror()
-    {
-        if ($this->_dblink) {
-            return pg_last_error($this->_dblink);
-        } else {
-            return 'We\'re not connected!';
-        }
-
-    }
-
-    /**
-     * Executes query.
-     * 
-     * @param string $query
-     * @return resource
-     */
-    public function _driver_execute($query)
-    {
-        $this->_query = $query;
-        $this->_result = @pg_query($this->_dblink, $query);
-        if ($this->_result) {
-            $this->_error = FALSE;
-        } else {
-            $this->_error = TRUE;
-        }
-        return $this->_result;
-
-    }
-
-    /**
-     * Executes multiple queries at once.
-     * 
-     * @param string $query
-     * @return boolean
-     */
-    public function _driver_multi_execute($query)
-    {
-        return $this->_driver_execute($query);
-
-    }
-
-    /**
-     * Returns single row from resource as associative array.
-     * 
-     * @param resource $result
-     * @return array|boolean
-     */
-    public function _driver_fetchrow_assoc($result = NULL)
-    {
-        if (!$this->_error) {
-            return @pg_fetch_array($result ? $result : $this->_result, NULL, PGSQL_ASSOC);
-        } else {
-            return FALSE;
-        }
-
-    }
-
-    /**
-     * Returns single row from resource as array.
-     * 
-     * @return array|boolean
-     */
-    public function _driver_fetchrow_num()
-    {
-        if (!$this->_error) {
-            return @pg_fetch_array($this->_result, NULL, PGSQL_NUM);
-        } else {
-            return FALSE;
-        }
-
-    }
-
-    /**
-     * Returns number of affected rows or false on query failure.
-     * 
-     * @return int|boolean
-     */
-    public function _driver_affected_rows()
-    {
-        if (!$this->_error) {
-            return @pg_affected_rows($this->_result);
-        } else {
-            return FALSE;
-        }
-
-    }
-
-    /**
-     * Returns number of rows in result reqource or false on failure.
-     * 
-     * @return int|boolean
-     */
-    public function _driver_num_rows()
-    {
-        if (!$this->_error) {
-            return @pg_num_rows($this->_result);
-        } else {
-            return FALSE;
-        }
-
-    }
-
-    public function _quote_value($input)
-    {
-        if ($input === NULL) {
-            return 'NULL';
-        } elseif (gettype($input) == 'string') {
-            return '\'' . @pg_escape_string($this->_dblink, $input) . '\'';
-        } elseif (is_array($input)) {
-            return $this->_quote_array($input);
-        } else {
-            return $input;
-        }
-
-    }
-
-    /**
-     * Returns name of sql function used to get time.
-     * 
-     * @return string
-     */
-    public function _driver_now()
-    {
-        return 'EXTRACT(EPOCH FROM CURRENT_TIMESTAMP(0))::integer';
-
-    }
-
-    /**
-     * Returns name of sql function used for "like" statement.
-     * 
-     * @return string
-     */
-    public function _driver_like()
-    {
-        return 'ILIKE';
-
-    }
-
-    /**
-     * Returns concat sql part.
-     * 
-     * @param string $input
-     * @return string
-     */
-    public function _driver_concat($input)
-    {
-        return implode(' || ', $input);
-
-    }
-
-    /**
-     * Returns list of tables in database.
-     * 
-     * @return array
-     */
-    public function _driver_listtables()
-    {
-        return $this->GetCol('SELECT relname AS name FROM pg_class WHERE relkind = \'r\' and relname !~ \'^pg_\' and relname !~ \'^sql_\'');
-
-    }
-
-    /**
-     * Begins transaction.
-     * 
-     * @return int|false
-     */
-    public function _driver_begintrans()
-    {
-        return $this->Execute('BEGIN');
-
-    }
-
-    /**
-     * Commits transaction.
-     * 
-     * @return int|false
-     */
-    public function _driver_committrans()
-    {
-        return $this->Execute('COMMIT');
-
-    }
-
-    /**
-     * Rollbacks transactions.
-     * 
-     * @return int|false
-     */
-    public function _driver_rollbacktrans()
-    {
-        return $this->Execute('ROLLBACK');
-
-    }
-
-	private function _driver_locktables_filter_helper($table) {
-		return !$this->_driver_resourceexists($table, LMSDB::RESOURCE_TYPE_VIEW);
-	}
-
-    /**
-     * Locks table.
-     * 
-     * @param string $table
-     * @param string $locktype
-     * @todo: locktype
-     */
-    public function _driver_locktables($table, $locktype = null)
-    {
-        if (is_array($table)) {
-            $table = array_filter($table, array($this, '_driver_locktables_filter_helper'));
-            $this->Execute('LOCK ' . implode(', ', $table));
-        } else {
-            $this->Execute('LOCK ' . $table);
-        }
-
-    }
-
-    /**
-     * Unlocks tables.
-     * 
-     * @return boolean
-     */
-    public function _driver_unlocktables()
-    {
-        return TRUE;
-
-    }
-
-    /**
-     * Returns last inserted element id.
-     * 
-     * @param string $table
-     * @return int
-     */
-    public function _driver_lastinsertid($table = null)
-    {
-        return $this->GetOne('SELECT currval(\'' . $table . '_id_seq\')');
-
-    }
-
-    /**
-     * Creates group concat sql part.
-     * 
-     * @param string $field
-     * @param string $separator
-     * @param boolean $distinct
-     * @return string
-     */
-    public function _driver_groupconcat($field, $separator = ',', $distinct = false)
-    {
-        if ($distinct === false) {
-            return 'array_to_string(array_agg(' . $field . '), \'' . $separator . '\')';
-        } else {
-            return 'array_to_string(array_agg(DISTINCT ' . $field . '), \'' . $separator . '\')';
-        }
-
-    }
-
-    /**
-     * Sets connection encoding.
-     * 
-     * @param string $name Connection name
-     */
-    public function _driver_setencoding($name)
-    {
-        $this->Execute('SET NAMES ?', array($name));
-
-    }
-
-	/**
-	* Gets year for date.
-	* 
-	* @param string $date
-	* @return year string
-	*/
-	public function _driver_year($date) {
-		return 'DATE_PART(\'year\', ' . $date . '::timestamp)';
-	}
-
-	/**
-	* Gets month for date.
-	* 
-	* @param string $date
-	* @return month string
-	*/
-	public function _driver_month($date) {
-		return 'DATE_PART(\'month\', ' . $date . '::timestamp)';
-	}
-
-	/**
-	* Gets day for date.
-	* 
-	* @param string $date
-	* @return day string
-	*/
-	public function _driver_day($date) {
-		return 'DATE_PART(\'day\', ' . $date . '::timestamp)';
-	}
-
-	/**
-	* Check if database resource exists (table, view)
-	*
-	* @param string $name
-	* @param int $type
-	* @return exists boolean
-	*/
-	public function _driver_resourceexists($name, $type) {
-		switch ($type) {
-			case LMSDB::RESOURCE_TYPE_TABLE:
-			case LMSDB::RESOURCE_TYPE_VIEW:
-				if ($type == LMSDB::RESOURCE_TYPE_TABLE)
-					$table_type = 'BASE TABLE';
-				else
-					$table_type = 'VIEW';
-				return $this->GetOne('SELECT COUNT(*) FROM information_schema.tables
-					WHERE table_catalog=? AND table_name=? AND table_type=?',
-					array($this->_dbname, $name, $table_type)) > 0;
-				break;
-			case LMSDB::RESOURCE_TYPE_COLUMN:
-				list ($table_name, $column_name) = explode('.', $name);
-				return $this->GetOne('SELECT COUNT(*) FROM information_schema.columns
-					WHERE table_catalog = ? AND table_name = ? AND column_name = ?',
-					array($this->_dbname, $table_name, $column_name)) > 0;
-				break;
-			case LMSDB::RESOURCE_TYPE_CONSTRAINT:
-				return $this->GetOne('SELECT COUNT(*) FROM information_schema.table_constraints
-					WHERE table_catalog = ? AND constraint_name = ?',
-					array($this->_dbname, $name)) > 0;
-				break;
+	function LMSDB_driver_postgres($dbhost,$dbuser,$dbpasswd,$dbname)
+	{
+		if(!extension_loaded('pgsql'))
+		{
+			trigger_error('PostgreSQL extension not loaded!', E_USER_WARNING);
+			$this->_loaded = FALSE;
+			return;
 		}
+
+		$this->_version .= ' ('.preg_replace('/^.Revision: ([0-9.]+).*/','\1',$this->_revision).'/'.preg_replace('/^.Revision: ([0-9.]+).*/','\1','$Revision: 1.56 $').')';
+		$this->Connect($dbhost,$dbuser,$dbpasswd,$dbname);
+	}
+
+	function _driver_dbversion()
+	{
+		return $this->GetOne("SELECT split_part(version(),' ',2)");
+	}
+
+	function _driver_connect($dbhost,$dbuser,$dbpasswd,$dbname)
+	{
+		$cstring = join(' ',array(
+			($dbhost != '' && $dbhost != 'localhost' ? 'host='.$dbhost : ''),
+			($dbuser != '' ? 'user='.$dbuser : ''),
+			($dbpasswd != '' ? 'password='.$dbpasswd : ''),
+			($dbname != '' ? 'dbname='.$dbname : '')
+		));
+
+		if($this->_dblink = @pg_connect($cstring, PGSQL_CONNECT_FORCE_NEW))
+		{
+			$this->_dbhost = $dbhost;
+			$this->_dbuser = $dbuser;
+			$this->_dbname = $dbname;
+			$this->_error = FALSE;
+		}
+		else
+			$this->_error = TRUE;
+
+		return $this->_dblink;
+	}
+
+	function _driver_disconnect()
+	{
+		$this->_loaded = FALSE;
+		@pg_close($this->_dblink);
+	}
+
+	function _driver_geterror()
+	{
+		if($this->_dblink)
+                        return pg_last_error($this->_dblink);
+                else
+            		return 'We\'re not connected!';
+	}
+	
+	function _driver_execute($query)
+	{
+		$this->_query = $query;
+
+		if($this->_result = @pg_query($this->_dblink,$query))
+			$this->_error = FALSE;
+		else
+			$this->_error = TRUE;
+		return $this->_result;
+	}
+
+	function _driver_fetchrow_assoc($result = NULL)
+	{
+		if(! $this->_error)
+			return @pg_fetch_array($result ? $result : $this->_result,NULL, PGSQL_ASSOC);
+		else
+			return FALSE;
+	}
+
+	function _driver_fetchrow_num()
+	{
+		if(! $this->_error)
+			return @pg_fetch_array($this->_result,NULL,PGSQL_NUM);
+		else
+			return FALSE;
+	}
+	
+	function _driver_affected_rows()
+	{
+		if(! $this->_error)
+			return @pg_affected_rows($this->_result);
+		else
+			return FALSE;
+	}
+
+	function _driver_num_rows()
+	{
+		if(! $this->_error)
+			return @pg_num_rows($this->_result);
+		else
+			return FALSE;
+	}
+/*	
+	// added 'E' for postgresql 8.2 to skip warnings in error log:
+	// HINT:  Use the escape string syntax for backslashes, e.g., E'\\'.
+	// WARNING:  nonstandard use of escape in a string literal at character...
+	function _quote_value($input)
+        {
+                if($input === NULL)
+			return 'NULL';
+		elseif(gettype($input) == 'string')
+			return 'E\''.addcslashes($input,"'\\\0").'\'';
+		else
+			return $input;
+	}
+*/	
+	function _driver_now()
+	{
+		return 'EXTRACT(EPOCH FROM CURRENT_TIMESTAMP(0))::integer';
+	}
+
+	function _driver_like()
+	{
+		return 'ILIKE';
+	}
+
+	function _driver_concat($input)
+	{
+		return implode(' || ',$input);
+	}
+
+	function _driver_listtables()
+	{
+		return $this->GetCol('SELECT relname AS name FROM pg_class WHERE relkind = \'r\' and relname !~ \'^pg_\' and relname !~ \'^sql_\'');
+	}
+
+	function _driver_begintrans()
+	{
+		return $this->Execute('BEGIN');
+	}
+
+	function _driver_committrans()
+	{
+		return $this->Execute('COMMIT');
+	}
+
+	function _driver_rollbacktrans()
+	{
+		return $this->Execute('ROLLBACK');
+	}
+
+	// @todo: locktype
+	function _driver_locktables($table, $locktype=null)
+        {
+	        if(is_array($table))
+		        $this->Execute('LOCK '.implode(', ', $table));
+		else
+		        $this->Execute('LOCK '.$table);
+	}
+
+	function _driver_unlocktables()
+	{
+		return TRUE;
+	}
+
+	function _driver_lastinsertid($table)
+	{
+               return $this->GetOne('SELECT currval(\''.$table.'_id_seq\')');
+	}
+
+	function _driver_groupconcat($field, $separator = ',')
+	{
+		return 'array_to_string(array_agg('.$field.'), \''.$separator.'\')';
 	}
 }
+
+?>

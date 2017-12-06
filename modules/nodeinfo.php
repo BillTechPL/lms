@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,29 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodeinfo.php,v 1.72 2011/02/18 14:32:46 alec Exp $
  */
+
+function NodeStats($id, $dt)
+{
+	global $DB;
+	if ($stats = $DB->GetRow('SELECT SUM(download) AS download, SUM(upload) AS upload 
+			    FROM stats WHERE nodeid=? AND dt>?',
+		array($id, time() - $dt))) {
+		list($result['download']['data'], $result['download']['units']) = setunits($stats['download']);
+		list($result['upload']['data'], $result['upload']['units']) = setunits($stats['upload']);
+		$result['downavg'] = $stats['download'] * 8 / 1000 / $dt;
+		$result['upavg'] = $stats['upload'] * 8 / 1000 / $dt;
+	}
+	return $result;
+}
 
 if (isset($_GET['nodegroups'])) {
 	$nodegroups = $LMS->GetNodeGroupNamesByNode(intval($_GET['id']));
 
 	$SMARTY->assign('nodegroups', $nodegroups);
 	$SMARTY->assign('total', sizeof($nodegroups));
-	$SMARTY->display('node/nodegrouplistshort.html');
+	$SMARTY->display('nodegrouplistshort.html');
 	die;
 }
 
@@ -42,7 +56,7 @@ else
 if (!$LMS->NodeExists($nodeid)) {
 	if (isset($_GET['ownerid']))
 		$SESSION->redirect('?m=customerinfo&id=' . $_GET['ownerid']);
-	else if ($DB->GetOne('SELECT 1 FROM vnodes WHERE id = ? AND ownerid IS NULL', array($nodeid)))
+	else if ($DB->GetOne('SELECT 1 FROM nodes WHERE id = ? AND ownerid = 0', array($nodeid)))
 		$SESSION->redirect('?m=netdevinfo&ip=' . $nodeid . '&id=' . $LMS->GetNetDevIDByNode($nodeid));
 	else
 		$SESSION->redirect('?m=nodelist');
@@ -61,6 +75,10 @@ $customerid = $nodeinfo['ownerid'];
 
 include(MODULES_DIR . '/customer.inc.php');
 
+$nodestats['hour'] = NodeStats($nodeid, 60 * 60);
+$nodestats['day'] = NodeStats($nodeid, 60 * 60 * 24);
+$nodestats['month'] = NodeStats($nodeid, 60 * 60 * 24 * 30);
+
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 if (!isset($_GET['ownerid']))
@@ -71,66 +89,15 @@ if ($nodeinfo['netdev'] == 0)
 else
 	$netdevices = $LMS->GetNetDev($nodeinfo['netdev']);
 
-$layout['pagetitle'] = trans('Node Info: $a', $nodeinfo['name']);
-
-$nodeinfo['projectname'] = trans('none');
-if ($nodeinfo['invprojectid']) {
-	$prj = $LMS->GetProject($nodeinfo['invprojectid']);
-	if ($prj) {
-		if ($prj['type'] == INV_PROJECT_SYSTEM && intval($prj['id']==1)) {
-			/* inherited */ 
-			if ($nodeinfo['netdev']) {
-				$prj = $LMS->GetProject($netdevices['invprojectid']);
-				if ($prj) {
-					if ($prj['type'] == INV_PROJECT_SYSTEM && intval($prj['id'])==1) {
-						/* inherited */
-						if ($netdevices['netnodeid']) {
-							$prj = $DB->GetRow("SELECT p.*, n.name AS nodename FROM invprojects p
-								JOIN netnodes n ON n.invprojectid = p.id
-								WHERE n.id=?",
-								array($netdevices['netnodeid']));
-							if ($prj)
-								$nodeinfo['projectname'] = trans('$a (from network node $b)', $prj['name'], $prj['nodename']);
-						}
-					} else
-						$nodeinfo['projectname'] = trans('$a (from network device $b)', $prj['name'], $netdevices['name']);
-				}
-			}
-		} else
-			$nodeinfo['projectname'] = $prj['name'];
-	}
-}
-$nodeauthtype = array();
-$authtype = $nodeinfo['authtype'];
-if ($authtype != 0) {
-	$nodeauthtype['pppoe'] = ($authtype & 1);
-	$nodeauthtype['dhcp'] = ($authtype & 2);
-	$nodeauthtype['eap'] = ($authtype & 4);
-}
-
-$LMS->InitXajax();
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'nodexajax.inc.php');
+$layout['pagetitle'] = trans('Node Info: $0', $nodeinfo['name']);
 
 $nodeinfo = $LMS->ExecHook('node_info_init', $nodeinfo);
 
-$hook_data = $LMS->executeHook('nodeinfo_before_display',
-	array(
-		'nodeinfo' => $nodeinfo,
-		'smarty' => $SMARTY,
-	)
-);
-$nodeinfo = $hook_data['nodeinfo'];
-
-$SMARTY->assign('xajax', $LMS->RunXajax());
-
-$SMARTY->assign('nodesessions', $LMS->GetNodeSessions($nodeid));
 $SMARTY->assign('netdevices', $netdevices);
-$SMARTY->assign('nodeauthtype', $nodeauthtype);
+$SMARTY->assign('nodestats', $nodestats);
 $SMARTY->assign('nodegroups', $nodegroups);
 $SMARTY->assign('othernodegroups', $othernodegroups);
 $SMARTY->assign('nodeinfo', $nodeinfo);
-$SMARTY->assign('objectid', $nodeinfo['id']);
-$SMARTY->assign('nodeinfo_sortable_order', $SESSION->get_persistent_setting('nodeinfo-sortable-order'));
-$SMARTY->display('node/nodeinfo.html');
+$SMARTY->display('nodeinfo.html');
 
 ?>

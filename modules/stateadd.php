@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: stateadd.php,v 1.4 2011/01/18 08:12:25 alec Exp $
  */
 
 $stateadd = isset($_POST['stateadd']) ? $_POST['stateadd'] : NULL;
@@ -38,21 +38,18 @@ if(sizeof($stateadd))
 	if($stateadd['name'] == '')
 		$error['name'] = trans('State name is required!');
 
-	if (!$error) {
-		$args = array(
-			'name' => $stateadd['name'],
-			'description' => $stateadd['description']
-		);
-		$DB->Execute('INSERT INTO states (name, description)
-				VALUES (?,?)', array_values($args));
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_STATE] = $DB->GetLastInsertID('states');
-			$SYSLOG->AddMessage(SYSLOG::RES_STATE, SYSLOG::OPER_ADD, $args);
-		}
-
-		if (!isset($stateadd['reuse']))
+	if(!$error)
+	{
+		$DB->Execute('INSERT INTO states (name, description) 
+			    VALUES (?,?)',array(
+				    $stateadd['name'],
+				    $stateadd['description'],
+				    ));
+		
+		if(!isset($stateadd['reuse']))
+		{
 			$SESSION->redirect('?m=statelist');
+		}
 
 		unset($stateadd['name']);
 		unset($stateadd['description']);
@@ -65,6 +62,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('stateadd', $stateadd);
 $SMARTY->assign('error', $error);
-$SMARTY->display('state/stateadd.html');
+$SMARTY->display('stateadd.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netinfo.php,v 1.45 2011/01/18 08:12:23 alec Exp $
  */
 
 if(!$LMS->NetworkExists($_GET['id']))
@@ -36,13 +36,13 @@ if($SESSION->is_set('ntlp.'.$_GET['id']) && !isset($_GET['page']))
 
 $SESSION->save('ntlp.'.$_GET['id'], $page);
 
-$network = $LMS->GetNetworkRecord($_GET['id'], $page, ConfigHelper::getConfig('phpui.networkhosts_pagelimit'));
+$network = $LMS->GetNetworkRecord($_GET['id'], $page, $CONFIG['phpui']['networkhosts_pagelimit']);
 
-$layout['pagetitle'] = trans('Info Network: $a', $network['name']);
+$layout['pagetitle'] = trans('Info Network: $0', $network['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('network', $network);
-$SMARTY->display('net/netinfo.html');
+$SMARTY->display('netinfo.html');
 
 ?>

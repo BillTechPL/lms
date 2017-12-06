@@ -1,9 +1,9 @@
 #!/sbin/runscript
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Header: /var/lib/cvsd/cvsroot/lms/contrib/daemon/gentoo-init/init.d/lmsd,v 1.2 2009/10/29 22:03:45 ceho Exp $
 
-extra_started_commands="reload"
+opts="${opts} reload"
 
 start() {
 	ebegin "Starting ${SVCNAME}"

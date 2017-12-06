@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: cashsourceadd.php,v 1.3 2011/01/18 08:12:20 alec Exp $
  */
 
 $sourceadd = isset($_POST['sourceadd']) ? $_POST['sourceadd'] : NULL;
@@ -43,25 +43,16 @@ if($sourceadd)
 	elseif($DB->GetOne('SELECT 1 FROM cashsources WHERE name = ?', array($sourceadd['name'])))
 		$error['name'] = trans('Source with specified name exists!');
 
-	if ($sourceadd['account'] != '' && (strlen($sourceadd['account'])>48 || !preg_match('/^([A-Z][A-Z])?[0-9]+$/', $sourceadd['account'])))
-		$error['account'] = trans('Wrong account number!');
-
-	if (!$error) {
-		$args = array(
-			'name' => $sourceadd['name'],
-			'description' => $sourceadd['description'],
-			'account' => $sourceadd['account'],
-		);
-		$DB->Execute('INSERT INTO cashsources (name, description, account) VALUES (?, ?, ?)', array_values($args));
-
-		if ($SYSLOG) {
-			$args[SYSLOG::RES_CASHSOURCE] = $DB->GetLastInsertID('cashsources');
-			$SYSLOG->AddMessage(SYSLOG::RES_CASHSOURCE, SYSLOG::OPER_ADD, $args);
-		}
-
+	if(!$error)
+	{
+		$DB->Execute('INSERT INTO cashsources (name, description) VALUES (?,?)',
+			array($sourceadd['name'], $sourceadd['description']));
+		
 		if(!isset($sourceadd['reuse']))
+		{
 			$SESSION->redirect('?m=cashsourcelist');
-
+		}
+		
 		unset($sourceadd['name']);
 		unset($sourceadd['description']);
 	}
@@ -73,6 +64,6 @@ $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('error', $error);
 $SMARTY->assign('sourceadd', $sourceadd);
-$SMARTY->display('cash/cashsourceadd.html');
+$SMARTY->display('cashsourceadd.html');
 
 ?>

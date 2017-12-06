@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: netdevmap.php,v 1.66 2011/01/18 08:12:23 alec Exp $
  */
 
 function drawtext($x, $y, $text, $r, $g, $b)
 {
-	global $m, $font;
+	global $m, $font, $CONFIG;
 
 	if(!$text) return;
 
@@ -46,8 +46,9 @@ function drawtext($x, $y, $text, $r, $g, $b)
 
 function pngdrawtext($image, $font, $x, $y, $text, $color, $bgcolor)
 {
-	if(ConfigHelper::getConfig('phpui.gd_translate_to'))
-		$text = iconv('UTF-8', ConfigHelper::getConfig('phpui.gd_translate_to'), $text);
+	global $CONFIG;
+	if($CONFIG['phpui']['gd_translate_to'])
+		$text = iconv('UTF-8', $CONFIG['phpui']['gd_translate_to'], $text);
 	imagestring($image, $font, $x + 1, $y + 1, $text, $bgcolor);
 	imagestring($image, $font, $x + 1, $y - 1, $text, $bgcolor);
 	imagestring($image, $font, $x - 1, $y + 1, $text, $bgcolor);
@@ -293,9 +294,9 @@ $nodelist = array();
 $devicelinks = array();
 $nodemap = array();
 
-if(!$mini && ($nodes = $DB->GetAll('SELECT id, linktype, netdev
-			FROM vnodes
-			WHERE ownerid IS NOT NULL AND netdev IS NOT NULL
+if(!$mini && ($nodes = $DB->GetAll('SELECT id, linktype, netdev 
+			FROM nodes 
+			WHERE ownerid > 0 AND netdev > 0 
 			ORDER BY name ASC')))
 {
 	foreach($nodes as $idx => $node)
@@ -315,34 +316,7 @@ if($links = $DB->GetAll('SELECT src, dst FROM netlinks'))
 	}
 }
 
-$type = strtolower(ConfigHelper::getConfig('phpui.map_type', ''));
-
-if ($type == 'openlayers')
-{
-	include(MODULES_DIR.'/map.inc.php');
-
-	if (isset($_GET['netdevid']))
-	{
-		$netdevid = intval($_GET['netdevid']);
-		$SMARTY->assign('lon', $devices[$netdevid]['lon']);
-		$SMARTY->assign('lat', $devices[$netdevid]['lat']);
-	}
-	else
-		if (isset($_GET['nodeid']))
-		{
-			$nodeid = intval($_GET['nodeid']);
-			$SMARTY->assign('lon', $nodes[$nodeid]['lon']);
-			$SMARTY->assign('lat', $nodes[$nodeid]['lat']);
-		}
-		else {
-			$SMARTY->assign('lon', $_GET['lon']);
-			$SMARTY->assign('lat', $_GET['lat']);
-		}
-
-	$SMARTY->assign('type', $type);
-	$SMARTY->display('netdev/netdevmap.html');
-}
-elseif($graph == '')
+if($graph == '')
 {
 	makemap($map,$seen,$start);
 	if($map)
@@ -413,11 +387,11 @@ elseif($graph == '')
 	$SMARTY->assign('deviceslist', $deviceslist);
 	$SMARTY->assign('start', $start);
 	$SMARTY->assign('mini', $mini);
-	$SMARTY->assign('type', $type);
+	$SMARTY->assign('type', strtolower(isset($CONFIG['phpui']['map_type']) ? $CONFIG['phpui']['map_type'] : ''));
 	$SMARTY->assign('emptydb', sizeof($deviceslist) ? FALSE : TRUE);
 	$SMARTY->assign('gd', function_exists('imagepng'));
 	$SMARTY->assign('ming', function_exists('ming_useswfversion'));
-	$SMARTY->display('netdev/netdevmap.html');
+	$SMARTY->display('netdevmap.html');
 } 
 elseif ($graph == 'flash')
 {	
@@ -541,7 +515,7 @@ elseif ($graph == 'flash')
 	$im_d_off = new SWFBitmap(fopen("img/netdev_off.jpg","rb"));
 	$im_d_on  = new SWFBitmap(fopen("img/netdev_on.jpg","rb"));
 	
-	$nodes = $DB->GetAllByKey('SELECT id, name, INET_NTOA(ipaddr) AS ip, lastonline FROM vnodes', 'id');
+	$nodes = $DB->GetAllByKey('SELECT id, name, INET_NTOA(ipaddr) AS ip, lastonline FROM nodes', 'id');
 
 	if($nodemap) foreach($nodemap as $nodeid => $node)
 	{
@@ -555,7 +529,7 @@ elseif ($graph == 'flash')
 		$n = $nodes[$nodeid];
 		
 		if ($n['lastonline']) {	
-			if ((time()-$n['lastonline'])>ConfigHelper::getConfig('phpui.lastonline_limit')) {
+			if ((time()-$n['lastonline'])>$CONFIG['phpui']['lastonline_limit']) {
 				$myfill = $squareshape->addFill($im_n_off,SWFFILL_TILED_BITMAP);
 			} else {
 				$myfill = $squareshape->addFill($im_n_on,SWFFILL_TILED_BITMAP);
@@ -580,7 +554,7 @@ elseif ($graph == 'flash')
 
 	$devices = $DB->GetAllByKey('SELECT n.id, n.name, n.location, MAX(lastonline) AS lastonline 
 				    FROM netdevices n 
-				    LEFT JOIN vnodes ON (n.id = netdev)
+				    LEFT JOIN nodes ON (n.id = netdev)
 				    GROUP BY n.id, n.name, n.location', 'id');
 
 	foreach($devicemap as $deviceid => $device)
@@ -596,7 +570,7 @@ elseif ($graph == 'flash')
 		
 		if ($d['lastonline']) 
 		{	
-			if ((time()-$d['lastonline'])>ConfigHelper::getConfig('phpui.lastonline_limit')) {
+			if ((time()-$d['lastonline'])>$CONFIG['phpui']['lastonline_limit']) {
 				$myfill = $squareshape->addFill($im_d_off,SWFFILL_TILED_BITMAP);
 			} else {
 				$myfill = $squareshape->addFill($im_d_on,SWFFILL_TILED_BITMAP);
@@ -617,7 +591,7 @@ elseif ($graph == 'flash')
 		$i->moveTo($px,$py);
 
 		if($devip = $DB->GetCol('SELECT INET_NTOA(ipaddr) 
-				    FROM vnodes WHERE ownerid IS NULL AND netdev = ? 
+				    FROM nodes WHERE ownerid = 0 AND netdev = ? 
 				    ORDER BY ipaddr LIMIT 4', array($deviceid)))
 		{
 			if(isset($devip[0])) drawtext($px + 16, $py - (isset($devip[1])?16:8), $devip[0], 0,0,255);
@@ -749,7 +723,7 @@ else
 	$im_d_off = imagecreatefrompng('img/netdev_off.png');
 	$im_d_on = imagecreatefrompng('img/netdev_on.png');
 
-	$nodes = $DB->GetAllByKey('SELECT id, name, INET_NTOA(ipaddr) AS ip, lastonline FROM vnodes', 'id');
+	$nodes = $DB->GetAllByKey('SELECT id, name, INET_NTOA(ipaddr) AS ip, lastonline FROM nodes', 'id');
 
 	if($nodemap) foreach($nodemap as $nodeid => $node)
 	{
@@ -761,7 +735,7 @@ else
 		$n = $nodes[$nodeid];
 
 		if ($n['lastonline']) {	
-			if ((time()-$n['lastonline'])>ConfigHelper::getConfig('phpui.lastonline_limit'))
+			if ((time()-$n['lastonline'])>$CONFIG['phpui']['lastonline_limit'])
 				imagecopy($im,$im_n_off,$px,$py,0,0,16,16);
 			else 
 				imagecopy($im,$im_n_on,$px,$py,0,0,16,16);
@@ -774,7 +748,7 @@ else
 
 	$devices = $DB->GetAllByKey('SELECT n.id, n.name, n.location, MAX(lastonline) AS lastonline 
 				    FROM netdevices n
-				    LEFT JOIN vnodes ON (n.id = netdev)
+				    LEFT JOIN nodes ON (n.id = netdev)
 				    GROUP BY n.id, n.name, n.location', 'id');
 
 	foreach($devicemap as $deviceid => $device)
@@ -787,15 +761,15 @@ else
 		$d = $devices[$deviceid];
 		
 		if ($d['lastonline']) {	
-			if ((time()-$d['lastonline'])>ConfigHelper::getConfig('phpui.lastonline_limit'))
+			if ((time()-$d['lastonline'])>$CONFIG['phpui']['lastonline_limit'])
 				imagecopy($im,$im_d_off,$px,$py,0,0,16,16);
 			else 
 				imagecopy($im,$im_d_on,$px,$py,0,0,16,16);
 		} else 
 			imagecopy($im,$im_d_unk,$px,$py,0,0,16,16);
 		
-		if($devip = $DB->GetCol('SELECT INET_NTOA(ipaddr) FROM vnodes
-				    WHERE ownerid IS NULL AND netdev = ?
+		if($devip = $DB->GetCol('SELECT INET_NTOA(ipaddr) FROM nodes 
+				    WHERE ownerid = 0 AND netdev = ? 
 				    ORDER BY ipaddr LIMIT 4', array($deviceid)))
 		{
 			if(isset($devip[0])) pngdrawtext($im, 1, $px + 20, $py - (isset($devip[1])?17:8), $devip[0], $blue, $lightbrown);

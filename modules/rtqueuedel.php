@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,30 +21,45 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtqueuedel.php,v 1.25 2011/01/18 08:12:25 alec Exp $
  */
 
-$queue = intval($_GET['id']);
-$qaction = ($_GET['qaction']);
-$ticket = $DB->GetOne('SELECT id FROM rttickets WHERE queueid = ?', array($queue));
+$layout['pagetitle'] = trans('Remove queue ID: $0',sprintf("%04d",$_GET['id']));
 
-if ($qaction == 'delete')
+if(!$LMS->QueueExists($_GET['id']))
 {
-	$del = 1;
-	$nodel = 0;
-	$deltime = time();
-	$DB->BeginTrans();
-	$DB->Execute('UPDATE rtqueues SET deleted=?, deltime=?, deluserid=? WHERE id = ?', array($del, $deltime, Auth::GetCurrentUser(), $queue));
-	$DB->Execute('UPDATE rttickets SET deleted=?, deluserid=? WHERE deleted=? and queueid = ?', array($del, Auth::GetCurrentUser(), $nodel, $queue));
-	if ($deltickets = $DB->GetCol('SELECT id FROM rttickets WHERE queueid = ?', array($queue)))
+	$body = '<P>'.trans('Specified ID is not proper or does not exist!').'</P>';
+}
+else
+{
+	if($_GET['is_sure']!=1)
 	{
-		foreach ($deltickets as $delticket) {
-			$DB->Execute('UPDATE rtmessages SET deleted=?, deluserid=? WHERE deleted=? and ticketid = ?', array($del, Auth::GetCurrentUser(), $nodel, $delticket));
-		}
+		$body = '<P>'.trans('Do you want to remove queue called $0?',$LMS->GetQueueName($_GET['id'])).'</P>'; 
+		$body .= '<P>'.trans('All tickets and messages in queue will be lost.').'</P>';
+		$body .= '<P><A HREF="?m=rtqueuedel&id='.$_GET['id'].'&is_sure=1">'.trans('Yes, I know what I do.').'</A>&nbsp;';
+		$body .= '<A HREF="?'.$SESSION->get('backto').'">'.trans('No, I\'ve changed my mind.').'</A></P>';
 	}
-	$DB->CommitTrans();
+	else
+	{
+		$queue = intval($_GET['id']);
+
+        if (isset($CONFIG['rt']['mail_dir'])) {
+            // remove attachment files
+            if ($tickets = $DB->GetCol('SELECT id FROM rttickets WHERE queueid = ?', array($queue)))
+            {
+                foreach ($tickets as $ticket) {
+                    rrmdir($CONFIG['rt']['mail_dir'].sprintf('/%06d', $ticket));
+                }
+            }
+        }
+
+        $DB->Execute('DELETE FROM rtqueues WHERE id=?', array($queue));
+
+		$SESSION->redirect('?m=rtqueuelist');
+	}
 }
 
-$SESSION->redirect('?m=rtqueuelist');
+$SMARTY->assign('body',$body);
+$SMARTY->display('dialog.html');
 
 ?>

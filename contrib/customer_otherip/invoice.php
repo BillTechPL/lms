@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2015 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,48 +21,41 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: invoice.php,v 1.16 2011/01/18 08:11:59 alec Exp $
  */
 
 include('class.php');
 session_start();
 
-if (!$_SESSION['uid'] || !$_GET['id'])
+if(!$_SESSION['uid'] || !$_GET['id'])
+{
 	die;
+}
 
-if ($_SESSION['uid'] != $DB->GetOne('SELECT customerid FROM documents WHERE id=?', array($_GET['id'])))
+if($_SESSION['uid'] != $DB->GetOne('SELECT customerid FROM documents WHERE id=?', array($_GET['id'])))
+{
 	die;
+}
 
-$invoice_type = strtolower(ConfigHelper::getConfig('invoices.type'));
-$attachment_name = ConfigHelper::getConfig('invoices.attachment_name');
+if (strtolower($CONFIG['invoices']['type']) == 'pdf')
+{
+    include('invoice_pdf.php');
+    die;
+}
 
-if ($invoice_type == 'pdf') {
-	$pdf_type = ConfigHelper::getConfig('invoices.pdf_type', 'tcpdf');
-	$pdf_type = ucwords($pdf_type);
-	$classname = 'LMS' . $pdf_type . 'Invoice';
-	$document = new $classname('A4', 'portrait', trans('Invoices'));
-} else
-	$document = new LMSHtmlInvoice($SMARTY);
+header('Content-Type: '.$LMS->CONFIG['invoices']['content_type']);
+if($LMS->CONFIG['invoices']['attachment_name'] != '')
+	header('Content-Disposition: attachment; filename='.$LMS->CONFIG['invoices']['attachment_name']);
 
 $invoice = $LMS->GetInvoiceContent($_GET['id']);
 
-$docnumber = docnumber(array(
-	'number' => $invoice['number'],
-	'template' => $invoice['template'],
-	'cdate' => $invoice['cdate'],
-));
-$layout['pagetitle'] = trans('Invoice No. $a', $docnumber);
-$invoice['last'] = true;
-$invoice['type'] = trans('ORIGINAL');
-
-$document->Draw($invoice);
-
-if (!is_null($attachment_name)) {
-	$attachment_name = str_replace('%number', $docnumber, $attachment_name);
-	$attachment_name = preg_replace('/[^[:alnum:]_\.]/i', '_', $attachment_name);
-} else
-	$attachment_name = 'invoices.pdf';
-
-$document->WriteToBrowser($attachment_name);
+$ntempl = docnumber($invoice['number'], $invoice['template'], $invoice['cdate']);
+$layout['pagetitle'] = trans('Invoice No. $0', $ntempl);
+$invoice['last'] = TRUE;
+$SMARTY->assign('invoice',$invoice);
+$SMARTY->display(SMARTY_TEMPLATES_DIR.'/clearheader.html');
+$SMARTY->assign('type',trans('ORIGINAL'));
+$SMARTY->display(SMARTY_TEMPLATES_DIR.'/'.$LMS->CONFIG['invoices']['template_file']);
+$SMARTY->display(SMARTY_TEMPLATES_DIR.'/clearfooter.html');
 
 ?>

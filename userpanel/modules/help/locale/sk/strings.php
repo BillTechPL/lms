@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: strings.php,v 1.5 2011/01/18 08:12:34 alec Exp $
  */
 
 $_LANG['Add'] = 'Pridať';
@@ -44,7 +44,7 @@ $_LANG['Now, you can only select:'] = 'Teraz môžeš vybrať len:';
 $_LANG['Runs problems solving center'] = 'Spustí centrum riešenia problémov';
 $_LANG['Select:'] = 'Vybrať:';
 $_LANG['Submit'] = 'Uložiť';
-$_LANG['There is no Help Center tree. Use $athis form$b to add root item.'] = 'Help Center nemá štruktúru. Použí $atento formulár$b pre pridanie koreňovej položky.';
+$_LANG['There is no Help Center tree. Use $0this form$1 to add root item.'] = 'Help Center nemá štruktúru. Použí $0tento formulár$1 pre pridanie koreňovej položky.';
 $_LANG['This cannot be empty'] = 'To nemôže byť prázdne';
 $_LANG['This module is not configured yet.'] = 'Tento modul ešte nie je nakonfigurovaný.';
 $_LANG['This module shows problems solving center'] = 'Tento modul zobrazuje centrum riešenia problémov';

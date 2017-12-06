@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2009091001.php,v 1.3 2011/01/18 08:12:16 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 ALTER TABLE customers ADD paytype varchar(255) DEFAULT NULL;
 DROP VIEW customersview;
 CREATE VIEW customersview AS
@@ -37,8 +37,8 @@ SELECT c.* FROM customers c
         WHERE e.userid = lms_current_user() AND a.customerid = c.id);
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009091001', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009091001', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

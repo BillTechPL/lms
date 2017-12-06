@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: noteadd.php,v 1.8 2011/01/18 08:12:24 alec Exp $
  */
 
 //$taxeslist = $LMS->GetTaxes();
@@ -44,7 +44,7 @@ switch($action)
 
 		// get default note's numberplanid and next number
 		$note['cdate'] = time();
-		$note['paytime'] = ConfigHelper::getConfig('notes.paytime');
+		$note['paytime'] = $CONFIG['notes']['paytime'];
 		if(isset($_GET['customerid']) && $_GET['customerid'] != '' && $LMS->CustomerExists($_GET['customerid']))
 		{
 			$customer = $LMS->GetCustomer($_GET['customerid'], true);
@@ -116,7 +116,7 @@ switch($action)
 	
 			if($note['cdate'] < $maxdate)
 			{
-				$error['cdate'] = trans('Last date of debit note settlement is $a. If sure, you want to write note with date of $b, then click "Submit" again.', date('Y/m/d H:i', $maxdate), date('Y/m/d H:i', $note['cdate']));
+				$error['cdate'] = trans('Last date of debit note settlement is $0. If sure, you want to write note with date of $1, then click "Submit" again.', date('Y/m/d H:i', $maxdate), date('Y/m/d H:i', $note['cdate']));
 				$note['cdatewarning'] = 1;
 			}
 		}
@@ -127,13 +127,8 @@ switch($action)
 		{
 			if(!preg_match('/^[0-9]+$/', $note['number']))
 				$error['number'] = trans('Debit note number must be integer!');
-			elseif($LMS->DocumentExists(array(
-					'number' => $note['number'],
-					'doctype' => DOC_DNOTE,
-					'planid' => $note['numberplanid'],
-					'cdate' => $note['cdate'],
-				)))
-				$error['number'] = trans('Debit note number $a already exists!', $note['number']);
+			elseif($LMS->DocumentExists($note['number'], DOC_DNOTE, $note['numberplanid'], $note['cdate']))
+				$error['number'] = trans('Debit note number $0 already exists!', $note['number']);
 		}
 
 		if(empty($note['paytime_default']) && !preg_match('/^[0-9]+$/', $note['paytime']))
@@ -163,35 +158,19 @@ switch($action)
 		if($contents && $customer)
 		{
 			$DB->BeginTrans();
-			$DB->LockTables(array('documents', 'cash', 'debitnotecontents', 'numberplans', 'divisions', 'vdivisions'));
+			$DB->LockTables(array('documents', 'cash', 'debitnotecontents', 'numberplans', 'divisions'));
 
 			if(!$note['number'])
-				$note['number'] = $LMS->GetNewDocumentNumber(array(
-					'doctype' => DOC_DNOTE,
-					'planid' => $note['numberplanid'],
-					'cdate' => $note['cdate'],
-					'customerid' => $customer['id'],
-				));
+				$note['number'] = $LMS->GetNewDocumentNumber(DOC_DNOTE, $note['numberplanid'], $note['cdate']);
 			else
 			{
 				if(!preg_match('/^[0-9]+$/', $note['number']))
 					$error['number'] = trans('Debit note number must be integer!');
-				elseif($LMS->DocumentExists(array(
-						'number' => $note['number'],
-						'doctype' => DOC_DNOTE,
-						'planid' => $note['numberplanid'],
-						'cdate' => $note['cdate'],
-						'customerid' => $customer['id'],
-					)))
-					$error['number'] = trans('Debit note number $a already exists!', $note['number']);
-
+				elseif($LMS->DocumentExists($note['number'], DOC_DNOTE, $note['numberplanid'], $note['cdate']))
+					$error['number'] = trans('Debit note number $0 already exists!', $note['number']);
+				
 				if($error)
-					$note['number'] = $LMS->GetNewDocumentNumber(array(
-						'doctype' => DOC_DNOTE,
-						'planid' => $note['numberplanid'],
-						'cdate' => $note['cdate'],
-						'customerid' => $customer['id'],
-					));
+					$note['number'] = $LMS->GetNewDocumentNumber(DOC_DNOTE, $note['numberplanid'], $note['cdate']);
 			}
 			
 			// set paytime
@@ -203,104 +182,51 @@ switch($action)
 			                WHERE id = ?', array($customer['divisionid']))) !== NULL)
 				        $note['paytime'] = $paytime;
 				else
-				        $note['paytime'] = ConfigHelper::getConfig('notes.paytime');
+				        $note['paytime'] = $CONFIG['notes']['paytime'];
 			}
 
 			$cdate = !empty($note['cdate']) ? $note['cdate'] : time();
-
-			$division = $DB->GetRow('SELECT name, shortname, address, city, zip, countryid, ten, regon,
-				account, inv_header, inv_footer, inv_author, inv_cplace 
-				FROM vdivisions WHERE id = ?',array($customer['divisionid']));
-
-			if ($note['numberplanid'])
-				$fullnumber = docnumber(array(
-					'number' => $note['number'],
-					'template' => $DB->GetOne('SELECT template FROM numberplans WHERE id = ?', array($note['numberplanid'])),
-					'cdate' => $cdate,
-					'customerid' => $customer['id'],
-				));
-			else
-				$fullnumber = null;
-
-			$args = array(
-				'number' => $note['number'],
-				SYSLOG::RES_NUMPLAN => !empty($note['numberplanid']) ? $note['numberplanid'] : null,
-				'type' => DOC_DNOTE,
-				'cdate' => $cdate,
-				SYSLOG::RES_USER => Auth::GetCurrentUser(),
-				SYSLOG::RES_CUST => $customer['id'],
-				'name' => $customer['customername'],
-				'address' => ($customer['postoffice'] && $customer['postoffice'] != $customer['city'] && $customer['street']
-					? $customer['city'] . ', ' : '') . $customer['address'],
-				'paytime' => $note['paytime'],
-				'ten' => $customer['ten'],
-				'ssn' => $customer['ssn'],
-				'zip' => $customer['zip'],
-				'city' => $customer['postoffice'] ? $customer['postoffice'] : $customer['city'],
-				SYSLOG::RES_COUNTRY => !empty($customer['countryid']) ? $customer['countryid'] : null,
-				SYSLOG::RES_DIV => !empty($customer['divisionid']) ? $customer['divisionid'] : null,
-				'div_name' => ($division['name'] ? $division['name'] : ''),
-				'div_shortname' => ($division['shortname'] ? $division['shortname'] : ''),
-				'div_address' => ($division['address'] ? $division['address'] : ''), 
-				'div_city' => ($division['city'] ? $division['city'] : ''), 
-				'div_zip' => ($division['zip'] ? $division['zip'] : ''),
-				'div_' . SYSLOG::getResourceKey(SYSLOG::RES_COUNTRY) => !empty($division['countryid']) ? $division['countryid'] : null,
-				'div_ten'=> ($division['ten'] ? $division['ten'] : ''),
-				'div_regon' => ($division['regon'] ? $division['regon'] : ''),
-				'div_account' => ($division['account'] ? $division['account'] : ''),
-				'div_inv_header' => ($division['inv_header'] ? $division['inv_header'] : ''),
-				'div_inv_footer' => ($division['inv_footer'] ? $division['inv_footer'] : ''),
-				'div_inv_author' => ($division['inv_author'] ? $division['inv_author'] : ''),
-				'div_inv_cplace' => ($division['inv_cplace'] ? $division['inv_cplace'] : ''),
-				'fullnumber' => $fullnumber,
-			);
+			
 			$DB->Execute('INSERT INTO documents (number, numberplanid, type,
-					cdate, userid, customerid, name, address, paytime,
-					ten, ssn, zip, city, countryid, divisionid,
-					div_name, div_shortname, div_address, div_city, div_zip, div_countryid,
-					div_ten, div_regon, div_account, div_inv_header, div_inv_footer, div_inv_author, div_inv_cplace, fullnumber)
-					VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-						?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', array_values($args));
-
+		                        cdate, userid, customerid, name, address, paytime,
+		                        ten, ssn, zip, city, countryid, divisionid)
+		                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+		                        array($note['number'],
+		                                !empty($note['numberplanid']) ? $note['numberplanid'] : 0,
+		                                DOC_DNOTE,
+		                                $cdate,
+		                                $AUTH->id,
+		                                $customer['id'],
+				                $customer['customername'],
+				                $customer['address'],
+						$note['paytime'],
+				                $customer['ten'],
+				                $customer['ssn'],
+				                $customer['zip'],
+				                $customer['city'],
+				                $customer['countryid'],
+				                $customer['divisionid'],
+					));
+			
 			$nid = $DB->GetLastInsertID('documents');
-
-			$LMS->UpdateDocumentPostAddress($nid, $customer['id']);
-
-			if ($SYSLOG) {
-				$args[SYSLOG::RES_DOC] = $nid;
-				unset($args[SYSLOG::RES_USER]);
-				$SYSLOG->AddMessage(SYSLOG::RES_DOC, SYSLOG::OPER_ADD, $args,
-					array('div_' . SYSLOG::getResourceKey(SYSLOG::RES_COUNTRY)));
-			}
-
-			$itemid = 0;
-			foreach ($contents as $idx => $item) {
-				$itemid++;
+			
+			$itemid=0;
+            		foreach($contents as $idx => $item)
+		        {
+			        $itemid++;
 				$item['value'] = str_replace(',','.', $item['value']);
 
-				$args = array(
-					SYSLOG::RES_DOC => $nid,
-					'itemid' => $itemid,
-					'value' => $item['value'],
-					'description' => $item['description']
-				);
 				$DB->Execute('INSERT INTO debitnotecontents (docid, itemid, value, description)
-					VALUES (?, ?, ?, ?)', array_values($args));
-
-				if ($SYSLOG) {
-					$args[SYSLOG::RES_DNOTECONT] = $DB->GetLastInsertID('debitnotecontents');
-					$args[SYSLOG::RES_CUST] = $customer['id'];
-					$SYSLOG->AddMessage(SYSLOG::RES_DNOTECONT, SYSLOG::OPER_ADD, $args);
-				}
+					VALUES (?, ?, ?, ?)', array($nid, $itemid, $item['value'], $item['description']));
 
 				$LMS->AddBalance(array(
-					'time' => $cdate,
-					'value' => $item['value']*-1,
-					'taxid' => 0,
-					'customerid' => $customer['id'],
-					'comment' => $item['description'],
-					'docid' => $nid,
-					'itemid'=> $itemid
+				        'time' => $cdate,
+				        'value' => $item['value']*-1,
+				        'taxid' => 0,
+				        'customerid' => $customer['id'],
+				        'comment' => $item['description'],
+				        'docid' => $nid,
+				        'itemid'=> $itemid
 				));
 			}
 
@@ -331,8 +257,10 @@ if($action)
 	$SESSION->redirect('?m=noteadd');
 }
 
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customers', $LMS->GetCustomerNames());
+if(!isset($CONFIG['phpui']['big_networks']) || !chkconfig($CONFIG['phpui']['big_networks']))
+{
+        $SMARTY->assign('customers', $LMS->GetCustomerNames());
+}
 
 if($newnote = $SESSION->get('noteprint'))
 {
@@ -346,11 +274,8 @@ $SMARTY->assign('error', $error);
 $SMARTY->assign('contents', $contents);
 $SMARTY->assign('customer', $customer);
 $SMARTY->assign('note', $note);
-$SMARTY->assign('numberplanlist', $LMS->GetNumberPlans(array(
-	'doctype' => DOC_DNOTE,
-	'cdate' => date('Y/m', $note['cdate']),
-)));
+$SMARTY->assign('numberplanlist', $LMS->GetNumberPlans(DOC_DNOTE, date('Y/m', $note['cdate'])));
 //$SMARTY->assign('taxeslist', $taxeslist);
-$SMARTY->display('note/noteadd.html');
+$SMARTY->display('noteadd.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: rtqueueinfo.php,v 1.16 2011/01/18 08:12:25 alec Exp $
  */
 
 if(! $LMS->QueueExists($_GET['id']))
@@ -31,11 +31,11 @@ if(! $LMS->QueueExists($_GET['id']))
 
 $queue = $LMS->GetQueue($_GET['id']);
 
-$layout['pagetitle'] = trans('Queue Info: $a',$queue['name']);
+$layout['pagetitle'] = trans('Queue Info: $0',$queue['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('queue', $queue);
-$SMARTY->display('rt/rtqueueinfo.html');
+$SMARTY->display('rtqueueinfo.html');
 
 ?>

@@ -1,7 +1,7 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
  *  (C) Copyright 2009 Webvisor Sp. z o.o.
  *
@@ -79,6 +79,6 @@ $layout['pagetitle'] = trans('DNS Record Edit');
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('record', $record);
-$SMARTY->display('record/recordedit.html');
+$SMARTY->display('recordedit.html');
 
 ?>

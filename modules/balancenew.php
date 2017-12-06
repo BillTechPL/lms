@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: balancenew.php,v 1.40 2011/01/18 08:12:20 alec Exp $
  */
 
 $layout['pagetitle'] = trans('New Balance');
@@ -46,9 +46,10 @@ $SMARTY->assign('sourceid',$SESSION->get('addsource'));
 $SMARTY->assign('comment', $SESSION->get('addbc'));
 $SMARTY->assign('taxid', $SESSION->get('addbtax'));
 $SMARTY->assign('time', $SESSION->get('addbt'));
+$SMARTY->assign('value', $SESSION->get('addbv'));
 $SMARTY->assign('taxeslist', $LMS->GetTaxes());
 $SMARTY->assign('customers',$LMS->GetCustomerNames());
-$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources WHERE deleted = 0 ORDER BY name'));
-$SMARTY->display('balance/balancenew.html');
+$SMARTY->assign('sourcelist', $DB->GetAll('SELECT id, name FROM cashsources ORDER BY name'));
+$SMARTY->display('balancenew.html');
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: dblist.php,v 1.41 2011/01/18 08:12:21 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Database Backups');
 
-if ($handle = opendir(ConfigHelper::getConfig('directories.backup_dir')))
+if ($handle = opendir($CONFIG['directories']['backup_dir']))
 {
 	while (false !== ($file = readdir($handle)))
 	{
@@ -54,9 +54,7 @@ if ($handle = opendir(ConfigHelper::getConfig('directories.backup_dir')))
 					}
 					
 					$dblist['name'][] = $name;
-					$dblist['size'][] = $filesize = filesize(ConfigHelper::getConfig('directories.backup_dir').'/'.$file);
-					list ($hsize, $hunit) = setunits($filesize);
-					$dblist['hsize'][] = f_round($hsize) . ' ' . $hunit;
+					$dblist['size'][] = filesize($CONFIG['directories']['backup_dir'].'/'.$file);
 					$dblist['type'][] = 'plain';
 				}
 			}
@@ -76,9 +74,7 @@ if ($handle = opendir(ConfigHelper::getConfig('directories.backup_dir')))
 						$dblist['time'][] = (int) $name;
 					}
 					$dblist['name'][] = $name;
-					$dblist['size'][] = $filesize = filesize(ConfigHelper::getConfig('directories.backup_dir').'/'.$file);
-					list ($hsize, $hunit) = setunits($filesize);
-					$dblist['hsize'][] = f_round($hsize) . ' ' . $hunit;
+					$dblist['size'][] = filesize($CONFIG['directories']['backup_dir'].'/'.$file);
 					$dblist['type'][] = 'gz';
 				}
 			}
@@ -88,7 +84,7 @@ if ($handle = opendir(ConfigHelper::getConfig('directories.backup_dir')))
 }
 
 if(isset($dblist['time']))
-	array_multisort($dblist['time'],$dblist['size'],$dblist['type'],$dblist['dbv'],$dblist['name'],$dblist['hsize']);
+	array_multisort($dblist['time'],$dblist['size'],$dblist['type'],$dblist['dbv'],$dblist['name']);
 
 $dblist['total'] = isset($dblist['time']) ? sizeof($dblist['time']) : 0;
 

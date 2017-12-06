@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: trafficprint.php,v 1.16 2011/01/18 08:12:26 alec Exp $
  */
-
-if (!ConfigHelper::checkConfig('privileges.superuser') && !ConfigHelper::checkConfig('privileges.reports'))
-	access_denied();
 
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
@@ -37,19 +34,19 @@ switch($type)
 		$year = isset($_POST['year']) ? $_POST['year'] : date('Y');
 		$customer = isset($_POST['customer']) ? intval($_POST['customer']) : intval($_GET['customer']);
 
-		$layout['pagetitle'] = trans('Stats of Customer $a in month $b', $LMS->GetCustomerName($customer), strftime('%B %Y', mktime(0,0,0,$month,1,$year)));
-
+		$layout['pagetitle'] = trans('Stats of Customer $0 in month $1', $LMS->GetCustomerName($customer), strftime('%B %Y', mktime(0, 0, 0, $month, 1, $year)));
+	
 		$from = mktime(0,0,0,$month,1,$year);
 		$to = mktime(0,0,0,$month+1,1,$year);
 
-		if($list = $DB->GetAll('SELECT download, upload, dt
-				    FROM stats
+		if ($list = $DB->GetAll('SELECT download, upload, dt
+	                	    FROM stats
 				    LEFT JOIN nodes ON (nodeid = nodes.id)
 				    WHERE ownerid = ? AND dt >= ? AND dt < ?',
 				    array($customer, $from, $to)))
 		{
 			for($i=1; $i<=date('t',$from); $i++)
-				$stats[$i]['date'] = mktime(0,0,0,$month,$i,$year); 
+				$stats[$i]['date'] = mktime(0,0,0,$month,$i,$year);
 
 			foreach($list as $row)
 			{
@@ -82,12 +79,7 @@ switch($type)
 			$SMARTY->assign('listdata', $listdata);
 		}
 
-		if (strtolower(ConfigHelper::getConfig('phpui.report_type')) == 'pdf') {
-			$output = $SMARTY->fetch('print/printcustomertraffic.html');
-			html2pdf($output, trans('Reports'), $layout['pagetitle']);
-		} else {
-			$SMARTY->display('print/printcustomertraffic.html');
-		}
+		$SMARTY->display('printcustomertraffic.html');
 	break;
 
 	default:
@@ -100,14 +92,15 @@ switch($type)
 		for($i=1; $i<13; $i++)
 			$months[$i] = strftime('%B', mktime(0,0,0,$i,1));
 
-		if (!ConfigHelper::checkConfig('phpui.big_networks'))
+		if (!isset($CONFIG['phpui']['big_networks']) || !chkconfig($CONFIG['phpui']['big_networks'])) {
 			$SMARTY->assign('customers', $LMS->GetCustomerNames());
+		}
 		$SMARTY->assign('currmonth', date('n'));
 		$SMARTY->assign('curryear', date('Y'));
 		$SMARTY->assign('statyears', $statyears);
 		$SMARTY->assign('months', $months);
 		$SMARTY->assign('printmenu', 'traffic');
-		$SMARTY->display('print/printindex.html');
+		$SMARTY->display('printindex.html');
 	break;
 }
 

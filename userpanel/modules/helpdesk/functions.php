@@ -1,9 +1,9 @@
 <?php
 
 /*
- *  LMS version 1.11-git
+ *  LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,459 +21,274 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: functions.php,v 1.7 2011/03/10 11:36:40 alec Exp $
  */
 
-if (defined('USERPANEL_SETUPMODE')) {
-	function module_setup() {
-		global $SMARTY, $LMS, $AUTH;
+if (defined('USERPANEL_SETUPMODE'))
+{
+    function module_setup()
+    {
+	global $SMARTY, $LMS;
 
-		$default_categories = explode(',', ConfigHelper::getConfig('userpanel.default_categories'));
-		$categories = $LMS->GetCategoryListByUser(Auth::GetCurrentUser());
-		foreach ($categories as $category) {
-			if (in_array($category['id'], $default_categories))
-				$category['checked'] = true;
-			$ncategories[] = $category;
-		}
-		$categories = $ncategories;
+	$SMARTY->assign('userlist', $LMS->GetUserNames());
+	$SMARTY->assign('queuelist', $LMS->GetQueueNames());
+	$SMARTY->assign('default_queue', $LMS->CONFIG['userpanel']['default_queue']);
+        $SMARTY->assign('default_userid', $LMS->CONFIG['userpanel']['default_userid']);
+        $SMARTY->assign('lms_url', $LMS->CONFIG['userpanel']['lms_url']);
+	$SMARTY->display('module:helpdesk:setup.html');
+    }
 
-		$SMARTY->assign('userlist', $LMS->GetUserNames());
-		$SMARTY->assign('queuelist', $LMS->GetQueueNames());
-		$SMARTY->assign('queues', explode(';', ConfigHelper::getConfig('userpanel.queues')));
-		$SMARTY->assign('sources', explode(';', ConfigHelper::getConfig('userpanel.visible_ticket_sources')));
-		$SMARTY->assign('tickets_from_selected_queues', ConfigHelper::getConfig('userpanel.tickets_from_selected_queues'));
-		$SMARTY->assign('allow_message_add_to_closed_tickets', ConfigHelper::getConfig('userpanel.allow_message_add_to_closed_tickets'));
-		$SMARTY->assign('limit_ticket_movements_to_selected_queues', ConfigHelper::getConfig('userpanel.limit_ticket_movements_to_selected_queues'));
-		$SMARTY->assign('default_userid', ConfigHelper::getConfig('userpanel.default_userid'));
-		$SMARTY->assign('lms_url', ConfigHelper::getConfig('userpanel.lms_url'));
-		$SMARTY->assign('categories', $categories);
-		$SMARTY->display('module:helpdesk:setup.html');
-	}
-
-	function module_submit_setup() {
-		$DB = LMSDB::getInstance();
-		if (!empty($_POST['queues']) && array_walk($_POST['queues'], 'intval'))
-			$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'queues\'', array(implode(';', $_POST['queues'])));
-		if (!empty($_POST['sources']) && array_walk($_POST['sources'], 'intval'))
-			$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'visible_ticket_sources\'',
-				array(implode(';', $_POST['sources'])));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'tickets_from_selected_queues\'',
-			array(intval($_POST['tickets_from_selected_queues'])));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'allow_message_add_to_closed_tickets\'',
-			array(intval($_POST['allow_message_add_to_closed_tickets'])));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'limit_ticket_movements_to_selected_queues\'',
-			array(intval($_POST['limit_ticket_movements_to_selected_queues'])));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'default_userid\'',array($_POST['default_userid']));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'lms_url\'',array($_POST['lms_url']));
-		$categories = array_keys((isset($_POST['lms_categories']) ? $_POST['lms_categories'] : array()));
-		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'default_categories\'', array(implode(',', $categories)));
-		header('Location: ?m=userpanel&module=helpdesk');
-	}
+    function module_submit_setup()
+    {
+	global $DB;
+        $DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'default_queue\'',array($_POST['default_queue']));
+	$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'default_userid\'',array($_POST['default_userid']));
+	$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'lms_url\'',array($_POST['lms_url']));
+        header('Location: ?m=userpanel&module=helpdesk');
+    }
 }
 
-function module_main() {
-	global $SMARTY, $LMS, $SESSION , $RT_STATES;
+function module_main()
+{
+    global $SMARTY,$LMS,$SESSION,$CONFIG,$DB;
 
-	$DB = LMSDB::getInstance();
+    $error = NULL;
 
-	$error = NULL;
+    if(isset($_POST['helpdesk']) && empty($_GET['id']))
+    {
+        $ticket = $_POST['helpdesk'];
 
-	$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+	$ticket['queue'] = $CONFIG['userpanel']['default_queue'];
+	$ticket['subject'] = strip_tags($ticket['subject']);
+	$ticket['body'] = strip_tags($ticket['body']);
 
-	if (isset($_FILES['files'])) {
-		$files = array();
-		foreach ($_FILES['files']['name'] as $fileidx => $filename)
-			if (!empty($filename)) {
-				if (is_uploaded_file($_FILES['files']['tmp_name'][$fileidx]) && $_FILES['files']['size'][$fileidx]) {
-					$filecontents = '';
-					$fd = fopen($_FILES['files']['tmp_name'][$fileidx], 'r');
-					if ($fd) {
-						while (!feof($fd))
-							$filecontents .= fread($fd,256);
-						fclose($fd);
-					}
-					$files[] = array(
-						'name' => $filename,
-						'tmp_name' => $_FILES['files']['tmp_name'][$fileidx],
-						'type' => $_FILES['files']['type'][$fileidx],
-						'contents' => $filecontents,
-					);
-				} else { // upload errors
-					if (isset($error['files']))
-						$error['files'] .= "\n";
-					else
-						$error['files'] = '';
-					switch ($_FILES['files']['error'][$fileidx]) {
-						case 1:
-						case 2: $error['files'] .= trans('File is too large: $a', $filename); break;
-						case 3: $error['files'] .= trans('File upload has finished prematurely: $a', $filename); break;
-						case 4: $error['files'] .= trans('Path to file was not specified: $a', $filename); break;
-						default: $error['files'] .= trans('Problem during file upload: $a', $filename); break;
-					}
-				}
-			}
+	if(!$ticket['queue'])
+	{
+		header('Location: ?m=helpdesk');
+		die;
 	}
 
-	if (!$id && isset($_POST['helpdesk'])) {
-		$ticket = $_POST['helpdesk'];
+	if($ticket['subject']=='' && $ticket['body']=='')
+	{
+		header('Location: ?m=helpdesk');
+		die;
+	}
 
-		$ticket['queue'] = intval($ticket['queue']);
-		$ticket['categories'] = ConfigHelper::getConfig('userpanel.default_categories');
-		$ticket['subject'] = strip_tags($ticket['subject']);
-		$ticket['body'] = strip_tags($ticket['body']);
+	if($ticket['subject'] == '')
+		$error['subject'] = trans('Ticket must have its title!');
 
-		if (!$ticket['queue'] || !$ticket['categories']) {
-			header('Location: ?m=helpdesk');
-			die;
-		}
+	if($ticket['body'] == '')
+		$error['body'] = trans('Ticket must have its body!');
 
-		if ($ticket['subject'] == '' && $ticket['body'] == '') {
-			header('Location: ?m=helpdesk');
-			die;
-		}
-
-		if ($ticket['subject'] == '')
-			$error['subject'] = trans('Ticket must have its title!');
-
-		if ($ticket['body'] == '')
-			$error['body'] = trans('Ticket must have its body!');
-
-		$queues = explode(';', ConfigHelper::getConfig('userpanel.queues'));
-		if (!in_array($ticket['queue'], $queues))
-			$error = true;
-
-		if (!$error) {
-			$ticket['email'] = $LMS->GetCustomerEmail($SESSION->id);
-			if (!empty($ticket['email']))
-				$ticket['email'] = $ticket['email'][0];
-			$ticket['mailfrom'] = $ticket['email'] ? $ticket['email'] : '';
-
-			$id = $LMS->TicketAdd(array(
-				'queue' => $ticket['queue'],
-				'subject' => $ticket['subject'],
-				'customerid' => $SESSION->id,
-				'requestor' => $LMS->GetCustomerName($SESSION->id),
-				'createtime' => time(),
-				'body' => $ticket['body'],
-				'categories' => array_flip(explode(',', $ticket['categories'])),
-				'mailfrom' => $ticket['mailfrom'],
-				'source' => RT_SOURCE_USERPANEL), $files);
-
-			if (ConfigHelper::checkConfig('phpui.newticket_notify')) {
-				$user = $LMS->GetUserInfo(ConfigHelper::getConfig('userpanel.default_userid'));
-
-				if($mailfname = ConfigHelper::getConfig('phpui.helpdesk_sender_name'))
-				{
-					if($mailfname == 'queue') $mailfname = $LMS->GetQueueName($ticket['queue']);
-					if($mailfname == 'user') $mailfname = $user['name'];
-					$mailfname = '"'.$mailfname.'"';
-				}
-
-				if ($user['email'])
-					$mailfrom = $user['email'];
-				elseif ($qemail = $LMS->GetQueueEmail($ticket['queue']))
-					$mailfrom = $qemail;
-				else
-					$mailfrom =  $ticket['mailfrom'];
-
-				$ticketdata = $LMS->GetTicketContents($id);
-
-				$headers['Date'] = date('r');
-				$headers['From'] = $mailfname.' <'.$mailfrom.'>';
-				$headers['Reply-To'] = $headers['From'];
-				$headers['Message-ID'] = $LMS->GetLastMessageID();
-
-				$info = $LMS->GetCustomer($SESSION->id, true);
-
-				$emails = array_map(function($contact) {
-						return $contact['fullname'];
-					}, $LMS->GetCustomerContacts($SESSION->id, CONTACT_EMAIL));
-				$phones = array_map(function($contact) {
-						return $contact['fullname'];
-					}, $LMS->GetCustomerContacts($SESSION->id, CONTACT_LANDLINE | CONTACT_MOBILE));
-
-				if (ConfigHelper::checkConfig('phpui.helpdesk_customerinfo')) {
-					$params = array(
-						'id' => $id,
-						'customerid' => $SESSION->id,
-						'customer' => $info,
-						'emails' => $emails,
-						'phones' => $phones,
-					);
-					$mail_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_mail_body'), $params);
-					$sms_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_sms_body'), $params);
-				}
-
-				$queuedata = $LMS->GetQueue($ticket['queue']);
-				if (!empty($queuedata['newticketsubject']) && !empty($queuedata['newticketbody'])
-					&& !empty($emails)) {
-					$custmail_subject = $queuedata['newticketsubject'];
-					$custmail_subject = str_replace('%tid', $id, $custmail_subject);
-					$custmail_subject = str_replace('%title', $ticket['subject'], $custmail_subject);
-					$custmail_body = $queuedata['newticketbody'];
-					$custmail_body = str_replace('%tid', $id, $custmail_body);
-					$custmail_body = str_replace('%cid', $SESSION->id, $custmail_body);
-					$custmail_body = str_replace('%pin', $info['pin'], $custmail_body);
-					$custmail_body = str_replace('%customername', $info['customername'], $custmail_body);
-					$custmail_body = str_replace('%title', $ticket['subject'], $custmail_body);
-					$custmail_headers = array(
-						'From' => $headers['From'],
-						'To' => '<' . $info['email'] . '>',
-						'Reply-To' => $headers['From'],
-						'Subject' => $custmail_subject,
-					);
-					$LMS->SendMail(implode(',', $emails), $custmail_headers, $custmail_body);
-				}
-
-				$params = array(
-					'id' => $id,
-					'customerid' => $SESSION->id,
-					'status' => $ticketdata['status'],
-					'categories' => $ticketdata['categorynames'],
-					'subject' => $ticket['subject'],
-					'body' => $ticket['body'],
-				);
-				$headers['Subject'] = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_subject'), $params);
-				$params['customerinfo'] = isset($mail_customerinfo) ? $mail_customerinfo : null;
-				$body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_body'), $params);
-				$params['customerinfo'] = isset($sms_customerinfo) ? $sms_customerinfo : null;
-				$sms_body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_sms_body'), $params);
-
-				$LMS->NotifyUsers(array(
-					'queue' => $ticket['queue'],
-					'mail_headers' => $headers,
-					'mail_body' => $body,
-					'sms_body' => $sms_body,
+	if(!$error)
+	{
+		$ticket['email'] = $LMS->GetCustomerEmail($SESSION->id);
+		$ticket['mailfrom'] = $ticket['email'] ? $ticket['email'] : '';
+		$ts = time();
+		
+		$DB->Execute('INSERT INTO rttickets (queueid, customerid, subject, createtime)
+				VALUES (?, ?, ?, ?)',
+				array($ticket['queue'],
+				        $SESSION->id,
+					$ticket['subject'],
+					$ts
 				));
+
+		$id = $DB->GetLastInsertID('rttickets');
+
+		$DB->Execute('INSERT INTO rtmessages (ticketid, customerid, createtime, subject, body, mailfrom)
+		                VALUES (?, ?, ?, ?, ?, ?)',
+				array($id,
+					$SESSION->id,
+					$ts,
+					$ticket['subject'],
+					$ticket['body'],
+					$ticket['mailfrom']
+				));
+
+		if(isset($CONFIG['phpui']['newticket_notify']) && chkconfig($CONFIG['phpui']['newticket_notify']))
+		{
+			$user = $LMS->GetUserInfo($CONFIG['userpanel']['default_userid']);
+
+			if($mailfname = $CONFIG['phpui']['helpdesk_sender_name'])
+			{
+				if($mailfname == 'queue') $mailfname = $LMS->GetQueueName($ticket['queue']);
+				if($mailfname == 'user') $mailfname = $user['name'];
+				$mailfname = '"'.$mailfname.'"';
 			}
-
-			header('Location: ?m=helpdesk&op=view&id=' . $id);
-			die;
-		} else {
-			$SMARTY->assign('error', $error);
-			$SMARTY->assign('helpdesk', $ticket);
-		}
-	} elseif ($id && isset($_POST['helpdesk'])
-		&& ($DB->GetOne('SELECT state FROM rttickets WHERE id = ?', array($id)) != RT_RESOLVED
-		|| ConfigHelper::getConfig('userpanel.allow_message_add_to_closed_tickets'))
-		&& $DB->GetOne('SELECT customerid FROM rttickets WHERE id = ?', array($id)) == $SESSION->id) {
-		$ticket = $_POST['helpdesk'];
-
-		$ticket['body'] = strip_tags($ticket['body']);
-		$ticket['subject'] = strip_tags($ticket['subject']);
-		$ticket['inreplyto'] = intval($ticket['inreplyto']);
-		$ticket['id'] = intval($_GET['id']);
-
-		if ($ticket['subject'] == '')
-			$error['subject'] = trans('Ticket must have its title!');
-
-		if ($ticket['body'] == '')
-			$error['body'] = trans('Ticket must have its body!');
-
-		$queues = str_replace(';', ',', ConfigHelper::getConfig('userpanel.queues'));
-		$sources = str_replace(';', ',', ConfigHelper::getConfig('userpanel.visible_ticket_sources'));
-		if (!$DB->GetOne('SELECT 1 FROM rttickets WHERE source IN (' . $sources . ')
-			AND queueid IN ('. $queues . ') AND id = ? AND customerid = ?',
-			array($ticket['id'], $SESSION->id)))
-			$error = true;
-
-		if (!$error) {
-			$ticket['customerid'] = $SESSION->id;
-			$ticket['queue'] = $LMS->GetQueueByTicketId($ticket['id']);
-
-			// add message
-			$ticket['messageid'] = '<msg.' . $ticket['queue']['id'] . '.' . $ticket['id'] . '.' . time()
-				. '@rtsystem.' . gethostname() . '>';
-
-			$msgid = $LMS->TicketMessageAdd(array(
-					'ticketid' => $ticket['id'],
-					'subject' => $ticket['subject'],
-					'body' => $ticket['body'],
-					'customerid' => $ticket['customerid'],
-					'inreplyto' => $ticket['inreplyto'],
-					'messageid' => $ticket['messageid'],
-				), $files);
-
-			// re-open ticket
-			static $ticket_change_state_map = array(
-				RT_NEW => RT_NEW,
-				RT_OPEN => RT_OPEN,
-				RT_RESOLVED => RT_OPEN,
-				RT_DEAD => RT_OPEN,
-			);
-			$ticket['state'] = $DB->GetOne('SELECT state FROM rttickets WHERE id = ?', array($ticket['id']));
-			$DB->Execute('UPDATE rttickets SET state = ? WHERE id = ?',
-				array($ticket_change_state_map[$ticket['state']], $ticket['id']));
-
-			$user = $LMS->GetUserInfo(ConfigHelper::getConfig('userpanel.default_userid'));
-
-			if ($mailfname = ConfigHelper::getConfig('phpui.helpdesk_sender_name')) {
-				if ($mailfname == 'queue')
-					$mailfname = $ticket['queue']['name'];
-				if ($mailfname == 'user')
-					$mailfname = $user['name'];
-				$mailfname = '"' . $mailfname . '"';
-			}
-
-			$ticket['email'] = $LMS->GetCustomerEmail($SESSION->id);
-			$ticket['mailfrom'] = $ticket['email'] ? $ticket['email'] : '';
 
 			if ($user['email'])
 				$mailfrom = $user['email'];
-			elseif (!empty($ticket['queue']['email']))
-				$mailfrom = $ticket['queue']['email'];
+			elseif ($qemail = $LMS->GetQueueEmail($ticket['queue']))
+				$mailfrom = $qemail;
 			else
-				$mailfrom = $ticket['mailfrom'];
-
-			$ticketdata = $LMS->GetTicketContents($ticket['id']);
+				$mailfrom =  $ticket['mailfrom'];
 
 			$headers['Date'] = date('r');
-			$headers['From'] = $mailfname . ' <' . $mailfrom . '>';
+	        $headers['From'] = $mailfname.' <'.$mailfrom.'>';
+			$headers['Subject'] = sprintf("[RT#%06d] %s", $id, $ticket['subject']);
 			$headers['Reply-To'] = $headers['From'];
-			if ($ticket['references']) {
-				$headers['References'] = $ticket['references'];
-				$headers['In-Reply-To'] = array_pop(explode(' ', $ticket['references']));
-			}
-			$headers['Message-ID'] = $ticket['messageid'];
 
-			if (ConfigHelper::checkConfig('phpui.helpdesk_customerinfo')) {
-				$info = $LMS->GetCustomer($SESSION->id, true);
+            $sms_body = $headers['Subject']."\n".$ticket['body'];
+			$body = $ticket['body']."\n\n".$CONFIG['userpanel']['lms_url'].'/?m=rtticketview&id='.$id;
 
-				$emails = array_map(function($contact) {
-						return $contact['fullname'];
-					}, $LMS->GetCustomerContacts($SESSION->id, CONTACT_EMAIL));
-				$phones = array_map(function($contact) {
-						return $contact['fullname'];
-					}, $LMS->GetCustomerContacts($SESSION->id, CONTACT_LANDLINE | CONTACT_MOBILE));
+            if (chkconfig($CONFIG['phpui']['helpdesk_customerinfo'])) {
+                $info = $DB->GetRow('SELECT '.$DB->Concat('UPPER(lastname)',"' '",'name').' AS customername,
+                        email, address, zip, city, (SELECT phone FROM customercontacts
+                            WHERE customerid = customers.id ORDER BY id LIMIT 1) AS phone
+                        FROM customers WHERE id = ?', array($SESSION->id));
 
-				$params = array(
-					'id' => $ticket['id'],
-					'customerid' => $SESSION->id,
-					'customer' => $info,
-					'emails' => $emails,
-					'phones' => $phones,
-				);
-				$mail_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_mail_body'), $params);
-				$sms_customerinfo = $LMS->ReplaceNotificationCustomerSymbols(ConfigHelper::getConfig('phpui.helpdesk_customerinfo_sms_body'), $params);
-			}
+                $body .= "\n\n-- \n";
+                $body .= trans('Customer:').' '.$info['customername']."\n";
+                $body .= trans('ID:').' '.sprintf('%04d', $ticket['customerid'])."\n";
+                $body .= trans('Address:').' '.$info['address'].', '.$info['zip'].' '.$info['city']."\n";
+                $body .= trans('Phone:').' '.$info['phone']."\n";
+                $body .= trans('E-mail:').' '.$info['email'];
 
-			$params = array(
-				'id' => $ticket['id'],
-				'messageid' => isset($msgid) ? $msgid : null,
-				'customerid' => $SESSION->id,
-				'status' => $ticketdata['status'],
-				'categories' => $ticketdata['categorynames'],
-				'subject' => $ticket['subject'],
-				'body' => $ticket['body'],
-			);
-			$headers['Subject'] = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_subject'), $params);
-			$params['customerinfo'] = isset($mail_customerinfo) ? $mail_customerinfo : null;
-			$body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_mail_body'), $params);
-			$params['customerinfo'] = isset($sms_customerinfo) ? $sms_customerinfo : null;
-			$sms_body = $LMS->ReplaceNotificationSymbols(ConfigHelper::getConfig('phpui.helpdesk_notification_sms_body'), $params);
+                $sms_body .= "\n";
+                $sms_body .= trans('Customer:').' '.$info['customername'];
+                $sms_body .= ' '.sprintf('(%04d)', $ticket['customerid']).'. ';
+                $sms_body .= $info['address'].', '.$info['zip'].' '.$info['city'].'. ';
+                $sms_body .= $info['phone'];
+            }
 
-			$LMS->NotifyUsers(array(
-				'queue' => $ticket['queue']['id'],
-				'mail_headers' => $headers,
-				'mail_body' => $body,
-				'sms_body' => $sms_body,
-			));
+            // send email
+			if ($recipients = $DB->GetCol('SELECT DISTINCT email
+			    FROM users, rtrights
+			    WHERE users.id = userid AND email != \'\' AND (rtrights.rights & 8) = 8
+			        AND (ntype & ?) = ? AND queueid = ?',
+			    array(MSG_MAIL, MSG_MAIL, intval($ticket['queue'])))
+			) {
+				foreach($recipients as $email) {
+					$headers['To'] = '<'.$email.'>';
 
-			header('Location: ?m=helpdesk&op=view&id='.$ticket['id']);
-			die;
-		} else {
-			$SMARTY->assign('error', $error);
-			$helpdesk = $ticket;
-			$SMARTY->assign('helpdesk', $helpdesk);
-			$_GET['op'] = 'message';
+					$LMS->SendMail($email, $headers, $body);
+				}
+            }
+
+            // send sms
+			if (!empty($CONFIG['sms']['service']) && ($recipients = $DB->GetCol('SELECT DISTINCT phone
+			    FROM users, rtrights
+			    WHERE users.id = userid AND phone != \'\' AND (rtrights.rights & 8) = 8
+			        AND (ntype & ?) = ? AND queueid = ?',
+			    array(MSG_SMS, MSG_SMS, intval($ticket['queue']))))
+			) {
+				foreach($recipients as $phone) {
+					$LMS->SendSMS($phone, $sms_body);
+				}
+            }
 		}
-	}
 
-	if (isset($_GET['op']) && $_GET['op'] == 'view') {
-		if ($LMS->TicketExists($_GET['id'])) {
-			$ticket = $LMS->GetTicketContents($_GET['id']);
-
-			$ticket['id'] = $_GET['id'];
-
-			$queues = explode(';', ConfigHelper::getConfig('userpanel.queues'));
-			$sources = explode(';', ConfigHelper::getConfig('userpanel.visible_ticket_sources'));
-			if ($ticket['customerid'] == $SESSION->id && in_array($ticket['queueid'], $queues)
-				&& in_array($ticket['source'], $sources)) {
-				$SMARTY->assign('title', trans('Request No. $a / Queue: $b',
-					sprintf('%06d', $ticket['ticketid']), $ticket['queuename']));
-
-				$SMARTY->assign('ticket', $ticket);
-				$SMARTY->display('module:helpdeskview.html');
-				die;
-			}
-		}
-	} elseif(isset($_GET['op']) && $_GET['op'] == 'message') {
-		if (intval($_GET['id']))
-			$ticket = $LMS->GetTicketContents($_GET['id']);
-
-		$ticket['id'] = $_GET['id'];
-
-		$queues = explode(';', ConfigHelper::getConfig('userpanel.queues'));
-		$sources = explode(';', ConfigHelper::getConfig('userpanel.visible_ticket_sources'));
-		if ($ticket['customerid'] == $SESSION->id && in_array($ticket['queueid'], $queues)
-			&& in_array($ticket['source'], $sources)) {
-			if (isset($_GET['msgid']) && intval($_GET['msgid'])) {
-				$reply = $LMS->GetMessage($_GET['msgid']);
-
-				$helpdesk['subject'] = $reply['subject'];
-				$helpdesk['subject'] = preg_replace('/^Re:\s*/', '', $helpdesk['subject']);
-				$helpdesk['subject'] = 'Re: '. $helpdesk['subject'];
-
-				$helpdesk['inreplyto'] = $reply['id'];
-				$helpdesk['references'] = implode(' ', $reply['references']);
-			} else {
-				$reply = $LMS->GetFirstMessage($_GET['id']);
-				$helpdesk['inreplyto'] = $reply['id'];
-				$helpdesk['references'] = implode(' ', $reply['references']);
-			}
-			$SMARTY->assign('helpdesk', $helpdesk);
-
-			$SMARTY->assign('title', trans('Request No. $a / Queue: $b',
-				sprintf('%06d', $ticket['ticketid']), $ticket['queuename']));
-			if ($ticket['customerid'] == $SESSION->id) {
-				$SMARTY->assign('ticket', $ticket);
-				$SMARTY->display('module:helpdeskreply.html');
-				die;
-			}
-		}
-	}
-
-	if ($helpdesklist = $LMS->GetCustomerTickets($SESSION->id))
-		foreach ($helpdesklist as $idx => $key)
-			$helpdesklist[$idx]['lastmod'] = $LMS->DB->GetOne('SELECT MAX(createtime) FROM rtmessages WHERE ticketid = ?',
-				array($key['id']));
-
-	$queues = $LMS->DB->GetAll('SELECT id, name FROM rtqueues WHERE id IN ('
-		. str_replace(';', ',', ConfigHelper::getConfig('userpanel.queues')) . ')');
-	$SMARTY->assign('queues', $queues);
-	$SMARTY->assign('helpdesklist', $helpdesklist);
-	$SMARTY->display('module:helpdesk.html');
-}
-
-function module_attachment() {
-	global $DB, $SESSION;
-	$attach = $DB->GetRow('SELECT ticketid, filename, contenttype FROM rtattachments a
-		JOIN rtmessages m ON m.id = a.messageid
-		JOIN rttickets t ON t.id = m.ticketid
-		WHERE t.customerid = ? AND a.messageid = ? AND filename = ?',
-		array($SESSION->id, $_GET['msgid'], $_GET['file']));
-	if (empty($attach))
+		header('Location: ?m=helpdesk');
 		die;
-	$file = ConfigHelper::getConfig('rt.mail_dir') . sprintf("/%06d/%06d/%s", $attach['ticketid'], $_GET['msgid'], $_GET['file']);
-	if (file_exists($file)) {
-		$size = @filesize($file);
-		header('Content-Length: ' . $size . ' bytes');
-		header('Content-Type: '. $attach['contenttype']);
-		header('Cache-Control: private');
-		header('Content-Disposition: attachment; filename=' . $attach['filename']);
-		@readfile($file);
 	}
-	die;
+	else
+	{
+	        $SMARTY->assign('error', $error);
+		$SMARTY->assign('helpdesk', $ticket);
+	}
+    }
+    elseif(isset($_POST['helpdesk']) && !empty($_GET['id']))
+    {
+        $ticket = $_POST['helpdesk'];
+
+	$ticket['body'] = strip_tags($ticket['body']);
+	$ticket['subject'] = strip_tags($ticket['subject']);
+	$ticket['inreplyto'] = intval($ticket['inreplyto']);
+	$ticket['id'] = intval($_GET['id']);
+
+	if($ticket['subject'] == '')
+		$error['subject'] = trans('Ticket must have its title!');
+
+	if($ticket['body'] == '')
+		$error['body'] = trans('Ticket must have its body!');
+
+	if(!$DB->GetOne('SELECT 1 FROM rttickets WHERE id = ? AND customerid = ?',
+			array($ticket['id'], $SESSION->id))) 
+		$error = true;
+
+	if(!$error)
+	{
+		$ticket['customerid'] = $SESSION->id;
+
+		// add message
+		$DB->Execute('INSERT INTO rtmessages (ticketid, createtime, subject, body, customerid, inreplyto)
+                        VALUES (?, ?NOW?, ?, ?, ?, ?)',
+		        array(
+		                $ticket['id'],
+		                $ticket['subject'],
+		                $ticket['body'],
+		                $ticket['customerid'],
+		            	$ticket['inreplyto'],
+		        ));
+	
+		// re-open ticket
+		$DB->Execute('UPDATE rttickets SET state = CASE state
+				WHEN 0 THEN 0
+				WHEN 1 THEN 1
+				WHEN 2 THEN 1
+				WHEN 3 THEN 1 END 
+			WHERE id = ?', array($ticket['id']));
+
+		header('Location: ?m=helpdesk&op=view&id='.$ticket['id']);
+		die;
+	}
+	else
+	{
+	        $SMARTY->assign('error', $error);
+		$SMARTY->assign('helpdesk', $ticket);
+		$_GET['op'] = 'message';
+	}
+    }
+
+    if(isset($_GET['op']) && $_GET['op'] == 'view')
+    {
+	if(preg_match('/^[0-9]+$/',$_GET['id']))
+		$ticket = $LMS->GetTicketContents($_GET['id']);
+
+	$ticket['id'] = $_GET['id'];
+
+	$SMARTY->assign('title', trans('Request No. $0', sprintf('%06d',$ticket['ticketid'])));
+	
+	if($ticket['customerid'] == $SESSION->id)
+	{
+	        $SMARTY->assign('ticket', $ticket);
+	        $SMARTY->display('module:helpdeskview.html');
+	        die;
+	}								
+    }
+    elseif(isset($_GET['op']) && $_GET['op'] == 'message')
+    {
+        if(preg_match('/^[0-9]+$/',$_GET['id']))
+		$ticket = $LMS->GetTicketContents($_GET['id']);
+	
+	$ticket['id'] = $_GET['id'];
+	
+	if(isset($_GET['msgid']) && preg_match('/^[0-9]+$/', $_GET['msgid']))
+	{
+	        $helpdesk['subject'] = $DB->GetOne('SELECT subject FROM rtmessages
+	                	WHERE ticketid = ? AND id = ?', array($ticket['id'], $_GET['msgid']));
+	
+		$helpdesk['subject'] = preg_replace('/^Re:\s*/', '', $helpdesk['subject']);
+		$helpdesk['subject'] = 'Re: '. $helpdesk['subject'];
+	        $SMARTY->assign('helpdesk', $helpdesk);
+	}
+
+        $SMARTY->assign('title', trans('Request No. $0', sprintf('%06d',$ticket['ticketid'])));
+        if($ticket['customerid'] == $SESSION->id)
+        {
+        	$SMARTY->assign('ticket', $ticket);
+	        $SMARTY->display('module:helpdeskreply.html');
+		die;
+	}
+    }
+
+    if($helpdesklist = $LMS->GetCustomerTickets($SESSION->id))
+	foreach($helpdesklist as $idx => $key)
+	    $helpdesklist[$idx]['lastmod'] = $LMS->DB->GetOne('SELECT MAX(createtime) FROM rtmessages WHERE ticketid = ?', array($key['id']));
+
+    $SMARTY->assign('helpdesklist', $helpdesklist);
+    $SMARTY->display('module:helpdesk.html');
 }
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,10 +21,11 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: balancelist.php,v 1.65 2011/04/01 10:35:12 alec Exp $
  */
 
-function GetBalanceList($search=NULL, $cat=NULL, $group=NULL, $pagelimit=100, $page=NULL, $from, $to) {
+function GetBalanceList($search=NULL, $cat=NULL, $group=NULL, $pagelimit=100, $page=NULL, $from, $to)
+{
 	global $DB;
 
 	$where = '';
@@ -36,39 +37,33 @@ function GetBalanceList($search=NULL, $cat=NULL, $group=NULL, $pagelimit=100, $p
 			case 'value':
 				$val = intval($search) > 0 ? intval($search) : intval($search)*-1;
 				$where = ' AND ABS(cash.value) = '.$val;
-				break;
+			break;
 			case 'number':
 				$where = ' AND documents.number = '.intval($search);
-				break;
+			break;
 			case 'cdate':
 				$where = ' AND cash.time >= '.intval($search).' AND cash.time < '.(intval($search)+86400);
-				break;
+			break;
 			case 'ten':
 				$where = ' AND c.ten = '.$DB->Escape($search);
-				break;
+			break;
 			case 'customerid':
 				$where = ' AND cash.customerid = '.intval($search);
-				break;
+			break;
 			case 'name':
 				$where = ' AND '.$DB->Concat('UPPER(c.lastname)',"' '",'c.name').' ?LIKE? '.$DB->Escape("%$search%");
-				break;
+			break;
 			case 'address':
 				$where = ' AND c.address ?LIKE? '.$DB->Escape("%$search%");
-				break;
-			case 'comment':
-				$where = ' AND cash.comment ?LIKE? '.$DB->Escape("%$search%");
-				break;
-			case 'cashimport':
-				$where = ' AND cash.importid IN (SELECT i.id FROM cashimport i JOIN sourcefiles f ON f.id = i.sourcefileid WHERE f.name = ' . $DB->Escape("$search") . ')';
-				break;
+			break;
 		}
 	}
 	elseif($cat)
 	{
 		switch($cat)
 		{
-			case 'documented': $where = ' AND cash.docid IS NOT NULL'; break;
-			case 'notdocumented': $where = ' AND cash.docid IS NULL'; break;
+			case 'documented': $where = ' AND cash.docid > 0'; break;
+			case 'notdocumented': $where = ' AND cash.docid = 0'; break;
 		}
 	}
 
@@ -79,8 +74,7 @@ function GetBalanceList($search=NULL, $cat=NULL, $group=NULL, $pagelimit=100, $p
 
 	if($res = $DB->Exec('SELECT cash.id AS id, time, cash.userid AS userid, cash.value AS value, 
 				cash.customerid AS customerid, comment, docid, cash.type AS type,
-				documents.type AS doctype, documents.closed AS closed,
-				documents.published, '
+				documents.type AS doctype, documents.closed AS closed, '
 				.$DB->Concat('UPPER(c.lastname)',"' '",'c.name').' AS customername
 				FROM cash
 				LEFT JOIN customers c ON (cash.customerid = c.id)
@@ -99,7 +93,7 @@ function GetBalanceList($search=NULL, $cat=NULL, $group=NULL, $pagelimit=100, $p
 					AND customerid = cash.customerid)' : '')
 				.' ORDER BY time, cash.id'))
 	{
-		$userlist = $DB->GetAllByKey('SELECT id, name FROM vusers','id');
+		$userlist = $DB->GetAllByKey('SELECT id, name FROM users','id');
 
 		$balancelist['liability'] = 0;
 		$balancelist['expense'] = 0;
@@ -161,15 +155,12 @@ if(isset($_POST['search']))
         $s = $_POST['search'];
 else
 	$SESSION->restore('bls', $s);
+$SESSION->save('bls', $s);
 
 if(isset($_POST['cat']))
         $c = $_POST['cat'];
 else
 	$SESSION->restore('blc', $c);
-if (!isset($c))
-{
-$c="cdate";
-}
 $SESSION->save('blc', $c);
 
 if(isset($_POST['group']))
@@ -182,53 +173,37 @@ if(isset($_POST['group']))
 }
 $SESSION->save('blg', $g);
 $SESSION->save('blge', $ge);
-
+				
 if($c == 'cdate' && $s)
 {
-	$date = date_to_timestamp($s);
-	if(empty($date))
-		$s = date('Y/m/d', time());
+        list($year, $month, $day) = explode('/', $s);
+	$s = mktime(0,0,0, (int)$month, (int)$day, (int)$year);
 }
-$SESSION->save('bls', $s);
 
 if(!empty($_POST['from']))
 {
-	$from = datetime_to_timestamp($_POST['from']);
+	list($year, $month, $day) = explode('/', $_POST['from']);
+	$from = mktime(0,0,0, $month, $day, $year);
 }
 elseif($SESSION->is_set('blf'))
 	$SESSION->restore('blf', $from);
 else
 	$from = '';
+$SESSION->save('blf', $from);
 
 if(!empty($_POST['to']))
 {
-    $to = datetime_to_timestamp($_POST['to']);
+	list($year, $month, $day) = explode('/', $_POST['to']);
+	$to = mktime(23,59,59, $month, $day, $year);
 }
 elseif($SESSION->is_set('blt'))
 	$SESSION->restore('blt', $to);
 else
 	$to = '';
+$SESSION->save('blt', $to);
 
-if(!empty($from) && !empty($to)) {
-	if($from < $to) {
-    $SESSION->save('blf', $from);
-    $SESSION->save('blt', $to);
-}
-}
-elseif(!empty($from))
-	$SESSION->save('blf', $from);
-elseif(!empty($to))
-    $SESSION->save('blt', $to);
-
-$pagelimit = ConfigHelper::getConfig('phpui.balancelist_pagelimit');
+$pagelimit = $CONFIG['phpui']['balancelist_pagelimit'];
 $page = (empty($_GET['page']) ? 0 : intval($_GET['page']));
-
-if (isset($_GET['sourcefileid'])) {
-	$s = $DB->GetOne('SELECT name FROM sourcefiles WHERE id = ?', array($_GET['sourcefileid']));
-	$c = 'cashimport';
-	$SESSION->save('bls', $s);
-	$SESSION->save('blc', $c);
-}
 
 $balancelist = GetBalanceList($s, $c, array('group' => $g, 'exclude'=> $ge), $pagelimit, $page, $from, $to);
 
@@ -263,6 +238,6 @@ $SMARTY->assign('start', ($page - 1) * $pagelimit);
 $SMARTY->assign('page',$page);
 $SMARTY->assign('pagelimit',$pagelimit);
 $SMARTY->assign('grouplist',$LMS->CustomergroupGetAll());
-$SMARTY->display('balance/balancelist.html');
+$SMARTY->display('balancelist.html');
 
 ?>

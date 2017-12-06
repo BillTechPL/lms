@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,11 +21,8 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodeprint.php,v 1.14 2011/01/18 08:12:24 alec Exp $
  */
-
-if (!ConfigHelper::checkConfig('privileges.superuser') && !ConfigHelper::checkConfig('privileges.reports'))
-	access_denied();
 
 $type = isset($_GET['type']) ? $_GET['type'] : '';
 
@@ -68,22 +65,21 @@ switch($type)
 					case 'mac':
 						$sqlord = ' ORDER BY mac';
 					break;
-					case 'ip':
+				    	case 'ip':
 						$sqlord = ' ORDER BY ipaddr';
 					break;
 					case 'ownerid':
 						$sqlord = ' ORDER BY ownerid';
 					break;
-					case 'owner':
+				    	case 'owner':
 						$sqlord = ' ORDER BY owner';
 					break;
 				}
 
-				$net = intval($_POST['network']);
-				if ($net)
+				if($_POST['network'])
 					$net = $LMS->GetNetworkParams($_POST['network']);
-
-				$group = intval($_POST['customergroup']);
+				
+				$group = $_POST['customergroup'];
 
 				$nodelist = $DB->GetAll('SELECT vnodes.id AS id, inet_ntoa(ipaddr) AS ip, mac, 
 					    vnodes.name AS name, vnodes.info AS info, 
@@ -100,12 +96,7 @@ switch($type)
 					    .($sqlord != '' ? $sqlord.' '.$direction : ''));
 				
 				$SMARTY->assign('nodelist', $nodelist);
-				if (strtolower(ConfigHelper::getConfig('phpui.report_type')) == 'pdf') {
-					$output = $SMARTY->fetch('print/printindebtnodelist.html');
-					html2pdf($output, trans('Reports'), $layout['pagetitle']);
-				} else {
-					$SMARTY->display('print/printindebtnodelist.html');
-				}
+				$SMARTY->display('printindebtnodelist.html');
 				$SESSION->close();
 				die;
 			break;
@@ -118,12 +109,7 @@ switch($type)
 		unset($nodelist['totaloff']);
 		
 		$SMARTY->assign('nodelist', $nodelist);
-		if (strtolower(ConfigHelper::getConfig('phpui.report_type')) == 'pdf') {
-			$output = $SMARTY->fetch('print/printnodelist.html');
-			html2pdf($output, trans('Reports'), $layout['pagetitle']);
-		} else {
-			$SMARTY->display('print/printnodelist.html');
-		}
+		$SMARTY->display('printnodelist.html');
 	break;
 
 	default:
@@ -132,7 +118,7 @@ switch($type)
 		$SMARTY->assign('customergroups', $LMS->CustomergroupGetAll());
 		$SMARTY->assign('networks', $LMS->GetNetworks());
 		$SMARTY->assign('printmenu', 'node');
-		$SMARTY->display('print/printindex.html');
+		$SMARTY->display('printindex.html');
 	break;
 }
 

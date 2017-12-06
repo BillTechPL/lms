@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodegroupdel.php,v 1.5 2011/01/18 08:12:24 alec Exp $
  */
 
 if(isset($_GET['is_sure']))
@@ -34,9 +34,6 @@ if(isset($_GET['is_sure']))
 		$DB->BeginTrans();
 		$DB->Execute('DELETE FROM nodegroups WHERE id = ?', array($id));
 //		$DB->Execute('DELETE FROM nodegroupassignments WHERE nodegroupid = ?', array($id));
-		if ($SYSLOG)
-			$SYSLOG->AddMessage(SYSLOG::RES_NODEGROUP, SYSLOG::OPER_DELETE,
-				array(SYSLOG::RES_NODEGROUP => $id));
 		$DB->CommitTrans();
 		$LMS->CompactNodeGroups();
 	}

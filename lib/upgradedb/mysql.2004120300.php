@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,26 +21,26 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: mysql.2004120300.php,v 1.11 2011/01/18 08:12:08 alec Exp $
  */
 
-$this->BeginTrans();
-$this->Execute("
+$DB->BeginTrans();
+$DB->Execute("
     CREATE TABLE domains (
 	id int(11) NOT NULL auto_increment,
 	name varchar(255) NOT NULL DEFAULT '',
 	description text NOT NULL DEFAULT '',
 	PRIMARY KEY (id),
 	UNIQUE KEY (name)
-    ) ENGINE=MyISAM");
-$this->Execute("INSERT INTO domains (name) SELECT DISTINCT domain FROM passwd WHERE domain != ''");
-$this->Execute("ALTER TABLE passwd ADD domainid int(11) NOT NULL DEFAULT '0'");
-if($domains = $this->GetAll('SELECT id, name FROM domains'))
+    ) TYPE=MyISAM");
+$DB->Execute("INSERT INTO domains (name) SELECT DISTINCT domain FROM passwd WHERE domain != ''");
+$DB->Execute("ALTER TABLE passwd ADD domainid int(11) NOT NULL DEFAULT '0'");
+if($domains = $DB->GetAll('SELECT id, name FROM domains'))
 	foreach($domains as $row)
-		$this->Execute('UPDATE passwd SET domainid=? WHERE domain=?', array($row['id'], $row['name']));
-$this->Execute('ALTER TABLE passwd DROP domain');
+		$DB->Execute('UPDATE passwd SET domainid=? WHERE domain=?', array($row['id'], $row['name']));
+$DB->Execute('ALTER TABLE passwd DROP domain');
 
-$this->Execute("UPDATE dbinfo SET keyvalue = '2004120300' WHERE keytype = 'dbversion'");
-$this->CommitTrans();
+$DB->Execute("UPDATE dbinfo SET keyvalue = '2004120300' WHERE keytype = 'dbversion'");
+$DB->CommitTrans();
 
 ?>

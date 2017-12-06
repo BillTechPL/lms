@@ -1,7 +1,7 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
  *  (C) Copyright 2009 Webvisor Sp z o.o.
  *

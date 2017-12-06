@@ -1,7 +1,7 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
  *  (C) Copyright 2009 Webvisor Sp. z o.o.
  *
@@ -22,13 +22,13 @@
  *
  */
 
-$this->Execute("ALTER TABLE domains ADD master VARCHAR(128) DEFAULT NULL");
-$this->Execute("ALTER TABLE domains ADD last_check INT(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE domains ADD type    VARCHAR(6) NOT NULL");
-$this->Execute("ALTER TABLE domains ADD notified_serial INT(11) DEFAULT NULL");
-$this->Execute("ALTER TABLE domains ADD account VARCHAR(40) DEFAULT NULL");
+$DB->Execute("ALTER TABLE domains ADD master VARCHAR(128) DEFAULT NULL");
+$DB->Execute("ALTER TABLE domains ADD last_check INT(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE domains ADD type    VARCHAR(6) NOT NULL");
+$DB->Execute("ALTER TABLE domains ADD notified_serial INT(11) DEFAULT NULL");
+$DB->Execute("ALTER TABLE domains ADD account VARCHAR(40) DEFAULT NULL");
 
-$this->Execute("CREATE TABLE records (
+$DB->Execute("CREATE TABLE records (
   id              INT(11) auto_increment,
   domain_id       INT(11) DEFAULT NULL,
   name            VARCHAR(255) DEFAULT NULL,
@@ -42,7 +42,7 @@ $this->Execute("CREATE TABLE records (
   INDEX name_type (name, type, domain_id)
 )");
 
-$this->Execute("CREATE TABLE supermasters (
+$DB->Execute("CREATE TABLE supermasters (
   id            INT(11) auto_increment,
   ip 		VARCHAR(25) NOT NULL,
   nameserver 	VARCHAR(255) NOT NULL,
@@ -50,6 +50,6 @@ $this->Execute("CREATE TABLE supermasters (
   PRIMARY KEY (id)
 )");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009103000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2009103000', 'dbversion'));
 
 ?>

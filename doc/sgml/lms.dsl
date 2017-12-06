@@ -1,7 +1,7 @@
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 <!ENTITY dbstyle PUBLIC "-//Norman Walsh//DOCUMENT DocBook HTML Stylesheet//EN" CDATA DSSSL>
 ]>
-<!-- $Id$ -->
+<!-- $Id: lms.dsl,v 1.8 2004/12/22 19:11:25 alec Exp $ -->
 <style-sheet>
 <style-specification use="docbook">
 <style-specification-body>

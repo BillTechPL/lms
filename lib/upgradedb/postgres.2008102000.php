@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2008102000.php,v 1.7 2011/01/18 08:12:15 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 
 CREATE SEQUENCE divisions_id_seq;
 CREATE TABLE divisions (
@@ -64,32 +64,26 @@ SELECT c.* FROM customers c
 
 ");
 
-$shortname = ConfigHelper::getConfig('finances.shortname');
-$header = ConfigHelper::getConfig('invoices.header');
-$footer = ConfigHelper::getConfig('invoices.footer');
-$default_author = ConfigHelper::getConfig('invoices.default_author');
-$cplace = ConfigHelper::getConfig('invoices.cplace');
-$name = ConfigHelper::getConfig('finances.name');
-$address = ConfigHelper::getConfig('finances.address');
-$city = ConfigHelper::getConfig('finances.city');
-$zip = ConfigHelper::getConfig('finances.zip');
-$account = ConfigHelper::getConfig('finances.account');
-$this->Execute("INSERT INTO divisions (shortname, inv_header, inv_footer, inv_author, inv_cplace, name, 
-	address, city, zip, account) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-	array(!empty($shortname) && $shortname != 'finances/shortname' ? $shortname : 'default',
-		!empty($header) ? str_replace("\\n", "\n", $header) : '',
-		!empty($footer) ? str_replace("\\n", "\n", $footer) : '',
-		!empty($default_author) ? $default_author : '',
-		!empty($cplace) ? $cplace : '',
-		!empty($name) && $name != 'finances/name' ? $name : 'default',
-		!empty($address) && $address != 'finances/address'  ? $address : '',
-		!empty($city) && $city != 'finances/city'  ? $city : '',
-		!empty($zip) && $zip != 'finances/zip'  ? $zip : '',
-		!empty($account) ? $account : '',
+if($list = $DB->GetAll("SELECT * FROM uiconfig WHERE section = 'finances' OR section = 'invoices'"))
+	foreach($list as $opt)
+		$CONFIG[$opt['section']][$opt['var']] = $opt['value'];
+
+$DB->Execute("INSERT INTO divisions (shortname, inv_header, inv_footer, inv_author, inv_cplace, name, address, city, zip, account)
+		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+	array(!empty($CONFIG['finances']['shortname']) && $CONFIG['finances']['shortname'] != 'finances/shortname' ? $CONFIG['finances']['shortname'] : 'default',
+		!empty($CONFIG['invoices']['header']) ? str_replace("\\n", "\n", $CONFIG['invoices']['header']) : '',
+		!empty($CONFIG['invoices']['footer']) ? str_replace("\\n", "\n", $CONFIG['invoices']['footer']) : '',
+		!empty($CONFIG['invoices']['default_author']) ? $CONFIG['invoices']['default_author'] : '',
+		!empty($CONFIG['invoices']['cplace']) ? $CONFIG['invoices']['cplace'] : '',
+		!empty($CONFIG['finances']['name']) && $CONFIG['finances']['name'] != 'finances/name' ? $CONFIG['finances']['name'] : 'default',
+		!empty($CONFIG['finances']['address']) && $CONFIG['finances']['address'] != 'finances/address' ? $CONFIG['finances']['address'] : '',
+		!empty($CONFIG['finances']['city']) && $CONFIG['finances']['city'] != 'finances/city' ? $CONFIG['finances']['city'] : '',
+		!empty($CONFIG['finances']['zip']) && $CONFIG['finances']['zip'] != 'finances/zip' ? $CONFIG['finances']['zip'] : '',
+		!empty($CONFIG['finances']['account']) ? $CONFIG['finances']['account'] : '',
 	));
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008102000', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008102000', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

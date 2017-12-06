@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,18 +21,16 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: invoicedel.php,v 1.4 2011/01/18 08:12:23 alec Exp $
  */
 
 $id = intval($_GET['id']);
 
-if ($id && $_GET['is_sure'] == '1') {
-	if ($LMS->isDocumentPublished($id) && !ConfigHelper::checkPrivilege('published_document_modification'))
-		return;
-
+if($id && $_GET['is_sure'] == '1')
+{
 	$LMS->InvoiceDelete($id);
 }
 
-$SESSION->redirect($_SERVER['HTTP_REFERER']);
+$SESSION->redirect('?m=invoicelist');
 
 ?>

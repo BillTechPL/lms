@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,17 +21,17 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2007062200.php,v 1.6 2011/01/18 08:12:15 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("SELECT setval('events_id_seq', MAX(id)) FROM events");
-$this->Execute("ALTER TABLE events ALTER id DROP DEFAULT");
-$this->Execute("ALTER TABLE events ALTER id SET DEFAULT nextval('events_id_seq')");
+$DB->Execute("SELECT setval('events_id_seq', MAX(id)) FROM events");
+$DB->Execute("ALTER TABLE events ALTER id DROP DEFAULT");
+$DB->Execute("ALTER TABLE events ALTER id SET DEFAULT nextval('events_id_seq')");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007062200', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2007062200', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

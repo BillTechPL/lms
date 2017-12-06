@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2008080800.php,v 1.6 2011/01/18 08:12:15 alec Exp $
  */
 
-$this->BeginTrans();
+$DB->BeginTrans();
 
-$this->Execute("
+$DB->Execute("
 CREATE SEQUENCE states_id_seq;
 CREATE TABLE states (
     	id 	integer DEFAULT nextval('states_id_seq'::text) NOT NULL,
@@ -52,10 +52,10 @@ INSERT INTO zipcodes (zip) SELECT DISTINCT zip FROM customers;
 
 ");
 
-if(ConfigHelper::getConfig('phpui.lang') == 'pl'
-	|| $this->GetOne("SELECT 1 FROM uiconfig WHERE var='lang' AND section='phpui' AND disabled=0 AND value='pl'"))
+if($CONFIG['phpui']['lang'] == 'pl'
+	|| $DB->GetOne("SELECT 1 FROM uiconfig WHERE var='lang' AND section='phpui' AND disabled=0 AND value='pl'"))
 {
-	$this->Execute("
+	$DB->Execute("
 	INSERT INTO states (name) VALUES ('dolnośląskie');
 	INSERT INTO states (name) VALUES ('kujawsko-pomorskie');
 	INSERT INTO states (name) VALUES ('lubelskie');
@@ -75,8 +75,8 @@ if(ConfigHelper::getConfig('phpui.lang') == 'pl'
 	");
 }
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008080800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2008080800', 'dbversion'));
 
-$this->CommitTrans();
+$DB->CommitTrans();
 
 ?>

@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,16 +21,62 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: nodeadd.php,v 1.99 2011/03/04 13:06:22 alec Exp $
  */
 
-$nodedata['access']   = 1;
-$nodedata['ownerid']  = 0;
-$nodedata['authtype'] = 0;
-
-if (isset($_GET['ownerid']))
+if(isset($_GET['ajax'])) 
 {
-	if ($LMS->CustomerExists($_GET['ownerid']) == true)
+	header('Content-type: text/plain');
+	$search = urldecode(trim($_GET['what']));
+
+	switch($_GET['mode'])
+	{
+	        case 'address':
+			$mode='location_address';
+			if ($CONFIG['database']['type'] == 'mysql' || $CONFIG['database']['type'] == 'mysqli') 
+				$mode = 'substring(location_address from 1 for length(location_address)-locate(\' \',reverse(location_address))+1)';
+			elseif($CONFIG['database']['type'] == 'postgres')
+				$mode = 'substring(location_address from \'^.* \')';
+		break;
+	        case 'zip':
+			$mode='location_zip';
+		break;
+	        case 'city':
+			$mode='location_city';
+		break;
+	}
+
+	if (!isset($mode)) { print 'false;'; exit; }
+
+	$candidates = $DB->GetAll('SELECT '.$mode.' as item, count(id) as entries
+	    FROM nodes
+	    WHERE '.$mode.' != \'\' AND lower('.$mode.') ?LIKE? lower(\'%'.$search.'%\')
+	    GROUP BY item
+	    ORDER BY entries desc, item asc
+	    LIMIT 15');
+
+	$eglible=array(); $descriptions=array();
+	if ($candidates)
+	foreach($candidates as $idx => $row) {
+		$eglible[$row['item']] = escape_js($row['item']);
+		$descriptions[$row['item']] = escape_js($row['entries'].' '.trans('entries'));
+	}
+	if ($eglible) {
+		print "this.eligible = [\"".implode('","',$eglible)."\"];\n";
+		print "this.descriptions = [\"".implode('","',$descriptions)."\"];\n";
+	} else {
+		print "false;\n";
+	}
+	exit;
+}
+
+
+$nodedata['access'] = 1;
+$nodedata['ownerid'] = 0;
+
+if(isset($_GET['ownerid']))
+{
+	if($LMS->CustomerExists($_GET['ownerid']) == true)
 	{
 		$nodedata['ownerid'] = $_GET['ownerid'];
 		$customerinfo = $LMS->GetCustomer($_GET['ownerid']);
@@ -40,148 +86,121 @@ if (isset($_GET['ownerid']))
 		$SESSION->redirect('?m=customerinfo&id='.$_GET['ownerid']);
 }
 
-if (isset($_GET['preip']))
+if(isset($_GET['preip']))
 	$nodedata['ipaddr'] = $_GET['preip'];
 
-if (isset($_GET['prenetwork']))
-    $nodedata['netid'] = $_GET['prenetwork'];
+if(isset($_GET['premac']))
+	$nodedata['macs'][] = $_GET['premac'];
 
-if (isset($_GET['premac']))
-	if (is_array($_GET['premac']))
-		$nodedata['macs'] = $_GET['premac'];
-	else
-		$nodedata['macs'][] = $_GET['premac'];
-
-if (isset($_GET['prename']))
+if(isset($_GET['prename']))
 	$nodedata['name'] = $_GET['prename'];
 
-if (isset($_GET['pre_address_id']))
-	$nodedata['address_id'] = $_GET['pre_address_id'];
-
-if (isset($_POST['nodedata']))
+if(isset($_POST['nodedata']) && !isset($_GET['newmac']))
 {
 	$nodedata = $_POST['nodedata'];
 
-	$nodedata['netid']      = $_POST['nodedatanetid'];
-	$nodedata['ipaddr']     = $_POST['nodedataipaddr'];
+	$nodedata['ipaddr'] = $_POST['nodedataipaddr'];
 	$nodedata['ipaddr_pub'] = $_POST['nodedataipaddr_pub'];
-
 	foreach($nodedata['macs'] as $key => $value)
 		$nodedata['macs'][$key] = str_replace('-',':',$value);
 
 	foreach($nodedata as $key => $value)
-		if ($key != 'macs' && $key != 'authtype' && $key != 'wysiwyg' && $key != 'nodegroup')
+		if($key != 'macs')
 			$nodedata[$key] = trim($value);
 
-	if ($nodedata['ipaddr']=='' && $nodedata['ipaddr_pub'] && $nodedata['mac']=='' && $nodedata['name']=='' && !isset($nodedata['wholenetwork']))
-		if ($_GET['ownerid']) {
+	if($nodedata['ipaddr']=='' && $nodedata['ipaddr_pub'] && $nodedata['mac']=='' && $nodedata['name']=='')
+		if($_GET['ownerid'])
+		{
 			$SESSION->redirect('?m=customerinfo&id='.$_GET['ownerid']);
-		} else {
+		}else{
 			$SESSION->redirect('?m=nodelist');
 		}
-
-	if ($nodedata['name']=='')
+	
+	if($nodedata['name']=='')
 		$error['name'] = trans('Node name is required!');
-	else if (strlen($nodedata['name']) > 32)
+	elseif(strlen($nodedata['name']) > 32)
 		$error['name'] = trans('Node name is too long (max.32 characters)!');
-	else if (!preg_match('/^[_a-z0-9-.]+$/i', $nodedata['name']))
+	elseif(!preg_match('/^[_a-z0-9-]+$/i', $nodedata['name']))
 		$error['name'] = trans('Specified name contains forbidden characters!');
-	else if ($LMS->GetNodeIDByName($nodedata['name']))
+	elseif($LMS->GetNodeIDByName($nodedata['name']))
 		$error['name'] = trans('Specified name is in use!');
 
-	if (isset($nodedata['wholenetwork'])) {
-		$nodedata['ipaddr']     = '0.0.0.0';
-		$nodedata['ipaddr_pub'] = '0.0.0.0';
-		$net = $LMS->GetNetworkRecord($nodedata['netid'], 0, 1);
-		if (!empty($net['ownerid']) && !empty($nodedata['ownerid']) && $net['ownerid'] != $nodedata['ownerid'])
-			$error['netid'] = trans('Selected network is already assigned to customer $a ($b)!', $net['customername'], $net['ownerid']);
-	} else if (!$nodedata['ipaddr'])
+	if(!$nodedata['ipaddr'])
 		$error['ipaddr'] = trans('Node IP address is required!');
-	else if (!check_ip($nodedata['ipaddr']))
+	elseif(!check_ip($nodedata['ipaddr']))
 		$error['ipaddr'] = trans('Incorrect node IP address!');
-	else if (!$LMS->IsIPValid($nodedata['ipaddr']))
+	elseif(!$LMS->IsIPValid($nodedata['ipaddr']))
 		$error['ipaddr'] = trans('Specified IP address doesn\'t overlap with any network!');
-	else {
-		if (empty($nodedata['netid']))
-			$nodedata['netid'] = $DB->GetOne('SELECT id FROM networks WHERE INET_ATON(?) & INET_ATON(mask) = address ORDER BY id LIMIT 1',
-				array($nodedata['ipaddr']));
-		if (!$LMS->IsIPInNetwork($nodedata['ipaddr'], $nodedata['netid']))
-			$error['ipaddr'] = trans('Specified IP address doesn\'t belong to selected network!');
-		else if (!$LMS->IsIPFree($nodedata['ipaddr'], $nodedata['netid']))
-			$error['ipaddr'] = trans('Specified IP address is in use!');
-		else if ($LMS->IsIPGateway($nodedata['ipaddr']))
-			$error['ipaddr'] = trans('Specified IP address is network gateway!');
-	}
+	elseif(!$LMS->IsIPFree($nodedata['ipaddr']))
+		$error['ipaddr'] = trans('Specified IP address is in use!');
+	elseif($LMS->IsIPGateway($nodedata['ipaddr']))
+		$error['ipaddr'] = trans('Specified IP address is network gateway!');
 
-	if ($nodedata['ipaddr_pub']!='0.0.0.0' && $nodedata['ipaddr_pub']!='') {
-		if (!check_ip($nodedata['ipaddr_pub']))
-            $error['ipaddr_pub'] = trans('Incorrect node IP address!');
-        else if (!$LMS->IsIPValid($nodedata['ipaddr_pub']))
-            $error['ipaddr_pub'] = trans('Specified IP address doesn\'t overlap with any network!');
-		else if (!$LMS->IsIPFree($nodedata['ipaddr_pub']))
+	if($nodedata['ipaddr_pub']!='0.0.0.0' && $nodedata['ipaddr_pub']!='')
+	{
+		if(!check_ip($nodedata['ipaddr_pub']))
+                	$error['ipaddr_pub'] = trans('Incorrect node IP address!');
+        	elseif(!$LMS->IsIPValid($nodedata['ipaddr_pub']))
+                	$error['ipaddr_pub'] = trans('Specified IP address doesn\'t overlap with any network!');
+		elseif(!$LMS->IsIPFree($nodedata['ipaddr_pub']))
 			$error['ipaddr_pub'] = trans('Specified IP address is in use!');
-		else if ($LMS->IsIPGateway($nodedata['ipaddr_pub']))
+		elseif($LMS->IsIPGateway($nodedata['ipaddr_pub']))
 			$error['ipaddr_pub'] = trans('Specified IP address is network gateway!');
 	}
 	else
-        $nodedata['ipaddr_pub'] = '0.0.0.0';
+    		$nodedata['ipaddr_pub'] = '0.0.0.0';
 
 	$macs = array();
-	$key = 0;
-	foreach ($nodedata['macs'] as $value) {
-		if (!$value)
-			continue;
-
-		if (check_mac($value)) {
-			if ($value != '00:00:00:00:00:00' && !ConfigHelper::checkConfig('phpui.allow_mac_sharing')) {
-				if ($LMS->GetNodeIDByMAC($value))
-					$error['mac' . $key] = trans('Specified MAC address is in use!');
+	foreach($nodedata['macs'] as $key => $value)
+		if(check_mac($value))
+		{
+			if($value!='00:00:00:00:00:00' && (!isset($CONFIG['phpui']['allow_mac_sharing']) || !chkconfig($CONFIG['phpui']['allow_mac_sharing'])))
+			{
+				if($LMS->GetNodeIDByMAC($value))
+					$error['mac'.$key] = trans('Specified MAC address is in use!');
 			}
-		} else {
-			$error['mac' . $key] = trans('Incorrect MAC address!');
+			$macs[] = $value;
 		}
-
-		$macs[$key] = $value;
-		++$key;
-	}
-
-	if (empty($macs))
-		$error['mac0'] = trans('MAC address is required!');
+		elseif($value!='')
+			$error['mac'.$key] = trans('Incorrect MAC address!');
+	if(empty($macs))
+		$error['mac'] = trans('MAC address is required!');
 	$nodedata['macs'] = $macs;
 
-	if (strlen($nodedata['passwd']) > 32)
+	if(strlen($nodedata['passwd']) > 32)
 		$error['passwd'] = trans('Password is too long (max.32 characters)!');
 
-    if (!$nodedata['ownerid']) {
-        $error['nodedata[customerid]'] = trans('Customer not selected!');
-        $error['nodedata[ownerid]']    = trans('Customer not selected!');
-	} else if (! $LMS->CustomerExists($nodedata['ownerid']))
+    if (!$nodedata['ownerid'])
+        $error['ownerid'] = trans('Customer not selected!');
+	if(! $LMS->CustomerExists($nodedata['ownerid']))
 		$error['ownerid'] = trans('You have to select owner!');
 	else
 	{
 		$status = $LMS->GetCustomerStatus($nodedata['ownerid']);
-		if ($status == CSTATUS_INTERESTED) // unknown (interested)
+		if($status == 1) // unknown (interested)
 			$error['ownerid'] = trans('Selected customer is not connected!');
-		else if ($status == CSTATUS_WAITING && $nodedata['access']) // awaiting
-	        $error['access'] = trans('Node owner is not connected!');
+		elseif($status == 2 && $nodedata['access']) // awaiting
+	                $error['access'] = trans('Node owner is not connected!');
 	}
 
-	if ($nodedata['netdev']) {
+	if($nodedata['netdev'])
+	{
 		$ports = $DB->GetOne('SELECT ports FROM netdevices WHERE id = ?', array($nodedata['netdev']));
-		$takenports = $LMS->CountNetDevLinks($nodedata['netdev']);
+	        $takenports = $LMS->CountNetDevLinks($nodedata['netdev']);
 
-		if ($ports <= $takenports)
+		if($ports <= $takenports) 
 			$error['netdev'] = trans('No free ports on device!');
-		else if ($nodedata['port'])
+		elseif($nodedata['port'])
 		{
-			if (!preg_match('/^[0-9]+$/', $nodedata['port']) || $nodedata['port'] > $ports) {
-				$error['port'] = trans('Incorrect port number!');
-			}
-			else if ($DB->GetOne('SELECT id FROM vnodes WHERE netdev=? AND port=? AND ownerid IS NOT NULL',
-					array($nodedata['netdev'], $nodedata['port']))
+		        if(!preg_match('/^[0-9]+$/', $nodedata['port']) || $nodedata['port'] > $ports)
+		        {
+		                $error['port'] = trans('Incorrect port number!');
+		        }
+		        elseif($DB->GetOne('SELECT id FROM nodes WHERE netdev=? AND port=? AND ownerid>0',
+		        		array($nodedata['netdev'], $nodedata['port']))
 			        || $DB->GetOne('SELECT 1 FROM netlinks WHERE (src = ? OR dst = ?)
-			        AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?',
-			        array($nodedata['netdev'], $nodedata['netdev'], $nodedata['netdev'], $nodedata['port'])))
+			                AND (CASE src WHEN ? THEN srcport ELSE dstport END) = ?',
+			                array($nodedata['netdev'], $nodedata['netdev'], $nodedata['netdev'], $nodedata['port'])))
 			{
 			        $error['port'] = trans('Selected port number is taken by other device or node!');
 			}
@@ -190,71 +209,34 @@ if (isset($_POST['nodedata']))
 	else
 		$nodedata['netdev'] = 0;
 
-	if (!isset($nodedata['chkmac']))
-		$nodedata['chkmac'] = 0;
+    if($nodedata['location_zip'] !='' && !check_zip($nodedata['location_zip']) && !isset($nodedata['zipwarning']))
+    {
+        $error['location_zip'] = trans('Incorrect ZIP code! If you are sure you want to accept it, then click "Submit" again.');
+        $nodedata['zipwarning'] = 1;
+    }
 
-	if (!isset($nodedata['halfduplex']))
-		$nodedata['halfduplex'] = 0;
+	if(!isset($nodedata['chkmac']))	$nodedata['chkmac'] = 0;
+	if(!isset($nodedata['halfduplex'])) $nodedata['halfduplex'] = 0;
 
-	if ($nodedata['invprojectid'] == '-1') { // nowy projekt
-		if (!strlen(trim($nodedata['projectname']))) {
-		 $error['projectname'] = trans('Project name is required');
-		}
-		if ($LMS->ProjectByNameExists($nodedata['projectname']))
-			$error['projectname'] = trans('Project with that name already exists');
-	}
-
-	$authtype = 0;
-	if (isset($nodedata['authtype']))
-		foreach ($nodedata['authtype'] as $val)
-			$authtype |= intval($val);
-	$nodedata['authtype'] = $authtype;
-
-	$hook_data = $LMS->executeHook('nodeadd_validation_before_submit',
-		array(
-			'nodeadd' => $nodedata,
-			'error'   => $error,
-		)
-	);
-	$nodedata = $hook_data['nodeadd'];
-	$error = $hook_data['error'];
-
-	if (!$error) {
+	if(!$error)
+	{
         $nodedata = $LMS->ExecHook('node_add_before', $nodedata);
-
-		$ipi = $nodedata['invprojectid'];
-		if ($ipi == '-1')
-			$ipi = $LMS->AddProject($nodedata);
-
-		if ($nodedata['invprojectid'] == '-1' || intval($ipi)>0)
-			$nodedata['invprojectid'] = intval($ipi);
-		else
-			$nodedata['invprojectid'] = NULL;
 
 		$nodeid = $LMS->NodeAdd($nodedata);
 
-		if (count($nodedata['nodegroup']) > 0) {
-			foreach ($nodedata['nodegroup'] as $nodegroupid) {
-				$DB->Execute('INSERT INTO nodegroupassignments (nodeid, nodegroupid)
-					VALUES (?, ?)', array($nodeid, intval($nodegroupid)));
-			}
+		if($nodedata['nodegroup'] != '0')
+		{
+			$DB->Execute('INSERT INTO nodegroupassignments (nodeid, nodegroupid)
+				VALUES (?, ?)', array($nodeid, intval($nodedata['nodegroup'])));
 		}
 
         $nodedata['id'] = $nodeid;
         $nodedata = $LMS->ExecHook('node_add_after', $nodedata);
 
-		$hook_data = $LMS->executeHook('nodeadd_after_submit',
-			array(
-				'nodeadd' => $nodedata,
-			)
-		);
-		$nodedata = $hook_data['nodeadd'];
-
-		if (!isset($nodedata['reuse']))
-			if (isset($nodedata['wholenetwork']))
-				$SESSION->redirect('?m=netinfo&id=' . $nodedata['netid']);
-			else
-				$SESSION->redirect('?m=nodeinfo&id=' . $nodeid);
+		if(!isset($nodedata['reuse']))
+		{
+			$SESSION->redirect('?m=nodeinfo&id='.$nodeid);
+		}
 
 		$ownerid = $nodedata['ownerid'];
 		unset($nodedata);
@@ -263,48 +245,44 @@ if (isset($_POST['nodedata']))
 		$nodedata['reuse'] = '1';
 	}
 	else {
-		if ($nodedata['ipaddr_pub']=='0.0.0.0')
+		if($nodedata['ipaddr_pub']=='0.0.0.0')
 			$nodedata['ipaddr_pub'] = '';
     }
 }
+else
+{
+	if(isset($_POST['nodedata']) && isset($_GET['newmac']))
+	{
+		$nodedata = $_POST['nodedata'];
+		$nodedata['ipaddr'] = $_POST['nodedataipaddr'];
+		$nodedata['ipaddr_pub'] = $_POST['nodedataipaddr_pub'];
+		$nodedata['macs'][] = '';
+	}
+}
 
-if (empty($nodedata['macs']))
+if(empty($nodedata['macs']))
     $nodedata['macs'][] = '';
 
 $layout['pagetitle'] = trans('New Node');
 
-if ($customerid = $nodedata['ownerid']) {
+if($customerid = $nodedata['ownerid'])
+{
 	include(MODULES_DIR.'/customer.inc.php');
 }
 else
 	$SMARTY->assign('allnodegroups', $LMS->GetNodeGroupNames());
 
-if (!ConfigHelper::checkConfig('phpui.big_networks'))
-	$SMARTY->assign('customers', $LMS->GetCustomerNames());
-
-$nprojects = $LMS->GetProjects();
-$SMARTY->assign('NNprojects', $nprojects);
-
-$LMS->InitXajax();
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'nodexajax.inc.php');
-include(MODULES_DIR . DIRECTORY_SEPARATOR . 'geocodexajax.inc.php');
+if(!isset($CONFIG['phpui']['big_networks']) || !chkconfig($CONFIG['phpui']['big_networks']))
+{
+    $SMARTY->assign('customers', $LMS->GetCustomerNames());
+}
 
 $nodedata = $LMS->ExecHook('node_add_init', $nodedata);
 
-$hook_data = $LMS->executeHook('nodeadd_before_display',
-	array(
-		'nodeadd' => $nodedata,
-		'smarty' => $SMARTY,
-	)
-);
-$nodedata = $hook_data['nodeadd'];
-
-$SMARTY->assign('xajax', $LMS->RunXajax());
-
-$SMARTY->assign('networks'  , $LMS->GetNetworks(true));
+$SMARTY->assign('cstateslist',$LMS->GetCountryStates());
 $SMARTY->assign('netdevices', $LMS->GetNetDevNames());
-$SMARTY->assign('error'     , $error);
-$SMARTY->assign('nodedata'  , $nodedata);
-$SMARTY->display('node/nodeadd.html');
+$SMARTY->assign('error', $error);
+$SMARTY->assign('nodedata', $nodedata);
+$SMARTY->display('nodeadd.html');
 
 ?>

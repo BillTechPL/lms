@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,15 +21,13 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: ui.php,v 1.2 2011/01/18 08:12:06 alec Exp $
  */
 
 function uptimef($ts)
 {
-	if ($ts < 60) {
-		return trans('less than one minute ago');
-	}
-
+	if($ts==0)
+		return 'n/a';
 	$min= $ts / 60;
 	$hours = $min / 60;
 	$days  = floor($hours / 24);

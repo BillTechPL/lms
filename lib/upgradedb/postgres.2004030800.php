@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2013 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,12 +21,12 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: postgres.2004030800.php,v 1.12 2011/01/18 08:12:11 alec Exp $
  */
 
 // Add rtqueues - table that contains information about RT (Request Tracker) queues.
 
-$this->Execute("
+$DB->Execute("
     CREATE SEQUENCE \"rtqueues_id_seq\";
     CREATE TABLE rtqueues (
 	id integer default nextval('rtqueues_id_seq'::text) NOT NULL,
@@ -37,7 +37,7 @@ $this->Execute("
 
 // rttickets - Tickets in RT
 
-$this->Execute("
+$DB->Execute("
     CREATE SEQUENCE \"rttickets_id_seq\";
     CREATE TABLE rttickets (
 	id integer default nextval('rttickets_id_seq'::text) NOT NULL,  
@@ -52,7 +52,7 @@ $this->Execute("
 
 // rtmessages - content of mails in RT
 
-$this->Execute("
+$DB->Execute("
     CREATE SEQUENCE \"rtmessages_id_seq\";
     CREATE TABLE rtmessages (
 	id integer default nextval('rtmessages_id_seq'::text) NOT NULL,
@@ -68,6 +68,6 @@ $this->Execute("
 	PRIMARY KEY (id))
 ");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004030800', 'dbversion'));
+$DB->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?",array('2004030800', 'dbversion'));
 
 ?>

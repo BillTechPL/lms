@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,13 +21,16 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: eventdel.php,v 1.12 2011/01/18 08:12:22 alec Exp $
  */
 
 $id = $_GET['id'];
 
-if ($id && $_GET['is_sure'] == '1')
-	$LMS->EventDelete($id);
+if ($id && $_GET['is_sure'] == '1') {
+	if ($DB->Execute('DELETE FROM events WHERE id = ?', array($id))) {
+		$DB->Execute('DELETE FROM eventassignments WHERE eventid = ?', array($id));
+	}
+}
 
 header('Location: ?m=eventlist');
 

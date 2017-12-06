@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,34 +21,33 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: reload.php,v 1.53 2011/01/18 08:12:25 alec Exp $
  */
 
 $layout['pagetitle'] = trans('Configuration Reload');
 
-$_RELOAD_TYPE = ConfigHelper::getConfig('phpui.reload_type');
-$_EXECCMD = ConfigHelper::getConfig('phpui.reload_execcmd');
+$_RELOAD_TYPE = $CONFIG['phpui']['reload_type'];
+$_EXECCMD = $CONFIG['phpui']['reload_execcmd'];
 
-$serverTime = date("r");
-
-if (ConfigHelper::checkConfig('phpui.reload_timer'))
-	$SMARTY->assign('serverTime', $serverTime);
-
-switch ($_RELOAD_TYPE) {
+switch($_RELOAD_TYPE)
+{
 	case 'exec':
+	
 		$hosts = $DB->GetAll('SELECT id, name, lastreload, reload, description FROM hosts ORDER BY name');
 
-		if ((isset($_GET['setreloads']) && isset($_POST['hosts'])) || count($hosts) == 1) {
+		if(isset($_GET['setreloads']) && isset($_POST['hosts']))
+		{
 			$SMARTY->display('header.html');
 
 			echo '<H1>'.$layout['pagetitle'].'</H1>';
 
 			$execlist = explode(';',$_EXECCMD);
 
-			foreach ($hosts as $host)
-				if (count($hosts) == 1 || in_array($host['id'], $_POST['hosts'])) {
+			foreach($hosts as $host)
+				if(in_array($host['id'], $_POST['hosts']))
+				{
 					echo '<H3>'.trans('Host:').' '.$host['name'].'</H3>';
-					echo '<TABLE WIDTH="100%" class="superlight" CELLPADDING="5"><TR><TD class="fall">';
+					echo '<TABLE WIDTH="100%" CLASS="superlight" CELLPADDING="5"><TR><TD CLASS="FALL">';
 					foreach($execlist as $execcmd)
 					{
 						$execcmd = str_replace('%host', $host['name'], $execcmd);
@@ -69,29 +68,34 @@ switch ($_RELOAD_TYPE) {
 					
 					$DB->Execute('UPDATE hosts SET lastreload = ?NOW?, reload = 0 WHERE id = ?', array($host['id']));
 				}
-			$SMARTY->display('footer.html');
-		} else {
+		}
+		else
+		{
 			$SMARTY->assign('hosts', $hosts);
+			$SMARTY->display('header.html');
 			$SMARTY->display('reload.html');
 		}
 	break;
 
 	case 'sql':
+	
 		$hosts = $DB->GetAll('SELECT id, name, lastreload, reload, description FROM hosts ORDER BY name');
-
-		$reload_sqlquery = ConfigHelper::getConfig('phpui.reload_sqlquery');
-		if (!empty($reload_sqlquery) && $hosts) {
-			if ((isset($_GET['setreloads']) && isset($_POST['hosts'])) || count($hosts) == 1) {
-				$SMARTY->display('header.html');
-
-				$sqlqueries = explode(';', $reload_sqlquery);
-
+		
+		if(!empty($CONFIG['phpui']['reload_sqlquery']) && $hosts)
+		{
+			$SMARTY->display('header.html');
+			
+			if(isset($_GET['setreloads']) && isset($_POST['hosts']))
+			{
+				$sqlqueries = explode(';', $CONFIG['phpui']['reload_sqlquery']);
+				
 				echo '<H1>'.$layout['pagetitle'].'</H1>';
 
-				foreach ($hosts as $host)
-					if (count($hosts) == 1 || in_array($host['id'], $_POST['hosts'])) {
+				foreach($hosts as $host)
+					if(in_array($host['id'], $_POST['hosts']))
+					{
 						echo '<H3>'.trans('Host:').' '.$host['name'].'</H3>';
-						echo '<TABLE WIDTH="100%" class="superlight" CELLPADDING="5"><TR><TD class="fall">';
+						echo '<TABLE WIDTH="100%" CLASS="superlight" CELLPADDING="5"><TR><TD CLASS="FALL">';
 						foreach($sqlqueries as $query)
 						{
 							$query = str_replace('%TIME%', '?NOW?', $query);
@@ -102,30 +106,39 @@ switch ($_RELOAD_TYPE) {
 						}
 						echo '</TD></TR></TABLE>';
 					}
-				$SMARTY->display('footer.html');
-			} else {
+			}
+			else
+			{
 				$SMARTY->assign('hosts', $hosts);
 				$SMARTY->display('reload.html');
 			}
-		} else {
-			if (isset($_GET['setreloads']) && isset($_POST['hosts']) && $hosts) {
+		}
+		else
+		{
+			if(isset($_GET['setreloads']) && isset($_POST['hosts']) && $hosts)
+			{
 				foreach($hosts as $host)
 					if(in_array($host['id'], $_POST['hosts']))
 						$DB->Execute('UPDATE hosts SET reload=1 WHERE id=?', array($host['id']));
 					else
 						$DB->Execute('UPDATE hosts SET reload=0 WHERE id=?', array($host['id']));
-
+			
 				$SESSION->redirect('?m=reload');
-			} else {
+			}
+			else
+			{
 				$SMARTY->assign('hosts', $hosts);
+				$SMARTY->display('header.html');
 				$SMARTY->display('reload.html');
 			}
 		}
 	break;
 
 	default:
-		echo '<P><B><FONT COLOR="RED">'.trans('Error: Unknown reload type: "$a"!', $_RELOAD_TYPE).'</FONT></B></P>';
+		echo '<P><B><FONT COLOR="RED">'.trans('Error: Unknown reload type: "$0"!', $_RELOAD_TYPE).'</FONT></B></P>';
 	break;
 }
+
+$SMARTY->display('footer.html');
 
 ?>

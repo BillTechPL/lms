@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2017 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: promotionschemainfo.php,v 1.3 2011/03/07 13:53:34 alec Exp $
  */
 
 
@@ -49,11 +49,11 @@ foreach ($schema['data'] as $idx => $data) {
         break;
     }
     else if ($data == 1) {
-        $period = trans('Month $a', $data);
+        $period = trans('Month $0', $data);
         $mon++;
     }
     else {
-        $period = trans('Months $a-$b', $mon, $mon + $data-1);
+        $period = trans('Months $0-$1', $mon, $mon + $data-1);
         $mon += $data;
     }
     $schema['periods'][] = $period;
@@ -62,24 +62,21 @@ foreach ($schema['data'] as $idx => $data) {
 $schema['data'] = implode(' &raquo; ', (array)$schema['data']);
 
 $schema['tariffs'] = $DB->GetAll('SELECT t.name, t.value,
-    a.tariffid, a.id, a.data, a.optional, a.label
+    a.tariffid, a.id, a.data
     FROM promotionassignments a
     JOIN tariffs t ON (a.tariffid = t.id)
     WHERE a.promotionschemaid = ?
-    ORDER BY a.orderid', array($schema['id']));
+    ORDER BY t.name, t.value DESC', array($schema['id']));
 
 if (!empty($schema['tariffs'])) {
-	$schema['selections'] = array();
-	foreach ($schema['tariffs'] as $idx => $value) {
-		$tmp = explode(';', $value['data']);
-		$data = array();
-		foreach ($tmp as $didx => $d)
-			list($data['value'][$didx], $data['period'][$didx]) = explode(':', $d);
-		$schema['tariffs'][$idx]['data'] = $data;
-		if (!empty($value['label']))
-			$schema['selections'][] = $value['label'];
-	}
-	$schema['selections'] = array_unique($schema['selections']);
+    foreach ($schema['tariffs'] as $idx => $value) {
+        $tmp = explode(';', $value['data']);
+        $data = array();
+        foreach ($tmp as $didx => $d) {
+            list($data['value'][$didx], $data['period'][$didx]) = explode(':', $d);
+        }
+        $schema['tariffs'][$idx]['data'] = $data;
+    }
 }
 
 $tariffs = $DB->GetAll('SELECT t.name, t.value, t.id, t.upceil, t.downceil
@@ -89,12 +86,13 @@ $tariffs = $DB->GetAll('SELECT t.name, t.value, t.id, t.upceil, t.downceil
         WHERE promotionschemaid = ?)
     ORDER BY t.name, t.value DESC', array($schema['id']));
 
-$layout['pagetitle'] = trans('Schema Info: $a', $schema['name']);
+$layout['pagetitle'] = trans('Schema Info: $0', $schema['name']);
 
 $SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 $SMARTY->assign('tariffs', $tariffs);
+$SMARTY->assign('activations', $activations);
 $SMARTY->assign('schema', $schema);
-$SMARTY->display('promotion/promotionschemainfo.html');
+$SMARTY->display('promotionschemainfo.html');
 
 ?>

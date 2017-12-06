@@ -1,9 +1,9 @@
 <?php
 
 /*
- * LMS version 1.11-git
+ * LMS version 1.11.13 Dira
  *
- *  (C) Copyright 2001-2016 LMS Developers
+ *  (C) Copyright 2001-2011 LMS Developers
  *
  *  Please, see the doc/AUTHORS for more information about authors!
  *
@@ -21,7 +21,7 @@
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
  *  USA.
  *
- *  $Id$
+ *  $Id: invoicepaid.php,v 1.33 2011/01/18 08:12:23 alec Exp $
  */
 
 $SESSION->restore('ilm', $ilm);
@@ -39,10 +39,11 @@ if(sizeof($ids))
 {
 	foreach($ids as $invoiceid)
 	{
-		list ($cid, $closed) = array_values($DB->GetRow('SELECT customerid, closed FROM documents
-			WHERE id = ?', array($invoiceid)));
 		// add payment
-		if (ConfigHelper::checkConfig('phpui.invoice_check_payment') && $cid && !$closed) {
+		if(chkconfig($CONFIG['phpui']['invoice_check_payment'])
+			&& ($cid = $DB->GetOne('SELECT customerid FROM documents
+				WHERE id = ? AND closed = 0', array($invoiceid))))
+		{
 			$value = $DB->GetOne('SELECT CASE reference WHEN 0 THEN SUM(a.value*a.count)
 				ELSE SUM((a.value+b.value)*(a.count+b.count)) - SUM(b.value*b.count) END
 				FROM documents d
@@ -53,21 +54,13 @@ if(sizeof($ids))
 			if ($value != 0)
 				$LMS->AddBalance(array(
 					'type' => 1,
-					'time' => time(),
+				        'time' => time(),
 					'value' => $value,
 					'customerid' => $cid,
 					'comment' => trans('Accounted'),
 				));
 		}
 
-		if ($SYSLOG) {
-			$args = array(
-				SYSLOG::RES_DOC => $invoiceid,
-				SYSLOG::RES_CUST => $cid,
-				'closed' => intval(!$closed),
-			);
-			$SYSLOG->AddMessage(SYSLOG::RES_DOC, SYSLOG::OPER_UPDATE, $args);
-		}
 		$DB->Execute('UPDATE documents SET closed = 
 			(CASE closed WHEN 0 THEN 1 ELSE 0 END)
 			WHERE id = ?', array($invoiceid));
