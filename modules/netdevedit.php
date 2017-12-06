@@ -677,8 +677,7 @@ if ($subtitle)
 	$layout['pagetitle'] .= ' - ' . $subtitle;
 
 $SMARTY->assign('NNprojects', $LMS->GetProjects());
-$netnodes = $DB->GetAll("SELECT * FROM netnodes ORDER BY name");
-$SMARTY->assign('NNnodes',$netnodes);
+$SMARTY->assign('NNnodes', $LMS->GetNetNodes());
 
 $SMARTY->assign('error'                , $error);
 $SMARTY->assign('netdevinfo'           , $netdevdata);
@@ -699,7 +698,7 @@ $SMARTY->assign('nodelinktype'         , $SESSION->get('nodelinktype'));
 $SMARTY->assign('nodelinkradiosector'  , $SESSION->get('nodelinkradiosector'));
 $SMARTY->assign('nodelinktechnology'   , $SESSION->get('nodelinktechnology'));
 $SMARTY->assign('nodelinkspeed'        , $SESSION->get('nodelinkspeed'));
-$SMARTY->assign('nastype'              , $LMS->GetNAStypes());
+$SMARTY->assign('nastypes'             , $LMS->GetNAStypes());
 
 if (!ConfigHelper::checkConfig('phpui.big_networks'))
     $SMARTY->assign('customers', $LMS->GetCustomerNames());

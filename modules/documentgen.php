@@ -123,13 +123,26 @@ if (isset($_POST['document'])) {
 	$SMARTY->assign('fileupload', $fileupload);
 
 	$globalfiles = array();
-	if (!$error && !empty($attachments))
-		foreach ($attachments as $attachment) {
-			$attachment['tmpname'] = $tmppath . DIRECTORY_SEPARATOR . $attachment['name'];
-			$attachment['md5sum'] = md5_file($attachment['tmpname']);
-			$attachment['main'] = false;
-			$globalfiles[] = $attachment;
-		}
+	if (!$error) {
+		if (!empty($attachments))
+			foreach ($attachments as $attachment) {
+				$attachment['tmpname'] = $tmppath . DIRECTORY_SEPARATOR . $attachment['name'];
+				$attachment['md5sum'] = md5_file($attachment['tmpname']);
+				$attachment['main'] = false;
+				$globalfiles[] = $attachment;
+			}
+		if (isset($document['attachments']) && !empty($document['attachments']))
+			foreach ($document['attachments'] as $attachment => $value) {
+				$filename = $engine['attachments'][$attachment];
+				$globalfiles[] = array(
+					'tmpname' => null,
+					'name' => $filename,
+					'type' => mime_content_type($filename),
+					'md5sum' => md5_file($filename),
+					'main' => false,
+				);
+			}
+	}
 
 	if (empty($globalfiles) && empty($document['templ']))
 		$error['files'] = trans('You must to specify file for upload or select document template!');
@@ -216,7 +229,12 @@ if (isset($_POST['document'])) {
 				$files = array_merge($files, $globalfiles);
 				foreach ($files as $file) {
 					@mkdir($file['path'], 0700);
-					if (!file_exists($file['newfile']) && !@rename($file['tmpname'], $file['newfile'])) {
+					if (empty($file['tmpname'])) {
+						if (!@copy($file['name'], $file['newfile'])) {
+							$error['files'] = trans('Can\'t save file in "$a" directory!', $file['path']);
+							break;
+						}
+					} elseif (!file_exists($file['newfile']) && !@rename($file['tmpname'], $file['newfile'])) {
 						$error = trans('Can\'t save file in "$a" directory!', $file['path']);
 						break;
 					}
@@ -294,7 +312,7 @@ if (isset($_POST['document'])) {
 			foreach ($files as $file)
 				$DB->Execute('INSERT INTO documentattachments (docid, filename, contenttype, md5sum, main)
 					VALUES (?, ?, ?, ?, ?)', array($docid,
-						$file['name'],
+						basename($file['name']),
 						$file['type'],
 						$file['md5sum'],
 						$file['main'] ? 1 : 0,
@@ -334,17 +352,37 @@ if (isset($_POST['document'])) {
 		$document['todate'] = $oldtodate;
 
 		if ($document['templ']) {
+			foreach ($documents_dirs as $doc)
+				if (file_exists($doc . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'] )) {
+					$doc_dir = $doc;
+					continue;
+				}
+
 			$result = '';
+			$script_result = '';
+
 			// read template information
-			include(DOC_DIR . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ']
+			include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ']
 				 . DIRECTORY_SEPARATOR . 'info.php');
 			// set some variables
 			$SMARTY->assign('document', $document);
+
 			// call plugin
-			@include(DOC_DIR . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $engine['name']
-				 . DIRECTORY_SEPARATOR . $engine['plugin'] . '.php');
+			if (!empty($engine['plugin'])) {
+				if (file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
+					. $engine['name'] . DIRECTORY_SEPARATOR . $engine['plugin'] . '.php'))
+					include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $engine['name']
+						. DIRECTORY_SEPARATOR . $engine['plugin'] . '.php');
+				if (file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
+					. $engine['name'] . DIRECTORY_SEPARATOR . $engine['plugin'] . '.js'))
+					$script_result = '<script src="' . $_SERVER['REQUEST_URI'] . '&template=' . $engine['name'] . '"></script>';
+			}
+
 			// get plugin content
 			$SMARTY->assign('plugin_result', $result);
+			$SMARTY->assign('script_result', $script_result);
+			$SMARTY->assign('attachment_result', GenerateAttachmentHTML($engine,
+				isset($document['attachments']) ? $document['attachments'] : array()));
 		}
 	}
 }

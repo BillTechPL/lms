@@ -113,6 +113,13 @@ function hostname()
 	return $hostname;
 }
 
+function long_ip($ip) {
+	$ip = (float) $ip;
+	if ($ip > PHP_INT_MAX)
+		$ip = $ip - 2 - ((float) PHP_INT_MAX) * 2;
+	return long2ip($ip);
+}
+
 function ip_long($sip)
 {
 	if(check_ip($sip)){
@@ -223,17 +230,10 @@ function getnetaddr($ip,$mask)
 		return false;
 }
 
-function prefix2mask($prefix)
-{
-	if($prefix>=0&&$prefix<=32)
-	{	
-		$out = '';
-		for($ti=0;$ti<$prefix;$ti++)
-			$out .= '1';
-		for($ti=$prefix;$ti<32;$ti++)
-			$out .= '0';
-		return long2ip(bindec($out));
-	}
+function prefix2mask($prefix) {
+	$prefix = intval($prefix);
+	if ($prefix >= 0 && $prefix <= 32)
+		return long2ip(-1 << (32 - $prefix));
 	else
 		return false;
 }

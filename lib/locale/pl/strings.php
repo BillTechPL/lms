@@ -1023,7 +1023,7 @@ $_LANG['Name'] = 'Nazwa';
 $_LANG['Name:'] = 'Nazwa:';
 $_LANG['First/last name'] = 'Imię i nazwisko';
 $_LANG['First/last name:'] = 'Imię i nazwisko:';
-+$_LANG['Sender First, Last name (name)'] = 'Imię i nazwisko nadawcy (nazwa)';
+$_LANG['Sender First, Last name (name)'] = 'Imię i nazwisko nadawcy (nazwa)';
 $_LANG['Last and first name'] = 'Nazwisko i imię';
 $_LANG['Name contains forbidden characters!'] = 'Nazwisko zawiera niepoprawne znaki!';
 $_LANG['Name of messages sender or predefined variables: "queue" - queue name, "user" - logged user name. Default: none.'] = 'Nazwa nadawcy wiadomości lub jedna z predefiniowanych wartości: "queue" - nazwa kolejki, "user" - zalogowany użytkownik. Domyślnie: pusta.';
@@ -3760,7 +3760,7 @@ $_LANG['Add network node:'] = 'Dodaj węzeł sieciowy:';
 
 $_LANG['New device'] = 'Nowe urządzenie';
 
-$_LANG['Enter external customer ID fragment and press Enter'] = 'Podaj fragment identyfikatora kienta w systemie zewnętrznych i naciśnij Enter';
+$_LANG['Enter external customer ID fragment and press Enter'] = 'Podaj fragment identyfikatora kienta w systemie zewnętrznym i naciśnij Enter';
 
 $_LANG['Customer count'] = 'Liczba klientów';
 $_LANG['Assignment count'] = 'Liczba zobowiązań';
@@ -3806,5 +3806,7 @@ $_LANG['<!existingassignment>cut'] = 'skróć';
 $_LANG['<!existingassignment>delete'] = 'usuń';
 $_LANG['limit to reference document'] = 'ogranicz do dokumentu odniesienia';
 $_LANG['limit to type'] = 'ogranicz do typu';
+
+$_LANG['Document attachments:'] = 'Załączniki dokumentu:';
 
 ?>

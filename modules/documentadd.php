@@ -95,7 +95,7 @@ if (isset($_POST['document'])) {
 		$error['todate'] = trans('Start date can\'t be greater than end date!');
 
 	// validate tariff selection list when promotions are active only
-	if (isset($document['assignment'])) {
+	if (isset($document['assignment']) && !empty($document['assignment']['schemaid'])) {
 		// validate selected promotion schema properties
 		$a = $document['assignment'];
 		$a['datefrom'] = $oldfromdate;
@@ -114,7 +114,10 @@ if (isset($_POST['document'])) {
 				$doc_dir = $doc;
 				continue;
 			}
+
 		$result = '';
+		$script_result = '';
+
 		// read template information
 		include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'] . DIRECTORY_SEPARATOR . 'info.php');
 		// set some variables (needed in e.g. plugin)
@@ -122,13 +125,22 @@ if (isset($_POST['document'])) {
 			$document['reference'] = $DB->GetRow('SELECT id, type, fullnumber, cdate FROM documents
 				WHERE id = ?', array($document['reference']));
 		$SMARTY->assignByRef('document', $document);
+
 		// call plugin
-		if (!empty($engine['plugin']) && file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
+		if (!empty($engine['plugin'])) {
+			if (file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
 			. $engine['name'] . DIRECTORY_SEPARATOR . $engine['plugin'] . '.php'))
-			include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $engine['name']
-				. DIRECTORY_SEPARATOR . $engine['plugin'] . '.php');
+				include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $engine['name']
+					. DIRECTORY_SEPARATOR . $engine['plugin'] . '.php');
+			if (file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
+				. $engine['name'] . DIRECTORY_SEPARATOR . $engine['plugin'] . '.js'))
+				$script_result = '<script src="' . $_SERVER['REQUEST_URI'] . '&template=' . $engine['name'] . '"></script>';
+		}
 		// get plugin content
 		$SMARTY->assign('plugin_result', $result);
+		$SMARTY->assign('script_result', $script_result);
+		$SMARTY->assign('attachment_result', GenerateAttachmentHTML($engine,
+			isset($document['attachments']) ? $document['attachments'] : array()));
 
 		// run template engine
 		if (file_exists($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR
@@ -160,13 +172,26 @@ if (isset($_POST['document'])) {
 	extract($result);
 	$SMARTY->assign('fileupload', $fileupload);
 
-	if (!$error && !empty($attachments))
-		foreach ($attachments as $attachment) {
-			$attachment['tmpname'] = $tmppath . DIRECTORY_SEPARATOR . $attachment['name'];
-			$attachment['md5sum'] = md5_file($attachment['tmpname']);
-			$attachment['main'] = false;
-			$files[] = $attachment;
-		}
+	if (!$error) {
+		if (!empty($attachments))
+			foreach ($attachments as $attachment) {
+				$attachment['tmpname'] = $tmppath . DIRECTORY_SEPARATOR . $attachment['name'];
+				$attachment['md5sum'] = md5_file($attachment['tmpname']);
+				$attachment['main'] = false;
+				$files[] = $attachment;
+			}
+		if (isset($document['attachments']) && !empty($document['attachments']))
+			foreach ($document['attachments'] as $attachment => $value) {
+				$filename = $engine['attachments'][$attachment];
+				$files[] = array(
+					'tmpname' => null,
+					'name' => $filename,
+					'type' => mime_content_type($filename),
+					'md5sum' => md5_file($filename),
+					'main' => false,
+				);
+			}
+	}
 
 	if (empty($files) && empty($document['templ']))
 		$error['files'] = trans('You must to specify file for upload or select document template!');
@@ -192,7 +217,12 @@ if (isset($_POST['document'])) {
 		if (!$error) {
 			foreach ($files as $file) {
 				@mkdir($file['path'], 0700);
-				if (!file_exists($file['newfile']) && !@rename($file['tmpname'], $file['newfile'])) {
+				if (empty($file['tmpname'])) {
+					if (!@copy($file['name'], $file['newfile'])) {
+						$error['files'] = trans('Can\'t save file in "$a" directory!', $file['path']);
+						break;
+					}
+				} elseif (!file_exists($file['newfile']) && !@rename($file['tmpname'], $file['newfile'])) {
 					$error['files'] = trans('Can\'t save file in "$a" directory!', $file['path']);
 					break;
 				}
@@ -296,7 +326,7 @@ if (isset($_POST['document'])) {
 		foreach ($files as $file)
 			$DB->Execute('INSERT INTO documentattachments (docid, filename, contenttype, md5sum, main)
 				VALUES (?, ?, ?, ?, ?)', array($docid,
-					$file['name'],
+					basename($file['name']),
 					$file['type'],
 					$file['md5sum'],
 					$file['main'] ? 1 : 0,

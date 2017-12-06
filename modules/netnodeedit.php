@@ -55,8 +55,8 @@ if (isset($netnodedata)) {
 		$error['name'] = trans('Net node name is required!');
 
 	if ($api) {
-		if (isset($netnodedata['divisionname'])) {
-			$division = $LMS->GetDivisionByName($netnodedata['divisionname']);
+		if (isset($netnodedata['division'])) {
+			$division = $LMS->GetDivisionByName($netnodedata['division']);
 			if (empty($division))
 				$error['divisionid'] = trans('Division is required!');
 			else
@@ -65,11 +65,12 @@ if (isset($netnodedata)) {
 			$error['divisionid'] = trans('Division is required!');
 	}
 
-	if ($api && isset($netnodedata['projectname'])) {
-		$project = $LMS->GetProjectByName($netnodedata['projectname']);
-		if (empty($project))
+	if ($api && isset($netnodedata['project'])) {
+		$project = $LMS->GetProjectByName($netnodedata['project']);
+		if (empty($project)) {
+			$netnodedata['projectname'] = $netnodedata['project'];
 			$netnodedata['invprojectid'] = -1;
-		else
+		} else
 			$netnodedata['invprojectid'] = $project['id'];
 	}
 
@@ -87,7 +88,7 @@ if (isset($netnodedata)) {
 	}
 
 	if ($netnodedata['location_zip'] && !check_zip($netnodedata['location_zip'])) {
-		$error['netnode[location_zip]'] = trans('Incorrect ZIP code!');
+		$error['location_zip'] = trans('Incorrect ZIP code!');
 	}
 
 	if (isset($netnodedata['terc']) && isset($netnodedata['simc']) && isset($netnodedata['ulic'])) {
@@ -101,17 +102,14 @@ if (isset($netnodedata)) {
 		$netnodedata['location_street_name'] = $teryt['location_street_name'];
 	}
 
-	if($netnodedata['lastinspectiontime'] == '')
-		$netnodedata['lastinspectiontime'] = "0";
-	else
-	{
-		$lit = date_to_timestamp($netnodedata['lastinspectiontime']);
-		if($lit != '')
-		{
-			if($lit > time())
-				$error['netnode[lastinspectiontime]'] = trans('Date from the future not allowed!');
+	if (isset($netnodedata['lastinspectiontime']))
+		if ($netnodedata['lastinspectiontime'] == '')
+			$netnodedata['lastinspectiontime'] = 0;
+		else {
+			$lit = date_to_timestamp($netnodedata['lastinspectiontime']);
+			if (!empty($lit) && $lit > time())
+				$error['lastinspectiontime'] = trans('Date from the future not allowed!');
 		}
-	}
 
 	if (!$error) {
 		if (intval($netnodedata['invprojectid']) == -1)

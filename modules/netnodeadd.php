@@ -43,8 +43,8 @@ if (isset($netnodedata)) {
 		$error['name'] = trans('Net node name is required!');
 
 	if ($api) {
-		if (isset($netnodedata['divisionname'])) {
-			$division = $LMS->GetDivisionByName($netnodedata['divisionname']);
+		if (isset($netnodedata['division'])) {
+			$division = $LMS->GetDivisionByName($netnodedata['division']);
 			if (empty($division))
 				$error['divisionid'] = trans('Division is required!');
 			else
@@ -54,11 +54,12 @@ if (isset($netnodedata)) {
 	} elseif ($netnodedata['divisionid'] == '-1')
 		$error['divisionid'] = trans('Division is required!');
 
-	if ($api && isset($netnodedata['projectname'])) {
-		$project = $LMS->GetProjectByName($netnodedata['projectname']);
-		if (empty($project))
+	if ($api && isset($netnodedata['project'])) {
+		$project = $LMS->GetProjectByName($netnodedata['project']);
+		if (empty($project)) {
+			$netnodedata['projectname'] = $netnodedata['project'];
 			$netnodedata['invprojectid'] = -1;
-		else
+		} else
 			$netnodedata['invprojectid'] = $project['id'];
 	}
 
@@ -70,7 +71,7 @@ if (isset($netnodedata)) {
 	}
 
 	if ($netnodedata['location_zip'] && !check_zip($netnodedata['location_zip'])) {
-		$error['netnode[location_zip]'] = trans('Incorrect ZIP code!');
+		$error['location_zip'] = trans('Incorrect ZIP code!');
 	}
 
 	if (in_array($netnodedata['ownership'], array('1', '2'))) { // węzeł współdzielony lub obcy
