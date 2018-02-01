@@ -67,6 +67,122 @@ class LMSDocumentManager extends LMSManager implements LMSDocumentManagerInterfa
         }
     }
 
+	public function GetDocumentList($order='cdate,asc', $search) {
+		$type = isset($search['type']) ? $search['type'] : NULL;
+		$customer = isset($search['customer']) ? $search['customer'] : NULL;
+		$numberplan = isset($search['numberplan']) ? $search['numberplan'] : NULL;
+		$usertype = isset($search['usertype']) ? $search['usertype'] : 'creator';
+		$userid = isset($search['userid']) ? $search['userid'] : NULL;
+		$periodtype = isset($search['periodtype']) ? $search['periodtype'] : 'creationdate';
+		$from = isset($search['from']) ? $search['from'] : 0;
+		$to = isset($search['to']) ? $search['to'] : 0;
+		$status = isset($search['status']) ? $search['status'] : -1;
+
+		if($order=='')
+			$order='cdate,asc';
+
+		list($order,$direction) = sscanf($order, '%[^,],%s');
+		($direction=='desc') ? $direction = 'desc' : $direction = 'asc';
+
+		switch($order)
+		{
+			case 'type':
+				$sqlord = ' ORDER BY d.type '.$direction.', d.name';
+				break;
+			case 'title':
+				$sqlord = ' ORDER BY title '.$direction.', d.name';
+				break;
+			case 'customer':
+				$sqlord = ' ORDER BY d.name '.$direction.', title';
+				break;
+			case 'user':
+				$sqlord = ' ORDER BY u.lastname '.$direction.', title';
+				break;
+			case 'cuser':
+				$sqlord = ' ORDER BY u2.lastname '.$direction.', title';
+				break;
+			case 'sdate':
+				$sqlord = ' ORDER BY d.sdate '.$direction.', d.name';
+				break;
+			default:
+				$sqlord = ' ORDER BY d.cdate '.$direction.', d.name';
+				break;
+		}
+
+		switch ($usertype) {
+			case 'creator':
+				$userfield = 'd.userid';
+				break;
+			case 'authorising':
+				$userfield = 'd.cuserid';
+				break;
+			default:
+				$userfield = 'd.userid';
+		}
+
+		switch ($periodtype) {
+			case 'creationdate':
+				$datefield = 'd.cdate';
+				break;
+			case 'confirmationdate':
+				$datefield = 'd.sdate';
+				break;
+			case 'fromdate':
+				$datefield = 'documentcontents.fromdate';
+				break;
+			case 'todate':
+				$datefield = 'documentcontents.todate';
+				break;
+			default:
+				$datefield = 'd.cdate';
+		}
+
+		$list = $this->db->GetAll('SELECT docid, d.number, d.type, title, d.cdate, u.name AS username, u.lastname, fromdate, todate, description, 
+				numberplans.template, d.closed, d.name, d.customerid, d.sdate, d.cuserid, u2.name AS cusername, u2.lastname AS clastname,
+				d.reference, i.senddocuments
+			FROM documentcontents
+			JOIN documents d ON (d.id = documentcontents.docid)
+			JOIN docrights r ON (d.type = r.doctype AND r.userid = ? AND (r.rights & 1) = 1)
+			JOIN vusers u ON u.id = d.userid
+			LEFT JOIN vusers u2 ON u2.id = d.cuserid
+			LEFT JOIN numberplans ON (d.numberplanid = numberplans.id)
+			LEFT JOIN (
+				SELECT DISTINCT c.id AS customerid, 1 AS senddocuments FROM customers c
+				JOIN customercontacts cc ON cc.customerid = c.id
+				WHERE cc.type & ' . (CONTACT_EMAIL | CONTACT_DOCUMENTS | CONTACT_DISABLED) . ' = ' . (CONTACT_EMAIL | CONTACT_DOCUMENTS) . '
+			) i ON i.customerid = d.customerid
+			LEFT JOIN (
+				SELECT DISTINCT a.customerid FROM customerassignments a
+				JOIN excludedgroups e ON (a.customergroupid = e.customergroupid)
+				WHERE e.userid = lms_current_user()
+			) e ON (e.customerid = d.customerid)
+			WHERE e.customerid IS NULL '
+			.($customer ? 'AND d.customerid = '.intval($customer) : '')
+			.($type ? ' AND d.type = '.intval($type) : '')
+			. ($userid ? ' AND ' . $userfield . ' = ' . intval($userid) : '')
+			. ($numberplan ? ' AND d.numberplanid = ' . intval($numberplan) : '')
+			.($from ? ' AND ' . $datefield . ' >= '.intval($from) : '')
+			.($to ? ' AND ' . $datefield . ' <= '.intval($to) : '')
+			.($status == -1 ? '' : ' AND d.closed = ' . intval($status))
+			.$sqlord, array(Auth::GetCurrentUser()));
+
+		if (!empty($list))
+			foreach ($list as &$document) {
+				$document['attachments'] = $this->db->GetAll('SELECT id, filename, md5sum, contenttype, main
+				FROM documentattachments WHERE docid = ? ORDER BY main DESC, filename', array($document['docid']));
+				if (!empty($document['reference'])) {
+					$document['reference'] = $this->db->GetRow('SELECT id, type, fullnumber, cdate FROM documents
+					WHERE id = ?', array($document['reference']));
+				}
+			}
+
+		$list['total'] = sizeof($list);
+		$list['direction'] = $direction;
+		$list['order'] = $order;
+
+		return $list;
+	}
+
 	/*
 	 \param array $properties - associative array with function parameters:
 		doctype: document type
@@ -417,5 +533,212 @@ class LMSDocumentManager extends LMSManager implements LMSDocumentManagerInterfa
 		foreach ($addresses as $address_id)
 			if (!empty($address_id))
 				$this->db->Execute('DELETE FROM addresses WHERE id = ?', array($address_id));
+	}
+
+	public function DocumentAttachmentExists($md5sum) {
+		return $this->db->GetOne('SELECT docid FROM documentattachments WHERE md5sum = ?',
+			array($md5sum));
+	}
+
+	public function GetDocumentFullContents($id) {
+		global $DOCTYPES;
+
+		if ($document = $this->db->GetRow('SELECT d.id, d.number, d.cdate, d.type, d.customerid,
+				d.fullnumber, n.template
+			FROM documents d
+			LEFT JOIN numberplans n ON (d.numberplanid = n.id)
+			JOIN docrights r ON (r.doctype = d.type)
+			WHERE d.id = ? AND r.userid = ? AND (r.rights & 1) = 1', array($id, Auth::GetCurrentUser()))) {
+
+			$document['fullnumber'] = docnumber(array(
+				'number' => $document['number'],
+				'template' => $document['template'],
+				'cdate' => $document['cdate'],
+				'customerid' => $document['customerid'],
+			));
+
+			$document['title'] = trans('$a no. $b issued on $c',
+				$DOCTYPES[$document['type']], $document['fullnumber'], date('Y/m/d', $document['cdate']));
+
+			$document['attachments'] = $this->db->GetAllByKey('SELECT * FROM documentattachments WHERE docid = ?
+				ORDER BY main DESC', 'id', array($id));
+
+			foreach ($document['attachments'] as &$attachment) {
+				$filename = DOC_DIR . DIRECTORY_SEPARATOR . substr($attachment['md5sum'], 0, 2)
+					. DIRECTORY_SEPARATOR . $attachment['md5sum'];
+				if (file_exists($filename . '.pdf')) {
+					// try to get file from pdf document cache
+					$contents = file_get_contents($filename . '.pdf');
+					$contenttype = 'application/pdf';
+					$contentname = str_replace('.html', '.pdf', $attachment['filename']);
+				} else {
+					$contents = file_get_contents($filename);
+					if (preg_match('/html/i', $attachment['contenttype'])
+						&& strtolower(ConfigHelper::getConfig('phpui.document_type')) == 'pdf') {
+						$margins = explode(",", ConfigHelper::getConfig('phpui.document_margins', '10,5,15,5'));
+						if (ConfigHelper::getConfig('phpui.cache_documents'))
+							$contents = html2pdf($contents, $document['title'], $document['title'], $document['type'], $id,
+								'P', $margins, 'S', false, $attachment['md5sum']);
+						else
+							$contents = html2pdf($contents, $document['title'], $document['title'], $document['type'], $id,
+								'P', $margins, 'S');
+						$contenttype = 'application/pdf';
+						$contentname = str_replace('.html', '.pdf', $attachment['filename']);
+					} else {
+						$contenttype = $attachment['contenttype'];
+						$contentname = $attachment['filename'];
+					}
+				}
+				$attachment['contents'] = $contents;
+				$attachment['contenttype'] = $contenttype;
+				$attachment['filename'] = $contentname;
+			}
+			unset($attachment);
+		}
+		return $document;
+	}
+
+	public function SendDocuments($docs, $type, $params) {
+		global $LMS;
+
+		extract($params);
+
+		if ($type == 'frontend')
+			$eol = '<br>';
+		else
+			$eol = PHP_EOL;
+
+		$month = sprintf('%02d', intval(date('m', $currtime)));
+		$day = sprintf('%02d', intval(date('d', $currtime)));
+		$year = sprintf('%04d', intval(date('Y', $currtime)));
+
+		$from = $sender_email;
+
+		if (!empty($sender_name))
+			$from = "$sender_name <$from>";
+
+		foreach ($docs as $doc) {
+			$document = $this->GetDocumentFullContents($doc['id']);
+			if (empty($document))
+				continue;
+
+			$custemail = (!empty($debug_email) ? $debug_email : $doc['email']);
+			$body = $mail_body;
+			$subject = $mail_subject;
+
+			$body = preg_replace('/%document/', $document['title'], $body);
+			$body = str_replace('\n', "\n", $body);
+			$body = preg_replace('/%today/', $year . '-' . $month . '-' . $day, $body);
+			$subject = preg_replace('/%document/', $document['title'], $subject);
+
+			$doc['name'] = '"' . $doc['name'] . '"';
+
+			$mailto = array();
+			$mailto_qp_encoded = array();
+			foreach (explode(',', $custemail) as $email) {
+				$mailto[] = $doc['name'] . " <$email>";
+				$mailto_qp_encoded[] = qp_encode($document['name']) . " <$email>";
+			}
+			$mailto = implode(', ', $mailto);
+			$mailto_qp_encoded = implode(', ', $mailto_qp_encoded);
+
+			if (!$quiet || $test) {
+				$msg = $document['title'] . ': ' . $mailto ;
+				if ($type == 'frontend') {
+					echo htmlspecialchars($msg) . $eol;
+					flush();
+					ob_flush();
+				} else
+					echo $msg . $eol;
+			}
+
+			if (!$test) {
+				$files = array();
+				foreach ($document['attachments'] as $attachment)
+					$files[] = array(
+						'content_type' => $attachment['contenttype'],
+						'filename' => $attachment['filename'],
+						'data' => $attachment['contents'],
+					);
+
+				if ($extrafile) {
+					$files[] = array(
+						'content_type' => mime_content_type($extrafile),
+						'filename' => basename($extrafile),
+						'data' => file_get_contents($extrafile)
+					);
+				}
+
+				$headers = array(
+					'From' => empty($dsn_email) ? $from : $dsn_email,
+					'To' => $mailto_qp_encoded,
+					'Subject' => $subject,
+					'Reply-To' => empty($reply_email) ? $sender_email : $reply_email,
+				);
+
+				if (!empty($mdn_email)) {
+					$headers['Return-Receipt-To'] = $mdn_email;
+					$headers['Disposition-Notification-To'] = $mdn_email;
+				}
+
+				if (!empty($dsn_email))
+					$headers['Delivery-Status-Notification-To'] = $dsn_email;
+
+				if (!empty($notify_email))
+					$headers['Cc'] = $notify_email;
+
+				if (isset($mail_format) && $mail_format == 'html')
+					$headers['X-LMS-Format'] = 'html';
+
+				if ($add_message) {
+					$this->db->Execute('INSERT INTO messages (subject, body, cdate, type, userid)
+						VALUES (?, ?, ?NOW?, ?, ?)',
+						array($subject, $body, MSG_MAIL, Auth::GetCurrentUser()));
+					$msgid = $this->db->GetLastInsertID('messages');
+					foreach (explode(',', $custemail) as $email) {
+						$this->db->Execute('INSERT INTO messageitems (messageid, customerid, destination, lastdate, status)
+							VALUES (?, ?, ?, ?NOW?, ?)',
+							array($msgid, $doc['customerid'], $email, MSG_NEW));
+						$msgitemid = $this->db->GetLastInsertID('messageitems');
+						if (!isset($msgitems[$doc['customerid']]))
+							$msgitems[$doc['customerid']] = array();
+						$msgitems[$doc['customerid']][$email] = $msgitemid;
+					}
+				}
+
+				foreach (explode(',', $custemail) as $email) {
+					if ($add_message && (!empty($dsn_email) || !empty($mdn_email))) {
+						$headers['X-LMS-Message-Item-Id'] = $msgitems[$doc['customerid']][$email];
+						$headers['Message-ID'] = '<messageitem-' . $headers['X-LMS-Message-Item-Id'] . '@rtsystem.' . gethostname() . '>';
+					}
+
+					$res = $LMS->SendMail($email . ',' . $notify_email, $headers, $body,
+						$files, null, (isset($smtp_options) ? $smtp_options : null));
+
+					if (is_string($res)) {
+						$msg = trans('Error sending mail: $a', $res);
+						if ($type == 'backend')
+							fprintf(STDERR, $msg . $eol);
+						else {
+							echo '<span class="red">' . htmlspecialchars($msg) . '</span>' . $eol;
+							flush();
+						}
+						$status = MSG_ERROR;
+					} else {
+						$status = MSG_SENT;
+						$res = NULL;
+					}
+
+					if ($status == MSG_SENT) {
+						$this->db->Execute('UPDATE documents SET published = 1 WHERE id = ?', array($doc['id']));
+						$published = true;
+					}
+
+					if ($add_message)
+						$this->db->Execute('UPDATE messageitems SET status = ?, error = ?
+							WHERE id = ?', array($status, $res, $msgitems[$doc['customerid']][$email]));
+				}
+			}
+		}
 	}
 }

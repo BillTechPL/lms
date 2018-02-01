@@ -281,6 +281,12 @@ if (isset($_POST['nodeedit'])) {
 
 	if ($nodeedit['ipaddr_pub'] == '0.0.0.0')
 		$nodeinfo['ipaddr_pub'] = '';
+} else {
+	if (empty($nodeinfo['netdev'])) {
+		$nodeinfo['linktype'] = intval(ConfigHelper::getConfig('phpui.default_linktype', LINKTYPE_WIRE));
+		$nodeinfo['linktechnology'] = intval(ConfigHelper::getConfig('phpui.default_linktechnology', 0));
+		$nodeinfo['linkspeed'] = intval(ConfigHelper::getConfig('phpui.default_linkspeed', 100000));
+	}
 }
 
 if (empty($nodeinfo['macs']))

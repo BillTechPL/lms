@@ -294,6 +294,7 @@ if(isset($_POST['message']))
 				'customerid' => empty($message['customerid']) ? $ticketdata['customerid'] : $message['customerid'],
 				'status' => $ticketdata['status'],
 				'categories' => $ticketdata['categorynames'],
+				'priority' => $RT_PRIORITIES[$ticketdata['priority']],
 				'subject' => $message['subject'],
 				'body' => $message['body'],
 			);
@@ -318,7 +319,7 @@ else
 {
 	if ($_GET['ticketid']) {
 		$queue = $LMS->GetQueueByTicketId($_GET['ticketid']);
-		$message = $DB->GetRow('SELECT id AS ticketid, state, cause, queueid, owner FROM rttickets WHERE id = ?', array($_GET['ticketid']));
+		$message = $DB->GetRow('SELECT id AS ticketid, subject, state, cause, queueid, owner FROM rttickets WHERE id = ?', array($_GET['ticketid']));
 		if ($queue['newmessagesubject'] && $queue['newmessagebody'])
 			$message['customernotify'] = 1;
 		if (ConfigHelper::checkConfig('phpui.helpdesk_notify'))

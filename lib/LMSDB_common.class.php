@@ -24,11 +24,10 @@
  *  $Id$
  */
 
-define('DBVERSION', '2017112200'); // here should be always the newest version of database!
+define('DBVERSION', '2018012200'); // here should be always the newest version of database!
 				 // it placed here to avoid read disk every time when we call this file.
 
 /**
- * LMSDB_driver_mysqli
  * 
  * Database access layer abstraction for LMS. LMSDB drivers should extend this
  * class.

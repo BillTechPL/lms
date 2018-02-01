@@ -360,7 +360,8 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
                     SYSLOG::RES_CUST    => $data['customerid'],
                     'period'            => $period,
                     'at'                => $at,
-                    'invoice'           => !empty($data['invoice']) ? (isset($data['separateinvoice']) ? 2 : 1) : 0,
+                    'invoice'           => isset($data['invoice']) ? $data['invoice'] : 0,
+                    'separatedocument'  => isset($data['separatedocument']) ? 1 : 0,
                     'settlement'        => !empty($data['settlement']) ? 1 : 0,
                     SYSLOG::RES_NUMPLAN => !empty($data['numberplanid']) ? $data['numberplanid'] : NULL,
                     'paytype'           => !empty($data['paytype']) ? $data['paytype'] : NULL,
@@ -401,7 +402,8 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
                         'period'            => $data['period'],
                         'at'                => (ConfigHelper::checkConfig('phpui.promotion_preserve_at_day') && !empty($data['at'])
                                                        ? $data['at'] : $this->CalcAt($data['period'], $datefrom)),
-                        'invoice'           => !empty($data['invoice']) ? (isset($data['separateinvoice']) ? 2 : 1) : 0,
+                        'invoice'           => isset($data['invoice']) ? $data['invoice'] : 0,
+                        'separatedocument'  => isset($data['separatedocument']) ? 1 : 0,
                         'settlement'        => !empty($data['settlement']) ? 1 : 0,
                         SYSLOG::RES_NUMPLAN => !empty($data['numberplanid']) ? $data['numberplanid'] : NULL,
                         'paytype'           => !empty($data['paytype']) ? $data['paytype'] : NULL,
@@ -446,7 +448,8 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
                 SYSLOG::RES_CUST    => $data['customerid'],
                 'period'            => $data['period'],
                 'at'                => $data['at'],
-                'invoice'           => !empty($data['invoice']) ? (isset($data['separateinvoice']) ? 2 : 1) : 0,
+                'invoice'           => isset($data['invoice']) ? $data['invoice'] : 0,
+                'separatedocument'  => isset($data['separatedocument']) ? 1 : 0,
                 'settlement'        => !empty($data['settlement']) ? 1 : 0,
                 SYSLOG::RES_NUMPLAN => !empty($data['numberplanid']) ? $data['numberplanid'] : NULL,
                 'paytype'           => !empty($data['paytype']) ? $data['paytype'] : NULL,
@@ -461,7 +464,7 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
                 'commited'			=> $commited,
             );
 
-            $data['assignmentid'] = $this->insertAssignment($args);
+            $result[] = $data['assignmentid'] = $this->insertAssignment($args);
 
             $this->insertNodeAssignments($data);
 			$this->insertPhoneAssignments($data);
@@ -478,10 +481,10 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
      */
     private function insertAssignment($args) {
     	$this->db->Execute('INSERT INTO assignments
-    							(tariffid, customerid, period, at, invoice, settlement, numberplanid,
+    							(tariffid, customerid, period, at, invoice, separatedocument, settlement, numberplanid,
     							paytype, datefrom, dateto, pdiscount, vdiscount, attribute, liabilityid, recipient_address_id,
     							docid, commited)
-					        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+					        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
 					        array_values($args));
 
         $id = $this->db->GetLastInsertID('assignments');
@@ -1106,18 +1109,16 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_zip ELSE a2.zip END) AS post_zip,
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_city ELSE a2.city END) AS post_city,
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_postoffice ELSE a2.postoffice END) AS post_postoffice,
-				(CASE WHEN d.post_address_id IS NULL THEN c.post_countryid ELSE a2.country_id END) AS post_countryid
+				(CASE WHEN d.post_address_id IS NULL THEN c.post_countryid ELSE a2.country_id END) AS post_countryid,
+				cp.name AS post_country
 				FROM documents d
 				JOIN customeraddressview c ON (c.id = d.customerid)
 				LEFT JOIN countries cn ON (cn.id = d.countryid)
 				LEFT JOIN numberplans n ON (d.numberplanid = n.id)
 				LEFT JOIN vaddresses a ON d.recipient_address_id = a.id
 				LEFT JOIN vaddresses a2 ON d.post_address_id = a2.id
+				LEFT JOIN countries cp ON (d.post_address_id IS NOT NULL AND cp.id = a2.country_id) OR (d.post_address_id IS NULL AND cp.id = c.post_countryid)
 				WHERE d.id = ? AND (d.type = ? OR d.type = ? OR d.type = ?)', array($invoiceid, DOC_INVOICE, DOC_CNOTE, DOC_INVOICE_PRO))) {
-
-			if (!empty($result['post_address_id'])) {
-
-			}
 
         	$result['bankaccounts'] = $this->db->GetCol('SELECT contact FROM customercontacts
 				WHERE customerid = ? AND (type & ?) = ?',
@@ -1263,12 +1264,14 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_zip ELSE a2.zip END) AS post_zip,
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_city ELSE a2.city END) AS post_city,
 				(CASE WHEN d.post_address_id IS NULL THEN c.post_postoffice ELSE a2.postoffice END) AS post_postoffice,
-				(CASE WHEN d.post_address_id IS NULL THEN c.post_countryid ELSE a2.country_id END) AS post_countryid
+				(CASE WHEN d.post_address_id IS NULL THEN c.post_countryid ELSE a2.country_id END) AS post_countryid,
+				cp.name AS post_country
 				FROM documents d
 				JOIN customeraddressview c ON (c.id = d.customerid)
 				LEFT JOIN countries cn ON (cn.id = d.countryid)
 				LEFT JOIN numberplans n ON (d.numberplanid = n.id)
 				LEFT JOIN vaddresses a2 ON a2.id = d.post_address_id
+				LEFT JOIN countries cp ON (d.post_address_id IS NOT NULL AND cp.id = a2.country_id) OR (d.post_address_id IS NULL AND cp.id = c.post_countryid)
 				WHERE d.id = ? AND d.type = ?', array($id, DOC_DNOTE))) {
 
 			$result['bankaccounts'] = $this->db->GetCol('SELECT contact FROM customercontacts
@@ -1549,7 +1552,7 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
 				LEFT JOIN tariffassignments ta ON ta.tariffid = t.id
 				LEFT JOIN taxes ON t.taxid = taxes.id
 				WHERE t.disabled = 0' . (empty($forced_id) ? '' : ' OR t.id = ' . intval($forced_id)) . '
-				GROUP BY t.id, t.name, t.value, uprate, taxid, datefrom, dateto, prodid, downrate, upceil, downceil, climit, plimit,
+				GROUP BY t.id, t.name, t.value, uprate, taxid, t.authtype, datefrom, dateto, prodid, downrate, upceil, downceil, climit, plimit,
 					taxes.value, taxes.label, t.period, t.type
 				ORDER BY t.name, t.value DESC', 'id');
     }
@@ -1757,7 +1760,7 @@ class LMSFinanceManager extends LMSManager implements LMSFinanceManagerInterface
 					LEFT JOIN documents ON (docid = documents.id)
 					WHERE cash.id = ?', array($id));
 
-        if ($row['doctype'] == DOC_INVOICE || $row['doctype'] == DOC_CNOTE)
+        if ($row['doctype'] == DOC_INVOICE || $row['doctype'] == DOC_INVOICE_PRO || $row['doctype'] == DOC_CNOTE)
             $this->InvoiceContentDelete($row['docid'], $row['itemid']);
         elseif ($row['doctype'] == DOC_RECEIPT)
             $this->ReceiptContentDelete($row['docid'], $row['itemid']);

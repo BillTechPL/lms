@@ -47,6 +47,12 @@ if (defined('USERPANEL_SETUPMODE')) {
 		$SMARTY->assign('default_userid', ConfigHelper::getConfig('userpanel.default_userid'));
 		$SMARTY->assign('lms_url', ConfigHelper::getConfig('userpanel.lms_url'));
 		$SMARTY->assign('categories', $categories);
+
+		$allow_reopen_tickets_newer_than = ConfigHelper::getConfig('userpanel.allow_reopen_tickets_newer_than');
+		if (empty($allow_reopen_tickets_newer_than))
+			$allow_reopen_tickets_newer_than = '';
+		$SMARTY->assign('allow_reopen_tickets_newer_than', $allow_reopen_tickets_newer_than);
+
 		$SMARTY->display('module:helpdesk:setup.html');
 	}
 
@@ -67,12 +73,14 @@ if (defined('USERPANEL_SETUPMODE')) {
 		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'lms_url\'',array($_POST['lms_url']));
 		$categories = array_keys((isset($_POST['lms_categories']) ? $_POST['lms_categories'] : array()));
 		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = \'userpanel\' AND var = \'default_categories\'', array(implode(',', $categories)));
+		$DB->Execute('UPDATE uiconfig SET value = ? WHERE section = ? AND var = ?',
+			array(intval($_POST['allow_reopen_tickets_newer_than']), 'userpanel' , 'allow_reopen_tickets_newer_than'));
 		header('Location: ?m=userpanel&module=helpdesk');
 	}
 }
 
 function module_main() {
-	global $SMARTY, $LMS, $SESSION , $RT_STATES;
+	global $SMARTY, $LMS, $SESSION, $RT_PRIORITIES;
 
 	$DB = LMSDB::getInstance();
 
@@ -230,6 +238,7 @@ function module_main() {
 					'customerid' => $SESSION->id,
 					'status' => $ticketdata['status'],
 					'categories' => $ticketdata['categorynames'],
+					'priority' => $RT_PRIORITIES[$ticketdata['priority']],
 					'subject' => $ticket['subject'],
 					'body' => $ticket['body'],
 				);
@@ -258,6 +267,14 @@ function module_main() {
 		|| ConfigHelper::getConfig('userpanel.allow_message_add_to_closed_tickets'))
 		&& $DB->GetOne('SELECT customerid FROM rttickets WHERE id = ?', array($id)) == $SESSION->id) {
 		$ticket = $_POST['helpdesk'];
+
+		$ticket['lastmod'] = $DB->GetOne('SELECT MAX(createtime) FROM rtmessages WHERE ticketid = ?',
+			array($id));
+		$allow_reopen_tickets_newer_than = intval(ConfigHelper::getConfig('userpanel.allow_reopen_tickets_newer_than'));
+		if ($allow_reopen_tickets_newer_than && time() - $allow_reopen_tickets_newer_than > $ticket['lastmod']) {
+			header('Location: ?m=helpdesk&op=view&id=' . $id);
+			die;
+		}
 
 		$ticket['body'] = strip_tags($ticket['body']);
 		$ticket['subject'] = strip_tags($ticket['subject']);
@@ -363,6 +380,7 @@ function module_main() {
 				'customerid' => $SESSION->id,
 				'status' => $ticketdata['status'],
 				'categories' => $ticketdata['categorynames'],
+				'priority' => $RT_PRIORITIES[$ticketdata['priority']],
 				'subject' => $ticket['subject'],
 				'body' => $ticket['body'],
 			);
@@ -443,10 +461,7 @@ function module_main() {
 		}
 	}
 
-	if ($helpdesklist = $LMS->GetCustomerTickets($SESSION->id))
-		foreach ($helpdesklist as $idx => $key)
-			$helpdesklist[$idx]['lastmod'] = $LMS->DB->GetOne('SELECT MAX(createtime) FROM rtmessages WHERE ticketid = ?',
-				array($key['id']));
+	$helpdesklist = $LMS->GetCustomerTickets($SESSION->id);
 
 	$queues = $LMS->DB->GetAll('SELECT id, name FROM rtqueues WHERE id IN ('
 		. str_replace(';', ',', ConfigHelper::getConfig('userpanel.queues')) . ')');

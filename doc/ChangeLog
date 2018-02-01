@@ -157,6 +157,32 @@ version ?.??.?? (????-??-??):
     dates into consideration [chilan]
   - enhancement: allow to select permanent attachments which are included with generated
     document [chilan]
+  - improvement: phpui.default_link{type,technology,speed} configuration variables allow to preselect
+    link properties for new and edited nodes [chilan]
+  - improvement: negative credit notes are taken immediately to account, by for positive ones
+    we wait for their pay time [chilan]
+  - enhancement: allow to send documents directly to mail [chilan]
+  - enhancement: phpui.document_password configuration variable controls if documents generated
+    by html2pdf conversion are protected [chilan]
+  - improvement: added support for CC and BCC headers in mail backends [chilan]
+  - enhancement: new userpanel authentication type - node name and password
+    (as pppoe login and password) [chilan]
+  - improvement: openlayers map: allow to copy gps coordinates of network devices from
+    coordinate selector popup [chilan]
+  - improvement: introduced 'mail' section configuration variables which allow to change
+    smtp ssl session behavior (mail.ssl_verify_peer, mail.ssl_verify_peer_name,
+    mail.ssl_allow_self_singed) [chilan]
+  - improvement: cashimport.folder configuration variable specifies which imap folder
+    to check for new cash import files [chilan]
+  - improvement: when customer has 'electronic invoice' not checked and we are trying to mark
+    mail contact as for invoice sending, we show alert popup [chilan]
+  - enhancement: allow to select issued document type for assignments [chilan]
+  - enhancement: helpdesk/rt: introduced ticket priorities [interduo]
+  - enhancement: allow to check all items with one click in lms-ui-multiselect [chilan]
+  - enhacement: userpanel: allow to limit reopening helpdesk tickets to newer than
+    configured seconds (userpanel.allow_reopen_tickets_newer_than configuration variable)
+    [chilan]
+  - cleanup: mysql and mysqli database types point to mysqli php extension [chilan]
 
 version 1.11.22 (2017-06-08):
 

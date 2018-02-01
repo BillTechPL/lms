@@ -383,6 +383,10 @@ $netdevices = $DB->GetAllByKey("SELECT nd.id, a.city_id as location_city, a.stre
 	WHERE EXISTS (SELECT id FROM netlinks nl WHERE nl.src = nd.id OR nl.dst = nd.id)
 		ORDER BY nd.name", "id");
 
+// get node gps coordinates which are used for network range gps calculation
+$nodecoords = $DB->GetAllByKey("SELECT id, longitude, latitude FROM nodes
+	WHERE longitude IS NOT NULL AND latitude IS NOT NULL", 'id');
+
 // prepare info about network nodes
 $netnodes   = array();
 $netdevs    = array();
@@ -1166,6 +1170,12 @@ foreach ($netnodes as $netnodename => &$netnode) {
 			&& $range['location_house'] == $netnode['location_house'])
 			$range_netbuilding = true;
 
+		$netrange = array(
+			'longitude' => 0,
+			'latitude' => 0,
+			'count' => 0,
+		);
+
 		$prjnodes = array();
 		foreach ($nodes as $node) {
 			$status = $node['status'];
@@ -1178,6 +1188,17 @@ foreach ($netnodes as $netnodename => &$netnode) {
 			if (!isset($prjnodes[$prj][$status]))
 				$prjnodes[$prj][$status] = array();
 			$prjnodes[$prj][$status][] = $node;
+
+			if (isset($nodecoords[$node['nodeid']])) {
+				$netrange['longitude'] += $nodecoords[$node['nodeid']]['longitude'];
+				$netrange['latitude'] += $nodecoords[$node['nodeid']]['latitude'];
+				$netrange['count']++;
+			}
+		}
+		// calculate network range gps coordinates as all nodes gps coordinates mean value
+		if ($netrange['count']) {
+			$netrange['longitude'] /= $netrange['count'];
+			$netrange['latitude'] /= $netrange['count'];
 		}
 
 		foreach ($prjnodes as $prj => $statuses) {
@@ -1245,8 +1266,8 @@ foreach ($netnodes as $netnodename => &$netnode) {
 					'zas_ulic' => sprintf("%05d", $teryt['address_symul']),
 					'zas_house' => $teryt['address_budynek'],
 					'zas_zip' => $teryt['location_zip'],
-					'zas_latitude' => $netnode['latitude'],
-					'zas_longitude' => $netnode['longitude'],
+					'zas_latitude' => str_replace(',', '.', sprintf('%.6f', empty($netrange['latitude']) ? $netnode['latitude'] : $netrange['latitude'])),
+					'zas_longitude' => str_replace(',', '.', sprintf('%.6f', empty($netrange['longitude']) ? $netnode['longitude'] : $netrange['longitude'])),
 					'zas_tech' => $technology,
 					'zas_ltech' => $linktechnology,
 				);
@@ -1460,7 +1481,8 @@ if ( $max_range > 0 ) {
 
     $buildings = $DB->GetAll('
         SELECT lc.name as city, building_num as house, longitude as "0", latitude as "1",
-            lst.name || \' \' || CASE WHEN ls.name2 is NOT NULL AND char_length(ls.name2) > 0 THEN ls.name2 || \' \' || ls.name ELSE ls.name END as street,
+            ' . $DB->Concat('lst.name', "' '", 'CASE WHEN ls.name2 is NOT NULL THEN '
+                . $DB->Concat('ls.name2', "' '", 'ls.name') . ' ELSE ls.name END') . ' AS street,
             ls.ident as street_ident, lc.ident as city_ident, lbor.name as borough, ldist.name as district,
             lsta.name as state, lsta.ident as state_ident, ldist.ident as district_ident, lbor.ident as borough_ident,
             lbor.type as borough_type
@@ -1519,9 +1541,6 @@ if ( $max_range > 0 ) {
                     $node = $netnodes[ $closest_p['netnode'] ];
 
                     if ( empty($b['street_ident'])) {
-                        $b['street']       = "ul. SPOZA ZAKRESU";
-                        $b['street_ident'] = "99998";
-                    } else if ( empty($b['street']) ) {
                         $b['street']       = "BRAK ULICY";
                         $b['street_ident'] = "99999";
                     }

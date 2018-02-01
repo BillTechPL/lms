@@ -421,7 +421,7 @@ if (isset($_POST['message']) && !isset($_GET['sent'])) {
 			foreach ($recipients[$key]['destination'] as $destination) {
 				$DB->Execute('INSERT INTO messageitems (messageid, customerid,
 					destination, status)
-					VALUES (?, ?, ?, ?)', array($msgid, $customerid, $destination, MSG_NEW));
+					VALUES (?, ?, ?, ?)', array($msgid, empty($customerid) ? null : $customerid, $destination, MSG_NEW));
 				if ($message['type'] == MSG_MAIL && (!empty($dsn_email) || !empty($mdn_email))) {
 					$msgitemid = $DB->GetLastInsertID('messageitems');
 					if (!isset($msgitems[$customerid]))
@@ -456,7 +456,7 @@ if (isset($_POST['message']) && !isset($_GET['sent'])) {
 			$headers['Subject'] = $message['subject'];
 
 			$reply_email = ConfigHelper::getConfig('mail.reply_email');
-			$headers['Reply-To'] = empty($reply_email) ? $headers['From'] : $reply_email;
+			$headers['Reply-To'] = empty($reply_email) ? $message['sender'] : $reply_email;
 
 			if (isset($message['copytosender']))
 				$headers['Cc'] = $headers['From'];
@@ -526,12 +526,13 @@ if (isset($_POST['message']) && !isset($_GET['sent'])) {
 
 				if (!is_int($result) || $result == MSG_SENT)
 					$DB->Execute('UPDATE messageitems SET status = ?, lastdate = ?NOW?,
-						error = ? WHERE messageid = ? AND customerid = ?
+						error = ? WHERE messageid = ? AND '
+							. (empty($customerid) ? 'customerid IS NULL' : 'customerid = ' . intval($customerid)) . '
 							AND destination = ?',
 						array(
 							is_int($result) ? $result : MSG_ERROR,
 							is_int($result) ? null : $result,
-							$msgid, $customerid,
+							$msgid,
 							$orig_destination,
 						));
 			}

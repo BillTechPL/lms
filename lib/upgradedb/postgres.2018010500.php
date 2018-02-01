@@ -23,19 +23,11 @@
 
 $this->BeginTrans();
 
-$this->Execute("ALTER TABLE nodes MODIFY netdev int(11) NULL");
-$this->Execute("ALTER TABLE nodes ALTER COLUMN netdev SET DEFAULT NULL");
+$this->Execute("ALTER TABLE assignments ADD COLUMN separatedocument smallint DEFAULT 0 NOT NULL");
 
-$netdevids = $this->GetCol("SELECT id FROM netdevices");
-if (empty($netdevids)) {
-	$this->Execute("UPDATE nodes SET netdev = NULL");
-} else {
-	$sql_netdevids = implode(',', $netdevids);
-	$this->Execute("UPDATE nodes SET netdev = NULL WHERE netdev = 0 OR netdev NOT IN (" . $sql_netdevids . ")");
-	$this->Execute("DELETE FROM netlinks WHERE src NOT IN (" . $sql_netdevids . ") OR dst NOT IN (" . $sql_netdevids . ")");
-}
+$this->Execute("UPDATE assignments SET separatedocument = 1, invoice = 1 WHERE invoice = 2");
 
-$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2017101102', 'dbversion'));
+$this->Execute("UPDATE dbinfo SET keyvalue = ? WHERE keytype = ?", array('2018010500', 'dbversion'));
 
 $this->CommitTrans();
 

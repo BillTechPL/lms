@@ -62,6 +62,11 @@ function multiselect(options) {
 		return selected.join(separator);
 	}
 
+	function updateCheckAll() {
+		var allcheckboxes = ul.find(':checkbox:not(:disabled)');
+		ul.parent().find('input[name="checkall"]').prop('checked', allcheckboxes.filter(':checked').length == allcheckboxes.length);
+	}
+
 	$('option', old_element).each(function(i) {
 		var li = $('<li/>').appendTo(ul);
 
@@ -108,13 +113,11 @@ function multiselect(options) {
 				box.attr('data-prev-checked', box.prop('checked'));
 			}
 
-			var optionValue = '';
-			if (/<span>(.*?)<\/span>/i.exec(this.innerHTML) !== null)
-				optionValue = RegExp.$1;
-
 			new_selected = multiselect.generateSelectedString();
 			if (!tiny)
 				new_element.html(new_selected);
+
+			updateCheckAll();
 
 			new_element.triggerHandler('itemclick', {
 				index: $(this).index(),
@@ -126,18 +129,62 @@ function multiselect(options) {
 		// TODO: keyboard events
 	});
 
+	function checkAllElements() {
+		var allcheckboxes = ul.find(':checkbox:not(:disabled)');
+		var checked = ul.parent().find('input[name="checkall"]').prop('checked');
+		allcheckboxes.each(function() {
+			var li = $(this).closest('li');
+			if (checked) {
+				li.addClass('selected');
+			} else {
+				li.removeClass('selected');
+			}
+			$(this).prop('checked', checked);
+		});
+		new_selected = multiselect.generateSelectedString();
+		if (!tiny)
+			new_element.html(new_selected);
+	}
+
 	new_selected = this.generateSelectedString();
 	old_selected = new_selected;
-	if (!tiny)
+	if (!tiny) {
 		new_element.html(old_selected);
+
+		var checkall_div = $('<div/>').appendTo(div);
+		$('<label><input type="checkbox" name="checkall" value="1">' + lmsMessages.checkAll + '</label>').appendTo(checkall_div);
+
+		updateCheckAll();
+
+		$('label,input', checkall_div).click(function(e) {
+			checkAllElements();
+			e.stopPropagation();
+		});
+	}
 
 	// add some mouse/key event handlers
 	new_element.click(function() {
 		var list = $('#' + this.id + '-layer');
 		if (!list.is(':visible')) {
+			//var pos = $(this).offset();
 			var pos = get_object_pos(this);
-			list.css('left', (pos.x + this.offsetWidth) + 'px')
-				.css('top', pos.y + 'px').show();
+			pos.left = pos.x;
+			pos.top = pos.y;
+
+			if (pos.left + $(this).outerWidth() + list.width() >= $(window).width()) {
+				pos.left -= list.width();
+			} else {
+				pos.left += $(this).outerWidth();
+			}
+
+			if (pos.top + $(this).outerHeight() + list.height() >= $(window).height()) {
+				pos.top -= list.height() - $(this).outerHeight();
+			}
+
+			list.css({
+					'left': pos.left + 'px',
+					'top': pos.top + 'px'
+				}).show();
 /*
 			list.position({
 				my: 'left top',
@@ -198,6 +245,8 @@ function multiselect(options) {
 				$(allcheckboxes[i]).prop('checked', checked);
 			}
 		}
+
+		updateCheckAll();
 	}
 
 	this.updateSelection = function(idArray) {

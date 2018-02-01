@@ -184,6 +184,7 @@ if(isset($_POST['ticket']))
 			'customerid' => $ticketedit['customerid'],
 			'categories' => isset($ticketedit['categories']) ? array_keys($ticketedit['categories']) : array(),
 			'source' => $ticketedit['source'],
+			'priority' => $ticketedit['priority'],
 			'address_id' => $ticketedit['address_id'] == -1 ? null : $ticketedit['address_id'],
 			'nodeid' => empty($ticketedit['nodeid']) ? null : $ticketedit['nodeid'],
 			'netnodeid' => empty($ticketedit['netnodeid']) ? null : $ticketedit['netnodeid'],
@@ -246,6 +247,7 @@ if(isset($_POST['ticket']))
 				'customerid' => $ticketedit['customerid'],
 				'status' => $ticketdata['status'],
 				'categories' => $ticketdata['categorynames'],
+				'priority' => $RT_PRIORITIES[$ticketdata['priority']],
 				'subject' => $ticket['subject'],
 				'body' => $ticket['messages'][0]['body'],
 			);
@@ -264,7 +266,11 @@ if(isset($_POST['ticket']))
 			));
 		}
 
-		$SESSION->redirect('?m=rtticketview&id='.$id);
+		$backto = $SESSION->get('backto');
+		if (empty($backto))
+			$SESSION->redirect('?m=rtticketview&id='.$id);
+		else
+			$SESSION->redirect('?' . $backto);
 	}
 
 	$ticket['subject'] = $ticketedit['subject'];
@@ -286,8 +292,6 @@ foreach ($categories as $category)
 $categories = $ncategories;
 
 $layout['pagetitle'] = trans('Ticket Edit: $a',sprintf("%06d",$ticket['ticketid']));
-
-$SESSION->save('backto', $_SERVER['QUERY_STRING']);
 
 if (!ConfigHelper::checkConfig('phpui.big_networks'))
 	$SMARTY->assign('customerlist', $LMS->GetAllCustomerNames());

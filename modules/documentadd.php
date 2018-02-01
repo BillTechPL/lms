@@ -97,29 +97,30 @@ if (isset($_POST['document'])) {
 	// validate tariff selection list when promotions are active only
 	if (isset($document['assignment']) && !empty($document['assignment']['schemaid'])) {
 		// validate selected promotion schema properties
-		$a = $document['assignment'];
-		$a['datefrom'] = $oldfromdate;
-		$a['dateto'] = $oldtodate;
+		$selected_assignment = $document['assignment'];
+		$selected_assignment['datefrom'] = $oldfromdate;
+		$selected_assignment['dateto'] = $oldtodate;
 
-		$result = $LMS->ValidateAssignment($a);
+		$result = $LMS->ValidateAssignment($selected_assignment);
 		extract($result);
 	} else
-		$a = null;
+		$selected_assignment = null;
 
 	$files = array();
 
 	if ($document['templ']) {
 		foreach ($documents_dirs as $doc)
-			if(file_exists($doc . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'] )) {
+			if (file_exists($doc . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'])) {
 				$doc_dir = $doc;
-				continue;
+				$template_dir = $doc . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'];
+				break;
 			}
 
 		$result = '';
 		$script_result = '';
 
 		// read template information
-		include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $document['templ'] . DIRECTORY_SEPARATOR . 'info.php');
+		include($template_dir . DIRECTORY_SEPARATOR . 'info.php');
 		// set some variables (needed in e.g. plugin)
 		if ($document['reference'])
 			$document['reference'] = $DB->GetRow('SELECT id, type, fullnumber, cdate FROM documents
@@ -139,7 +140,7 @@ if (isset($_POST['document'])) {
 		// get plugin content
 		$SMARTY->assign('plugin_result', $result);
 		$SMARTY->assign('script_result', $script_result);
-		$SMARTY->assign('attachment_result', GenerateAttachmentHTML($engine,
+		$SMARTY->assign('attachment_result', GenerateAttachmentHTML($template_dir, $engine,
 			isset($document['attachments']) ? $document['attachments'] : array()));
 
 		// run template engine
@@ -183,6 +184,8 @@ if (isset($_POST['document'])) {
 		if (isset($document['attachments']) && !empty($document['attachments']))
 			foreach ($document['attachments'] as $attachment => $value) {
 				$filename = $engine['attachments'][$attachment];
+				if ($filename[0] != DIRECTORY_SEPARATOR)
+					$filename = $template_dir . DIRECTORY_SEPARATOR . $filename;
 				$files[] = array(
 					'tmpname' => null,
 					'name' => $filename,
@@ -206,9 +209,10 @@ if (isset($_POST['document'])) {
 			// the new document file
 			// why? document attachment can be shared between different documents.
 			// we should rather use the other message digest in such case!
-			if ($DB->GetOne('SELECT docid FROM documentattachments WHERE md5sum = ?', array($file['md5sum']))
-				&& (filesize($file['newfile']) != filesize($file['tmpname'])
-					|| hash_file('sha256', $file['newfile']) != hash_file('sha256', $file['tmpname']))) {
+			$filename = empty($file['tmpname']) ? $file['name'] : $file['tmpname'];
+			if ($LMS->DocumentAttachmentExists($file['md5sum'])
+				&& (filesize($file['newfile']) != filesize($filename)
+					|| hash_file('sha256', $file['newfile']) != hash_file('sha256', $filename))) {
 				$error['files'] = trans('Specified file exists in database!');
 				break;
 			}
@@ -237,23 +241,7 @@ if (isset($_POST['document'])) {
 
 		$DB->BeginTrans();
 
-		$division = $DB->GetRow('SELECT d.name, d.shortname, d.ten, d.regon,
-									d.account, d.inv_header, d.inv_footer, d.inv_author, d.inv_cplace,
-									addr.country_id as countryid, addr.zip,
-									addr.city, addr.house, addr.flat, addr.street
-								FROM
-									divisions d
-									LEFT JOIN addresses addr ON d.address_id = addr.id
-								WHERE d.id = ?',array($customer['divisionid']));
-
-		if ($division) {
-			$tmp = array('city_name'     => $division['city'],
-						'location_house' => $division['house'],
-						'location_flat'  => $division['flat'],
-						'street_name'    => $division['street']);
-
-			$division['address'] = location_str( $tmp );
-		}
+		$division = $LMS->GetDivision($customer['divisionid']);
 
 		$fullnumber = docnumber(array(
 			'number' => $document['number'],
@@ -264,11 +252,11 @@ if (isset($_POST['document'])) {
 
 		// if document will not be closed now we should store commit flags in documents table
 		// to allow restore commit flags later during document close process
-		if (isset($document['closed']) || !isset($a))
+		if (isset($document['closed']) || !isset($selected_assignment))
 			$commit_flags = 0;
 		else {
-			$commit_flags = $a['existing_assignments']['operation'];
-			if ($commit_flags && isset($a['existing_assignments']['reference_document_limit']))
+			$commit_flags = $selected_assignment['existing_assignments']['operation'];
+			if ($commit_flags && isset($selected_assignment['existing_assignments']['reference_document_limit']))
 				$commit_flags += 16;
 		}
 
@@ -338,32 +326,32 @@ if (isset($_POST['document'])) {
 			include($doc_dir . DIRECTORY_SEPARATOR . 'templates' . DIRECTORY_SEPARATOR . $engine['name']
 				. DIRECTORY_SEPARATOR . $engine['post-action'] . '.php');
 
-		if (isset($a)) {
-			$a['docid'] = $docid;
-			$a['customerid'] = $document['customerid'];
-			$a['reference'] = $document['reference']['id'];
+		if (isset($selected_assignment)) {
+			$selected_assignment['docid'] = $docid;
+			$selected_assignment['customerid'] = $document['customerid'];
+			$selected_assignment['reference'] = $document['reference']['id'];
 			if (empty($from)) {
 				list ($year, $month, $day) = explode('/', date('Y/m/d'));
-				$a['datefrom'] = mktime(0, 0, 0, $month, $day, $year);
+				$selected_assignment['datefrom'] = mktime(0, 0, 0, $month, $day, $year);
 			} else
-				$a['datefrom'] = $from;
-			$a['dateto'] = $to;
+				$selected_assignment['datefrom'] = $from;
+			$selected_assignment['dateto'] = $to;
 
 			if (isset($document['closed']))
-				$LMS->UpdateExistingAssignments($a);
+				$LMS->UpdateExistingAssignments($selected_assignment);
 
-			if ($a['schemaid']) {
+			if ($selected_assignment['schemaid']) {
 				// create assignments basing on selected promotion schema
-				$a['period'] = $period;
-				$a['at'] = $at;
-				$a['commited'] = isset($document['closed']) ? 1 : 0;
+				$selected_assignment['period'] = $period;
+				$selected_assignment['at'] = $at;
+				$selected_assignment['commited'] = isset($document['closed']) ? 1 : 0;
 
-				if (is_array($a['stariffid'][$schemaid])) {
-					$copy_a = $a;
-					$snodes = $a['snodes'][$schemaid];
-					$sphones = $a['sphones'][$schemaid];
+				if (is_array($selected_assignment['stariffid'][$schemaid])) {
+					$copy_a = $selected_assignment;
+					$snodes = $selected_assignment['snodes'][$schemaid];
+					$sphones = $selected_assignment['sphones'][$schemaid];
 
-					foreach ($a['stariffid'][$schemaid] as $label => $v) {
+					foreach ($selected_assignment['stariffid'][$schemaid] as $label => $v) {
 						if (!$v)
 							continue;
 

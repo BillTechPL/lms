@@ -1861,6 +1861,11 @@ class LMS
 			if (!empty($debug_email)) {
 				$recipients = ConfigHelper::getConfig('mail.debug_email');
 				$headers['To'] = '<' . $recipients . '>';
+			} else {
+				if (isset($headers['Cc']))
+					$recipients .= ',' . $headers['Cc'];
+				if (isset($headers['Bcc']))
+					$recipients .= ',' . $headers['Bcc'];
 			}
 
 			if (empty($headers['Date']))
@@ -1926,9 +1931,12 @@ class LMS
 
 			$this->mail_object->SMTPOptions = array(
 				'ssl' => array(
-					'verify_peer' => isset($smtp_options['ssl_verify_peer']) ? $smtp_options['ssl_verify_peer'] : false,
-					'verify_peer_name' => isset($smtp_options['ssl_verify_peer_name']) ? $smtp_options['ssl_verify_peer_name'] : false,
-					'allow_self_signed' => isset($smtp_options['ssl_allow_self_signed']) ? $smtp_options['ssl_allow_self_signed'] : true,
+					'verify_peer' => isset($smtp_options['ssl_verify_peer']) ? $smtp_options['ssl_verify_peer']
+						: ConfigHelper::checkValue(ConfigHelper::getConfig('mail.smtp_ssl_verify_peer', false, true)),
+					'verify_peer_name' => isset($smtp_options['ssl_verify_peer_name']) ? $smtp_options['ssl_verify_peer_name']
+						: ConfigHelper::checkValue(ConfigHelper::getConfig('mail.smtp_ssl_verify_peer_name', false, true)),
+					'allow_self_signed' => isset($smtp_options['ssl_allow_self_signed']) ? $smtp_options['ssl_allow_self_signed']
+						: ConfigHelper::checkValue(ConfigHelper::checkConfig('mail.smtp_ssl_allow_self_signed', true)),
 				)
 			);
 
@@ -1962,6 +1970,13 @@ class LMS
 			if (!empty($debug_email)) {
 				$this->mail_object->SMTPDebug = 2;
 				$recipients = ConfigHelper::getConfig('mail.debug_email');
+			} else {
+				if (isset($headers['Cc']))
+					foreach (explode(',', $headers['Cc']) as $cc)
+						$this->mail_object->addCC($cc);
+				if (isset($headers['Bcc']))
+					foreach (explode(',', $headers['Bcc']) as $bcc)
+						$this->mail_object->addBCC($bcc);
 			}
 
 			if (empty($headers['Date']))
@@ -2355,7 +2370,12 @@ class LMS
         return $manager->GetDocuments($customerid, $limit);
     }
 
-    public function GetTaxes($from = NULL, $to = NULL)
+	public function GetDocumentList($order='cdate,asc', $search) {
+		$manager = $this->getDocumentManager();
+		return $manager->GetDocumentList($order, $search);
+	}
+
+	public function GetTaxes($from = NULL, $to = NULL)
     {
         $manager = $this->getFinanceManager();
         return $manager->GetTaxes($from, $to);
@@ -2433,11 +2453,26 @@ class LMS
 		return $manager->DeleteDocumentAddresses($docid);
 	}
 
+	public function DocumentAttachmentExists($md5sum) {
+		$manager = $this->getDocumentManager();
+		return $manager->DocumentAttachmentExists($md5sum);
+	}
+
+	public function GetDocumentFullContents($id) {
+		$manager = $this->getDocumentManager();
+		return $manager->GetDocumentFullContents($id);
+	}
+
+	public function SendDocuments($docs, $type, $params) {
+		$manager = $this->getDocumentManager();
+		return $manager->SendDocuments($docs, $type, $params);
+	}
+
 	/*
 	 *  Location
 	 */
 
-    public function GetCountryStates()
+	public function GetCountryStates()
     {
         $manager = $this->getLocationManager();
         return $manager->GetCountryStates();
@@ -3404,7 +3439,7 @@ class LMS
 			else
 				$document = new LMSHtmlDebitNote($SMARTY);
 
-			$filename = ConfigHelper::getConfig('sendinvoices.debitnote_filename', 'dnote_%docid');
+			$filename = $doc['dnote_filename'];
 
 			$data = $this->GetNoteContent($doc['id']);
 		} else {
@@ -3417,7 +3452,7 @@ class LMS
 			} else
 				$document = new LMSHtmlInvoice($SMARTY);
 
-			$filename = ConfigHelper::getConfig('sendinvoices.invoice_filename', 'invoice_%docid');
+			$filename = $doc['invoice_filename'];
 
 			$data = $this->GetInvoiceContent($doc['id']);
 		}
@@ -3476,6 +3511,9 @@ class LMS
 			$from = "$sender_name <$from>";
 
 		foreach ($docs as $doc) {
+			$doc['invoice_filename'] = $invoice_filename;
+			$doc['dnote_filename'] = $dnote_filename;
+
 			$document = $this->GetFinancialDocument($doc, $SMARTY);
 
 			$custemail = (!empty($debug_email) ? $debug_email : $doc['email']);
@@ -3602,7 +3640,7 @@ class LMS
 						$headers['Message-ID'] = '<messageitem-' . $headers['X-LMS-Message-Item-Id'] . '@rtsystem.' . gethostname() . '>';
 					}
 
-					$res = $this->SendMail($email . ',' . $notify_email, $headers, $body,
+					$res = $this->SendMail($email, $headers, $body,
 						$files, null, (isset($smtp_options) ? $smtp_options : null));
 
 					if (is_string($res)) {

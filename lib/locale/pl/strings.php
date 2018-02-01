@@ -984,7 +984,7 @@ $_LANG['Login can\'t be empty!'] = 'Login nie może być pusty!';
 $_LANG['Login contains forbidden characters!'] = 'Login zawiera zabronione znaki!';
 $_LANG['Please login.'] = 'Proszę się zalogować.';
 $_LANG['Logout'] = 'Wyloguj';
-$_LANG['Low'] = 'Niski';
+$_LANG['low'] = 'niski';
 $_LANG['MAC address'] = 'Adres MAC';
 $_LANG['MAC address:'] = 'Adres MAC:';
 $_LANG['MAC address is in use!'] = 'Adres MAC jest już używany!';
@@ -1238,6 +1238,10 @@ $_LANG['Print cash receipts'] = 'Drukuj dowody wpłaty';
 $_LANG['Print invoices'] = 'Drukuj faktury';
 $_LANG['Print form of cash transfer'] = 'Drukuj formularz przelewu/wpłaty';
 $_LANG['Priority:'] = 'Priorytet:';
+$_LANG['normal'] = 'normalny';
+$_LANG['very low'] = 'bardzo niski';
+$_LANG['urgent'] = 'pilny';
+$_LANG['critical'] = 'krytyczny';
 $_LANG['Priority must be integer!'] = 'Priorytet musi być typu całkowitego!';
 $_LANG['private'] = 'prywatny';
 $_LANG['Privileges:'] = 'Prawa:';
@@ -1407,7 +1411,7 @@ $_LANG['Sender name is required!'] = 'Nazwisko nadawcy jest wymagane!';
 $_LANG['Sending messages to:'] = 'Wysyłanie wiadomości do:';
 $_LANG['Send'] = 'Wyślij';
 $_LANG['Send registration info'] = 'Wyślij dane rejestracyjne';
-$_LANG['separate invoice'] = 'oddzielna faktura';
+$_LANG['separate document'] = 'oddzielny dokument';
 $_LANG['Serial number:'] = 'Numer seryjny:';
 $_LANG['Service:'] = 'Usługa:';
 $_LANG['Services:'] = 'Usługi:';
@@ -3103,6 +3107,7 @@ $_LANG['Ticket\'s source has been changed from $a to $b.'] = 'Źródło zgłosze
 $_LANG['Ticket has been moved from queue $a to queue $b.'] = 'Zgłoszenie zostało przeniesione z kolejki $a do kolejki $b.';
 $_LANG['Ticket\'s location has been changed from $a to $b.'] = 'Lokalizacja zgłoszenia została zmieniona z $a na $b.';
 $_LANG['Ticket\'s node has been changed from $a ($b) to $c ($d).'] = 'Komputer powiązany ze zgłoszeniem został zmieniony z $a ($b) na $c ($d).';
+$_LANG['Ticket\'s priority has been changed from $a to $b.'] = 'Priorytet zgłoszenia został zmieniony z $a na $b.';
 
 $_LANG['www'] = 'www';
 $_LANG['any sms'] = 'dowolny sms';
@@ -3716,7 +3721,7 @@ $_LANG['Select ticket source'] = 'Wybierz źródło zgłoszenia';
 
 $_LANG['Add new request to Helpdesk'] = 'Dodaj nowe zgłoszenie do Helpdesk';
 $_LANG['Request Number'] = 'Nr zgłoszenia';
-$_LANG['Timetable assigned events'] = 'Przypisane zdarzenia w terminarzu';
+$_LANG['Timetable assigned events:'] = 'Przypisane zdarzenia w terminarzu:';
 $_LANG['Add new'] = 'Dodaj nowe';
 $_LANG['Close all'] = 'Zamknij wszystkie';
 $_LANG['Assign this event to Helpdesk request'] = 'Przypisz zdarzenie do zgłoszenia w Helpdesk:';
@@ -3808,5 +3813,23 @@ $_LANG['limit to reference document'] = 'ogranicz do dokumentu odniesienia';
 $_LANG['limit to type'] = 'ogranicz do typu';
 
 $_LANG['Document attachments:'] = 'Załączniki dokumentu:';
+
+$_LANG['Document send'] = 'Wysyłka dokumentów';
+$_LANG['Fatal error: No documents were selected!'] = 'Błąd krytyczny: nie wybrano żadnych dokumentów!';
+$_LANG['Are you sure, you want to send document to customer?'] = 'Jesteś pewien, że chcesz wysłać dokument do klienta?';
+$_LANG['Are you sure, you want to send documents to customer?'] = 'Jesteś pewien, że chcesz wysłać dokumenty do klienta?';
+$_LANG['Are you sure, you want to send documents to customers?'] = 'Jesteś pewien, że chcesz wysłać dokumenty do klientów?';
+$_LANG['Send documents'] = 'Wyślij dokumenty';
+
+$_LANG['PPPoE login:'] = 'Login PPPoE:';
+$_LANG['PPPoE password:'] = 'Hasło PPPoE:';
+$_LANG['PPPoE login and password'] = 'Login i hasło PPPoE';
+
+$_LANG['Customer has not checked \\\'electronic invoice\\\' consent and you are trying to mark this mail contact for invoice sending!'] = 'Klient nie ma zaznaczonej zgody na \\\'faktury elektroniczne\\\', podczas gdy próbujesz oznaczyć mail kontaktowy do wysyłki faktur!';
+
+$_LANG['Add new event to request:'] = 'Przypisanie nowego zdarzenia do zgłoszenia:';
+$_LANG['document type:'] = 'typ dokumentu:';
+
+$_LANG['No address has been selected!'] = 'Nie wybrano adresu!';
 
 ?>

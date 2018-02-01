@@ -270,7 +270,7 @@ class LMSCustomerManager extends LMSManager implements LMSCustomerManagerInterfa
 			WHERE c.id = ? AND invoicenotice = 1 AND cc.type & ? = ?
 			LIMIT 1', array($id, CONTACT_INVOICES | CONTACT_DISABLED, CONTACT_INVOICES)) > 0);
 
-        $result['customerid'] = $id;
+		$result['customerid'] = $id;
         return $result;
     }
 
@@ -665,7 +665,8 @@ class LMSCustomerManager extends LMSManager implements LMSCustomerManagerInterfa
             	SUM(CASE WHEN b.value > 0 THEN b.value ELSE 0 END) AS over,
             	SUM(CASE WHEN b.value < 0 THEN b.value ELSE 0 END) AS below ';
         } else {
-            $sql .= 'SELECT c.id AS id, ' . $this->db->Concat('UPPER(lastname)', "' '", 'c.name') . ' AS customername,
+            $sql .= 'SELECT c.id AS id, c.lastname, c.name, ' . $this->db->Concat('UPPER(lastname)', "' '", 'c.name') . ' AS customername,
+		c.type,
                 status, full_address, address, zip, city, countryid, countries.name AS country, cc.email, ccp.phone, ten, ssn, c.info AS info,
                 extid, message, c.divisionid, c.paytime AS paytime, COALESCE(b.value, 0) AS balance,
                 COALESCE(t.value, 0) AS tariffvalue, s.account, s.warncount, s.online,
@@ -772,7 +773,7 @@ class LMSCustomerManager extends LMSManager implements LMSCustomerManagerInterfa
                 		JOIN vnodes ON vnodes.netdev = netdevices.id AND vnodes.ownerid IS NULL
                 		WHERE netdevices.ownerid = c.id AND (netid = ' . $network . '
                 		OR (ipaddr_pub > ' . $net['address'] . ' AND ipaddr_pub < ' . $net['broadcast'] . '))))' : '')
-                . (!empty($customergroup) ? ' AND ca.gcount = ' . (is_array($customergroup) ? count($customergroup) : 1) : '')
+                . (!empty($customergroup) && $customergroup != -1 ? ' AND ca.gcount = ' . (is_array($customergroup) ? count($customergroup) : 1) : '')
                 . ($customergroup == -1 ? ' AND ca.gcount IS NULL ' : '')
                 . ($nodegroup ? ' AND EXISTS (SELECT 1 FROM nodegroupassignments na
                     JOIN vnodes n ON (n.id = na.nodeid)
@@ -1037,6 +1038,7 @@ class LMSCustomerManager extends LMSManager implements LMSCustomerManagerInterfa
 					array($result['id'], $properties['flagmask']));
 
 			$result['sendinvoices'] = false;
+			$result['senddocuments'] = false;
 
 			foreach (array_keys($CUSTOMERCONTACTTYPES) as $ctype) {
 				$customercontacttype = $CUSTOMERCONTACTTYPES[$ctype];
@@ -1053,6 +1055,9 @@ class LMSCustomerManager extends LMSManager implements LMSCustomerManagerInterfa
 
 						if ($ctype == 'emails' && (($row['type'] & (CONTACT_INVOICES | CONTACT_DISABLED)) == CONTACT_INVOICES))
 							$result['sendinvoices'] = true;
+
+						if ($ctype == 'emails' && (($row['type'] & (CONTACT_DOCUMENTS | CONTACT_DISABLED)) == CONTACT_DOCUMENTS))
+							$result['senddocuments'] = true;
 
 						if ($types)
 							$result[$ctype][$idx]['typestr'] = implode('/', $types);

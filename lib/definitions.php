@@ -187,6 +187,29 @@ $RT_SOURCES = array(
 	RT_SOURCE_SMS => trans('SMS'),
 );
 
+//Helpdesk ticket priority
+define('RT_PRIORITY_VERYLOW', -2);
+define('RT_PRIORITY_LOW', -1);
+define('RT_PRIORITY_NORMAL', 0);
+define('RT_PRIORITY_URGENT', 1);
+define('RT_PRIORITY_CRITICAL', 2);
+
+$RT_PRIORITIES = array(
+	RT_PRIORITY_VERYLOW => trans('very low'),
+	RT_PRIORITY_LOW => trans('low'),
+	RT_PRIORITY_NORMAL => trans('normal'),
+	RT_PRIORITY_URGENT => trans('urgent'),
+	RT_PRIORITY_CRITICAL => trans('critical'),
+);
+
+$RT_PRIORITY_STYLES = array(
+	RT_PRIORITY_VERYLOW => 'background-color: lightgreen; color: black;',
+	RT_PRIORITY_LOW => 'background-color: yellow; color: black;',
+	RT_PRIORITY_NORMAL => 'background-color: transparent; color: black;',
+	RT_PRIORITY_URGENT => 'background-color: orange; color: white;',
+	RT_PRIORITY_CRITICAL => 'background-color: red; color: white;',
+);
+
 // Helpdesk cause type
 define('RT_CAUSE_OTHER', 0);
 define('RT_CAUSE_CUSTOMER', 1);
@@ -621,22 +644,31 @@ $NETELEMENTOWNERSHIPS = array(
 	2	=> 'Węzeł obcy',
 );
 
-$USERPANEL_ID_TYPES = array(
+$USERPANEL_AUTH_TYPES = array(
 	1	=> array(
 		'label' => trans('Customer ID:'),
+		'label_secret' => trans('PIN:'),
 		'selection' => trans('Customer ID and PIN'),
 	),
 	2	=> array(
 		'label' => trans('Phone number:'),
+		'label_secret' => trans('PIN:'),
 		'selection' => trans('Phone number and PIN'),
 	),
 	3	=> array(
 		'label' => trans('Document number:'),
+		'label_secret' => trans('PIN:'),
 		'selection' => trans('Document number and PIN'),
 	),
 	4	=> array(
 		'label' => trans('Customer e-mail:'),
+		'label_secret' => trans('PIN:'),
 		'selection' => trans('Customer e-mail and PIN'),
+	),
+	5	=> array(
+		'label' => trans('PPPoE login:'),
+		'label_secret' => trans('PPPoE password:'),
+		'selection' => trans('PPPoE login and password'),
 	),
 );
 
@@ -647,6 +679,8 @@ define('EVENT_INSTALLATION', 4);
 define('EVENT_MEETING', 5);
 define('EVENT_VACATION', 6);
 define('EVENT_DUTY', 7);
+define('EVENT_PHONE', 8);
+define('EVENT_TV', 9);
 
 $EVENTTYPES = array(
 	EVENT_OTHER => trans('other'),
@@ -655,7 +689,9 @@ $EVENTTYPES = array(
 	EVENT_INSTALLATION => trans('installation'),
 	EVENT_MEETING => trans('meeting'),
 	EVENT_VACATION => trans('vacation'),
-	EVENT_DUTY => trans('duty')
+	EVENT_DUTY => trans('duty'),
+	EVENT_PHONE => trans('phone'),
+	EVENT_TV => trans('tv'),
 );
 
 $EVENTSTYLES = array(
@@ -665,7 +701,9 @@ $EVENTSTYLES = array(
 	EVENT_INSTALLATION => 'background-color: green; color: white;',
 	EVENT_MEETING => 'background-color: yellow; color: black;',
 	EVENT_VACATION => 'background-color: white; color: black;',
-	EVENT_DUTY => 'background-color: brown; color: white;'
+	EVENT_DUTY => 'background-color: brown; color: white;',
+	EVENT_PHONE => 'background-color: white; color: black;',
+	EVENT_TV => 'background-color: white; color: blue;',
 );
 
 define('SESSIONTYPE_PPPOE', 1);
@@ -725,6 +763,8 @@ if(isset($SMARTY))
 	$SMARTY->assign('_NUM_PERIODS', $NUM_PERIODS);
 	$SMARTY->assign('_RT_STATES', $RT_STATES);
 	$SMARTY->assign('_RT_SOURCES', $RT_SOURCES);
+	$SMARTY->assign('_RT_PRIORITIES', $RT_PRIORITIES);
+	$SMARTY->assign('_RT_PRIORITY_STYLES', $RT_PRIORITY_STYLES);
 	$SMARTY->assign('_CONFIG_TYPES', $CONFIG_TYPES);
 	$SMARTY->assign('_TARIFFTYPES', $TARIFFTYPES);
 	$SMARTY->assign('_PAYTYPES', $PAYTYPES);
@@ -739,7 +779,7 @@ if(isset($SMARTY))
 	$SMARTY->assign('_NETELEMENTSTATUSES', $NETELEMENTSTATUSES);
 	$SMARTY->assign('_NETELEMENTTYPES', $NETELEMENTTYPES);
 	$SMARTY->assign('_NETELEMENTOWNERSHIPS', $NETELEMENTOWNERSHIPS);
-	$SMARTY->assign('_USERPANEL_ID_TYPES', $USERPANEL_ID_TYPES);
+	$SMARTY->assign('_USERPANEL_AUTH_TYPES', $USERPANEL_AUTH_TYPES);
 	$SMARTY->assign('_EVENTTYPES', $EVENTTYPES);
 	$SMARTY->assign('_EVENTSTYLES', $EVENTSTYLES);
 	$SMARTY->assign('_SESSIONTYPES', $SESSIONTYPES);

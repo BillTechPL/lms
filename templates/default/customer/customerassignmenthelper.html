@@ -335,13 +335,17 @@
 					</TD>
 					<TD class="nobr">
 						<label>
-							<INPUT type="checkbox" name="{$variable_prefix}[invoice]" value="1"{if $variables.invoice} checked{/if}>
-							{trans("with invoice")}
+							{trans("document type:")}&nbsp;
+							<SELECT name="{$variable_prefix}[invoice]">
+								<OPTION value="0">{trans("without document")}</OPTION>
+								<OPTION value="{$smarty.const.DOC_INVOICE}"{if $variables.invoice == $smarty.const.DOC_INVOICE} selected{/if}>{trans("invoice")}</OPTION>
+								<OPTION value="{$smarty.const.DOC_INVOICE_PRO}"{if $variables.invoice == $smarty.const.DOC_INVOICE_PRO} selected{/if}>{trans("pro forma invoice")}</OPTION>
+							</SELECT>
 						</label>
 						<br>
 						<label>
-							<input type="checkbox" name="{$variable_prefix}[separateinvoice]" value="1"{if $variables.separateinvoice} checked{/if}>
-							{trans("separate invoice")}
+							<input type="checkbox" name="{$variable_prefix}[separatedocument]" value="1"{if $variables.separatedocument} checked{/if}>
+							{trans("separate document")}
 						</label>
 						<br>
 						<label>
@@ -389,12 +393,12 @@
 					<td class="nobr" id="nodelist">
 						{foreach $customernodes as $customernode}
 						<span data-tariffaccess="{$customernode.authtype}" class="global-node-checkbox">
-													<label>
-														<input type="checkbox" name="{$variable_prefix}[nodes][{counter}]" value="{$customernode.id}"{if in_array($customernode.id, (array)$variables.nodes)} checked{/if}>
-														<span class="bold">{$customernode.name}</span> ({$customernode.id|string_format:"%04d"}){if $customernode.location} / {$customernode.location|truncate:"60":"...":true}{/if}
-													</label>
-													<br>
-													</span>
+							<label>
+								<input type="checkbox" name="{$variable_prefix}[nodes][{counter}]" value="{$customernode.id}"{if in_array($customernode.id, (array)$variables.nodes)} checked{/if}>
+								<span class="bold">{$customernode.name}</span> ({$customernode.id|string_format:"%04d"}){if $customernode.location} / {$customernode.location|truncate:"60":"...":true}{/if}
+							</label>
+							<br>
+						</span>
 						{/foreach}
 					</td>
 				</tr>
@@ -411,12 +415,12 @@
 					<td class="nobr" id="nodelist">
 						{foreach $customernetdevnodes as $customernode}
 						<span data-tariffaccess="{$customernode.authtype}" class="global-node-checkbox">
-													<label>
-														<input type="checkbox" name="{$variable_prefix}[nodes][{counter}]" value="{$customernode.id}"{if in_array($customernode.id, (array)$variables.nodes)} checked{/if}>
-														<span class="bold">{$customernode.name}</span> {if !empty($customernode.netdev_name)} / {$customernode.netdev_name}{/if}  ({$customernode.id|string_format:"%04d"}){if $customernode.location} / {$customernode.location|truncate:"60":"...":true}{/if}
-													</label>
-													<br>
-													</span>
+							<label>
+								<input type="checkbox" name="{$variable_prefix}[nodes][{counter}]" value="{$customernode.id}"{if in_array($customernode.id, (array)$variables.nodes)} checked{/if}>
+								<span class="bold">{$customernode.name}</span> {if !empty($customernode.netdev_name)} / {$customernode.netdev_name}{/if}  ({$customernode.id|string_format:"%04d"}){if $customernode.location} / {$customernode.location|truncate:"60":"...":true}{/if}
+							</label>
+							<br>
+						</span>
 						{/foreach}
 					</td>
 				</tr>

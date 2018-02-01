@@ -794,6 +794,7 @@ CREATE TABLE assignments (
 	docid integer DEFAULT NULL
 		CONSTRAINT assignments_docid_fkey REFERENCES documents (id) ON DELETE CASCADE ON UPDATE CASCADE,
 	commited smallint DEFAULT 1 NOT NULL,
+	separatedocument smallint DEFAULT 0 NOT NULL,
 	PRIMARY KEY (id)
 );
 CREATE INDEX assignments_tariffid_idx ON assignments (tariffid);
@@ -1660,6 +1661,7 @@ CREATE TABLE rttickets (
   createtime integer 	DEFAULT 0 NOT NULL,
   resolvetime integer 	DEFAULT 0 NOT NULL,
   source smallint	DEFAULT 0 NOT NULL,
+  priority smallint	DEFAULT 0 NOT NULL,
   deleted smallint	DEFAULT 0 NOT NULL,
   deltime integer	DEFAULT 0 NOT NULL,
   deluserid integer	DEFAULT NULL
@@ -1692,7 +1694,7 @@ CREATE TABLE rtmessages (
   mailfrom varchar(255) DEFAULT '' NOT NULL,
   subject varchar(255) 	DEFAULT '' NOT NULL,
   messageid varchar(255) DEFAULT '' NOT NULL,
-  inreplyto integer 	DEFAULT 0 NOT NULL
+  inreplyto integer 	DEFAULT NULL
 	CONSTRAINT rtmessages_inreplyto_fkey REFERENCES rtmessages (id) ON DELETE SET NULL ON UPDATE CASCADE,
   replyto text 		DEFAULT '' NOT NULL,
   headers text 		DEFAULT '' NOT NULL,
@@ -2938,6 +2940,7 @@ URL: %url
 ('userpanel', 'change_rejection_mail_body', '', '', 0),
 ('userpanel', 'google_recaptcha_sitekey', '', '', 0),
 ('userpanel', 'google_recaptcha_secret', '', '', 0),
+('userpanel', 'allow_reopen_tickets_newer_than', '0', '', 0),
 ('directories', 'userpanel_dir', 'userpanel', '', 0);
 
 INSERT INTO netdeviceproducers (id, name) VALUES
@@ -3267,6 +3270,6 @@ INSERT INTO netdevicemodels (name, alternative_name, netdeviceproducerid) VALUES
 ('XR7', 'XR7 MINI PCI PCBA', 2),
 ('XR9', 'MINI PCI 600MW 900MHZ', 2);
 
-INSERT INTO dbinfo (keytype, keyvalue) VALUES ('dbversion', '2017112200');
+INSERT INTO dbinfo (keytype, keyvalue) VALUES ('dbversion', '2018012200');
 
 COMMIT;

@@ -894,6 +894,7 @@ CREATE TABLE assignments (
 	recipient_address_id int(11),
 	docid int(11) DEFAULT NULL,
 	commited tinyint(1) NOT NULL DEFAULT '1',
+	separatedocument tinyint(1) NOT NULL DEFAULT 0,
 	PRIMARY KEY (id),
 	INDEX tariffid (tariffid),
 	INDEX customerid (customerid),
@@ -1688,6 +1689,7 @@ CREATE TABLE rttickets (
   createtime int(11) NOT NULL DEFAULT '0',
   resolvetime int(11) NOT NULL DEFAULT '0',
   source tinyint(4) NOT NULL DEFAULT '0',
+  priority tinyint(4) NOT NULL DEFAULT '0',
   deleted tinyint(1) NOT NULL DEFAULT '0',
   deltime int(11) NOT NULL DEFAULT '0',
   deluserid int(11) DEFAULT NULL,
@@ -2928,6 +2930,7 @@ URL: %url
 ('userpanel', 'change_rejection_mail_body', '', '', 0),
 ('userpanel', 'google_recaptcha_sitekey', '', '', 0),
 ('userpanel', 'google_recaptcha_secret', '', '', 0),
+('userpanel', 'allow_reopen_tickets_newer_than', '0', '', 0),
 ('directories','userpanel_dir','userpanel','',0);
 
 INSERT INTO netdeviceproducers (id, name) VALUES
@@ -3257,4 +3260,4 @@ INSERT INTO netdevicemodels (name, alternative_name, netdeviceproducerid) VALUES
 ('XR7', 'XR7 MINI PCI PCBA', 2),
 ('XR9', 'MINI PCI 600MW 900MHZ', 2);
 
-INSERT INTO dbinfo (keytype, keyvalue) VALUES ('dbversion', '2017112200');
+INSERT INTO dbinfo (keytype, keyvalue) VALUES ('dbversion', '2018012200');

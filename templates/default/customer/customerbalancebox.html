@@ -182,7 +182,7 @@
 					{continue}
 					{/if}
 				{/if}
-				<TR{if $item.docid} data-published="{$item.published}"{/if}>
+				<TR{if $item.docid} data-published="{$item.published}"{if $item.closed && ($item.doctype == $smarty.const.DOC_INVOICE || $item.doctype == $smarty.const.DOC_CNOTE || $item.doctype == $smarty.const.DOC_DNOTE)} class="blend"{/if}{/if}>
 					<TD class="nobr">{$item.date}</TD>
 					<TD class="nobr">{$item.username|truncate:16:"...":true}</TD>
 					<TD class="text-right nobr">{if !$item.type}{($item.value*-1)|money_format}{else}-{/if}</TD>
@@ -202,7 +202,7 @@
 							{/if}
 							{if ($customerinfo.sendinvoices || $balancelist.sendinvoices) && ($item.doctype == $smarty.const.DOC_INVOICE
 								|| $item.doctype == $smarty.const.DOC_CNOTE || $item.doctype == $smarty.const.DOC_INVOICE_PRO)}
-							<A href="?m=invoicesend&id={$item.docid}" rel="external" OnClick="return confirmLink(this, '{t a=$customerinfo.customername|escape:"javascript"|escape:"html"}Are you sure, you want to send invoice to customer \'$a\'?{/t}');"><IMG src="img/mail.gif" alt="{trans("Send invoice")}" title="{trans("Send invoice")}"></A>
+							<A class="invoicesend" href="?m=invoicesend&id={$item.docid}"><IMG src="img/mail.gif" alt="{trans("Send invoice")}" title="{trans("Send invoice")}"></A>
 							{/if}
 							{if $item.doctype == $smarty.const.DOC_INVOICE}
 								<A HREF="?m=invoicenote&id={$item.docid}&action=init"><IMG src="img/eraser.gif" alt="{trans("Revise")}" title="{trans("Revise")}"></A>
@@ -226,6 +226,9 @@
 								<A href="?m=invoice&id={$item.docid}&dontpublish=1" class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}" rel="external"><img src="img/view.gif" alt="{trans("View")}"></A>
 								{/if}
 								<A href="?m=invoice&id={$item.docid}" class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}" rel="external"><IMG src="img/printn.gif" alt="{trans("Credit note")}"></A>
+								{if !$item.published || ConfigHelper::checkPrivilege('published_document_modification')}
+								<A href="?m=invoicenoteedit&id={$item.docid}&action=edit" rel="external"{if $item.published} OnClick="return confirmLink(this, '{trans("Document has been published already! Are you sure you want to edit it despite this?")}');"{/if} class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}"><IMG SRC="img/edit.gif" ALT="{trans("Invoice")}"></A>
+								{/if}
 							{elseif $item.doctype == $smarty.const.DOC_RECEIPT}
 								<A href="?m=receipt&id={$item.docid}" class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}" rel="external"><IMG src="img/printr.gif" alt="{trans("Cash receipt")}"></A>
 								<a href="?m=receiptedit&id={$item.docid}" class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}" rel="external"><IMG src="img/edit.gif" alt="{trans("Cash receipt")}"></a>
@@ -236,7 +239,7 @@
 								<A href="?m=note&id={$item.docid}" class="lms-ui-tooltip-docnumber" data-resourceid="{$item.docid}" rel="external"><IMG src="img/printd.gif" alt="{trans("Debit note")}"></A>
 							{/if}
 						{/if}
-						<INPUT type="checkbox" NAME="marks{if $item.doctype == $smarty.const.DOC_INVOICE_PRO}[proforma][{$item.docid}]{/if}[{$item.id}]" value="{$item.id}" class="lms-ui-multi-check">
+						<INPUT type="checkbox" NAME="marks{if $item.doctype == $smarty.const.DOC_INVOICE_PRO && !ConfigHelper::checkConfig('phpui.proforma_invoice_generates_commitment')}[proforma][{$item.docid}]{/if}[{$item.id}]" value="{$item.id}" class="lms-ui-multi-check">
 					</TD>
 				</TR>
 				{foreachelse}
@@ -348,6 +351,14 @@
 		document.getElementById('customerbalancepanel').style.display = 'none';
 {/if}
 
-new_doc_type_changed($("[name=newdocument]").val());
+	$('.invoicesend').click(function() {
+		if (!confirm('{t a=$customerinfo.customername|escape:"javascript"|escape:"html"}Are you sure, you want to send invoice to customer \'$a\'?{/t}')) {
+			return false;
+		}
+		window.open($(this).attr('href'));
+		return false;
+	});
+
+	new_doc_type_changed($("[name=newdocument]").val());
 //-->
 </SCRIPT>
